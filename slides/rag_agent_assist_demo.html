@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RAG Demo - Salesforce Agent Assist</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }
+        .slide { background: white; padding: 30px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #0176d3; }
+        h2 { color: #032d60; margin-top: 0; }
+        .metric { display: inline-block; margin: 10px 20px; padding: 15px; background: #e8f4f8; border-radius: 5px; }
+        .metric-value { font-size: 24px; font-weight: bold; color: #0176d3; }
+        .metric-label { font-size: 14px; color: #666; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        .case-example { background: #fff9e6; padding: 15px; border-left: 4px solid #ffa500; margin: 10px 0; }
+        .response { background: #e8f5e9; padding: 15px; border-left: 4px solid #4caf50; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <h1>🤖 RAG-Powered Agent Assist for Salesforce</h1>
+        <p><strong>Demo: Knowledge-Grounded Case Response Generation</strong></p>
+        <div class="metric">
+            <div class="metric-value">3</div>
+            <div class="metric-label">Knowledge Articles</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">3</div>
+            <div class="metric-label">Chunks Indexed</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">2</div>
+            <div class="metric-label">Test Cases</div>
+        </div>
+    </div>
+    <div class="slide">
+        <h2>📊 Demo Results</h2>
+        <div class="case-example">
+            <strong>Case:</strong> Cannot reset password<br>
+            <strong>Description:</strong> User can't reset password using forgot link; gets invalid token error.
+        </div>
+        <div class="response">
+            <strong>AI-Generated Response:</strong><br>
+            Ensure reset link not expired; request new link; clear cache; check redirects [cite:Reset Password Troubleshooting]. Verify routing addresses and forwarding; check Email Services logs; ensure mailbox not over quota [cite:Email-to-Case Setup Guide].
+        </div>
+        <p><strong>Retrieved Knowledge Articles:</strong></p>
+        <ul>            <li>Reset Password Troubleshooting (similarity: 0.730)</li>
+            <li>Login Issues Common Causes (similarity: 0.205)</li>
+            <li>Email-to-Case Setup Guide (similarity: 0.075)</li>
+        </ul>
+    </div>
+    <div class="slide">
+        <h2>📈 Performance Metrics</h2>
+        <pre>
+Average Latency: 0.02 ms
+Average Cost: $0.000222 USD per case
+Average Similarity Score: 0.314
+Average Quality Rating: 4.0/5
+        </pre>
+    </div>
+    <div class="slide">
+        <h2>🎯 Key Takeaways</h2>
+        <ul>
+            <li>✅ RAG enables grounded, citation-backed responses</li>
+            <li>✅ Semantic search retrieves relevant knowledge automatically</li>
+            <li>✅ Low latency (&lt;100ms average) suitable for real-time assist</li>
+            <li>✅ Cost-effective at ~$0.0002 per case</li>
+            <li>✅ Ready for Salesforce Lightning Web Component integration</li>
+        </ul>
+    </div>
+</body>
+</html>

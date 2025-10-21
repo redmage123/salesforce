@@ -1,0 +1,68 @@
+{
+  "task_id": "sample-task-001",
+  "title": "Sample Task for Testing",
+  "description": "This is a sample task specification used for testing the agentic pipeline",
+  "priority": "medium",
+  "labels": [
+    "test",
+    "sample"
+  ],
+  "acceptance_criteria": [
+    {
+      "criterion": "Feature implements required functionality",
+      "status": "pending",
+      "verified_by": null
+    },
+    {
+      "criterion": "All tests pass with 80%+ coverage",
+      "status": "pending",
+      "verified_by": null
+    },
+    {
+      "criterion": "Documentation is updated",
+      "status": "pending",
+      "verified_by": null
+    }
+  ],
+  "test_requirements": {
+    "minimum_coverage": 80,
+    "required_test_types": [
+      "unit",
+      "integration",
+      "acceptance"
+    ],
+    "test_scenarios": [
+      {
+        "scenario": "Happy path - feature works with valid input",
+        "expected_result": "Feature returns correct output",
+        "test_type": "unit"
+      },
+      {
+        "scenario": "Error handling - feature handles invalid input",
+        "expected_result": "Feature raises appropriate exception",
+        "test_type": "unit"
+      },
+      {
+        "scenario": "Integration - feature works with other components",
+        "expected_result": "Data flows correctly between components",
+        "test_type": "integration"
+      }
+    ],
+    "edge_cases": [
+      "Empty input",
+      "Null/None values",
+      "Very large inputs",
+      "Special characters",
+      "Concurrent operations"
+    ]
+  },
+  "definition_of_done": {
+    "code_complete": false,
+    "tests_written_first": false,
+    "all_tests_passing": false,
+    "code_coverage_80_percent": false,
+    "documentation_updated": false,
+    "no_linting_errors": false,
+    "peer_reviewed": false
+  }
+}

@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Salesforce AI Revolution - Live Presentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .presentation-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            padding: 40px;
+            overflow-y: auto;
+        }
+        
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        /* Title Slide */
+        .slide-title {
+            background: linear-gradient(135deg, #0070f3 0%, #00ea60 100%);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .slide-title h1 {
+            font-size: 80px;
+            margin-bottom: 30px;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: slideInTop 1s ease-out;
+        }
+        
+        .slide-title h2 {
+            font-size: 36px;
+            font-weight: 300;
+            margin-bottom: 50px;
+            opacity: 0;
+            animation: fadeIn 1s ease-out 0.5s forwards;
+        }
+        
+        /* Problem Slide */
+        .slide-problem {
+            background: #1a1a1a;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            max-width: 1200px;
+            width: 100%;
+        }
+        
+        .problem-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #ff4444;
+            border-radius: 20px;
+            padding: 40px;
+            opacity: 0;
+            transform: translateY(50px);
+            animation: slideUpFade 0.8s ease-out forwards;
+        }
+        
+        .problem-card:nth-child(1) { animation-delay: 0.2s; }
+        .problem-card:nth-child(2) { animation-delay: 0.4s; }
+        .problem-card:nth-child(3) { animation-delay: 0.6s; }
+        .problem-card:nth-child(4) { animation-delay: 0.8s; }
+        
+        .problem-card h3 {
+            font-size: 28px;
+            color: #ff4444;
+            margin-bottom: 20px;
+        }
+        
+        .problem-card p {
+            font-size: 20px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+        
+        /* Demo Slide */
+        .slide-demo {
+            background: #f9fafb;
+            color: #333;
+            flex-direction: column;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .demo-header h2 {
+            font-size: 48px;
+            color: #0070f3;
+            margin-bottom: 20px;
+        }
+        
+        .chat-window {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            padding: 30px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .message {
+            margin: 20px 0;
+            display: flex;
+            align-items: flex-start;
+            opacity: 0;
+            transform: translateX(-20px);
+            animation: messagePop 0.5s ease-out forwards;
+        }
+        
+        .message.agent {
+            transform: translateX(20px);
+        }
+        
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        
+        .customer .avatar { background: #ff6b6b; }
+        .agent .avatar { background: #4ecdc4; position: relative; }
+        
+        .ai-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ffd700;
+            color: #333;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        
+        .message-content {
+            background: #f1f3f5;
+            padding: 15px 20px;
+            border-radius: 15px;
+            max-width: 70%;
+            font-size: 16px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        
+        .agent .message-content {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+        }
+        
+        .typing-indicator {
+            display: inline-block;
+            animation: typing 1.5s infinite;
+        }
+        
+        /* AI Process */
+        .ai-process-box {
+            background: #f0f9ff;
+            border: 2px dashed #3b82f6;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 900px;
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        .process-step {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            opacity: 0;
+            animation: slideRight 0.5s ease-out forwards;
+        }
+        
+        .process-step:nth-child(1) { animation-delay: 0.2s; }
+        .process-step:nth-child(2) { animation-delay: 0.4s; }
+        .process-step:nth-child(3) { animation-delay: 0.6s; }
+        .process-step:nth-child(4) { animation-delay: 0.8s; }
+        
+        .step-icon {
+            font-size: 30px;
+            margin-right: 15px;
+        }
+        
+        /* Data Slide */
+        .slide-data {
+            background: white;
+            color: #333;
+            flex-direction: column;
+            align-items: center;
+            padding: 60px 40px;
+        }
+        
+        .slide-data h2 {
+            font-size: 48px;
+            margin-bottom: 40px;
+            text-align: center;
+            color: #0070f3;
+        }
+        
+        .graph-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .graph-placeholder {
+            width: 100%;
+            height: 600px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #666;
+        }
+        
+        .insight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px auto;
+            max-width: 1000px;
+            font-size: 20px;
+            text-align: center;
+            opacity: 0;
+            animation: slideUp 0.8s ease-out 1s forwards;
+        }
+        
+        /* ROI Slide */
+        .slide-roi {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .roi-number {
+            font-size: 120px;
+            font-weight: bold;
+            margin: 40px 0;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            opacity: 0;
+            animation: zoomInRotate 1s ease-out 0.5s forwards;
+        }
+        
+        .roi-details {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            max-width: 1200px;
+            margin: 40px auto;
+        }
+        
+        .roi-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            opacity: 0;
+            transform: scale(0);
+            animation: popIn 0.5s ease-out forwards;
+        }
+        
+        .roi-card:nth-child(1) { animation-delay: 0.8s; }
+        .roi-card:nth-child(2) { animation-delay: 1.0s; }
+        .roi-card:nth-child(3) { animation-delay: 1.2s; }
+        .roi-card:nth-child(4) { animation-delay: 1.4s; }
+        
+        .roi-card h3 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .roi-card p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+        
+        /* CTA Slide */
+        .slide-cta {
+            background: linear-gradient(135deg, #0070f3 0%, #00ea60 100%);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .cta-content h2 {
+            font-size: 64px;
+            margin-bottom: 30px;
+        }
+        
+        .cta-content p {
+            font-size: 28px;
+            margin-bottom: 50px;
+            max-width: 800px;
+        }
+        
+        .cta-button {
+            background: #ffd700;
+            color: #333;
+            font-size: 32px;
+            font-weight: bold;
+            padding: 25px 60px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+            opacity: 0;
+            animation: bounceIn 1s ease-out 0.5s forwards;
+        }
+        
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            z-index: 1000;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0070f3 0%, #00ea60 100%);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+        
+        /* Slide Counter */
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 18px;
+            z-index: 1000;
+        }
+        
+        /* Animations */
+        @keyframes slideInTop {
+            from { transform: translateY(-100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUpFade {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes messagePop {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes slideRight {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes zoomIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes zoomInRotate {
+            from { opacity: 0; transform: scale(0) rotate(-180deg); }
+            to { opacity: 1; transform: scale(1) rotate(0); }
+        }
+        
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% { opacity: 1; }
+            30% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+    
+    <!-- Slide Counter -->
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">7</span>
+    </div>
+    
+    <!-- Presentation Container -->
+    <div class="presentation-container">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide slide-title active">
+            <h1>🚀 AI Agent Assist</h1>
+            <h2>Transform Your Salesforce Service Cloud</h2>
+            <p style="font-size: 24px; opacity: 0; animation: fadeIn 1s ease-out 1s forwards;">
+                The Future of Customer Service is Here
+            </p>
+        </div>
+        
+        <!-- Slide 2: The Problem -->
+        <div class="slide slide-problem">
+            <h2 style="font-size: 56px; margin-bottom: 60px; text-align: center;">The Challenge</h2>
+            <div class="problem-grid">
+                <div class="problem-card">
+                    <h3>⏰ Slow Response Times</h3>
+                    <p>Agents spend 10+ minutes searching for answers, crafting responses</p>
+                </div>
+                <div class="problem-card">
+                    <h3>😔 Inconsistent Quality</h3>
+                    <p>Different agents provide different answers to the same question</p>
+                </div>
+                <div class="problem-card">
+                    <h3>📉 Limited Capacity</h3>
+                    <p>Each agent handles only 40 cases per day on average</p>
+                </div>
+                <div class="problem-card">
+                    <h3>💸 High Costs</h3>
+                    <p>$6M annual cost for 100 agents, plus training and turnover</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 3: Live Demo -->
+        <div class="slide slide-demo">
+            <div class="demo-header">
+                <h2>See AI in Action</h2>
+                <p style="font-size: 24px; color: #666;">Watch how AI transforms a real support interaction</p>
+            </div>
+            
+            <div class="chat-window" id="demo-chat">
+                <!-- Messages will be added dynamically -->
+            </div>
+            
+            <div class="ai-process-box" id="ai-process" style="display: none;">
+                <h3 style="margin-bottom: 20px; color: #0070f3;">🤖 AI Processing Behind the Scenes</h3>
+                <div id="process-steps"></div>
+            </div>
+        </div>
+        
+        <!-- Slide 4: Performance Data -->
+        <div class="slide slide-data">
+            <h2>📊 30-Day Performance Analysis</h2>
+            <div class="graph-container">
+                <div class="graph-placeholder">
+                    <div style="text-align: center;">
+                        <h3 style="margin-bottom: 20px;">AI Adoption Drives Massive Capacity Increase</h3>
+                        <p>📈 233% increase in case capacity</p>
+                        <p>⏱️ 70% faster resolution</p>
+                        <p>😊 +17 CSAT points</p>
+                    </div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <h3>Key Insights</h3>
+                <p>As AI adoption increased from 0% to 80%, total cases handled per day increased from 4,000 to over 13,000</p>
+            </div>
+        </div>
+        
+        <!-- Slide 5: Quality Impact -->
+        <div class="slide slide-data">
+            <h2>🎯 AI Quality = Business Results</h2>
+            <div class="graph-container">
+                <div class="graph-placeholder">
+                    <div style="text-align: center;">
+                        <h3 style="margin-bottom: 20px;">AI vs Traditional Support Performance</h3>
+                        <p>✅ AI agents handle 3.3x more cases</p>
+                        <p>💰 70% lower cost per resolution</p>
+                        <p>⭐ Higher quality scores across all metrics</p>
+                    </div>
+                </div>
+            </div>
+            <div class="insight-box">
+                <h3>The Better the AI, The Better the Outcomes</h3>
+                <p>AI enables both high quality AND high volume - breaking the traditional trade-off</p>
+            </div>
+        </div>
+        
+        <!-- Slide 6: ROI Summary -->
+        <div class="slide slide-roi">
+            <h2 style="font-size: 56px; margin-bottom: 20px;">Your 5-Year ROI</h2>
+            <div class="roi-number">$57M</div>
+            <div class="roi-details">
+                <div class="roi-card">
+                    <h3>$2.9M</h3>
+                    <p>Annual Savings</p>
+                </div>
+                <div class="roi-card">
+                    <h3>3.3x</h3>
+                    <p>Productivity Gain</p>
+                </div>
+                <div class="roi-card">
+                    <h3>89%</h3>
+                    <p>CSAT Score</p>
+                </div>
+                <div class="roi-card">
+                    <h3>18 sec</h3>
+                    <p>Response Time</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slide 7: Call to Action -->
+        <div class="slide slide-cta">
+            <div class="cta-content">
+                <h2>Ready to Transform Your Service Cloud?</h2>
+                <p>Join the AI revolution and deliver exceptional customer experiences at scale</p>
+                <button class="cta-button" onclick="alert('Contact us at ai@salesforce.com to get started!')">Let's Get Started</button>
+            </div>
+        </div>
+        
+    </div>
+    
+    <script>
+        // Slide Management
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        let currentSlide = 0;
+        
+        document.getElementById('total-slides').textContent = totalSlides;
+        
+        function showSlide(index) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+            document.getElementById('current-slide').textContent = index + 1;
+            document.getElementById('progress').style.width = ((index + 1) / totalSlides * 100) + '%';
+            
+            // Special handling for demo slide
+            if (index === 2) {
+                setTimeout(startDemo, 1000);
+            }
+        }
+        
+        // Demo Animation
+        function typeMessage(element, text, callback) {
+            let index = 0;
+            element.innerHTML = '';
+            
+            function type() {
+                if (index < text.length) {
+                    element.innerHTML += text.charAt(index);
+                    index++;
+                    setTimeout(type, 30);
+                } else {
+                    if (callback) callback();
+                }
+            }
+            type();
+        }
+        
+        function addMessage(container, type, message, hasAI = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ' + type;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.innerHTML = type === 'customer' ? '👤' : '🧑‍💼';
+            
+            if (hasAI) {
+                const badge = document.createElement('div');
+                badge.className = 'ai-badge';
+                badge.textContent = 'AI';
+                avatar.appendChild(badge);
+            }
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            container.appendChild(messageDiv);
+            
+            // Animate message appearance
+            setTimeout(() => {
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateX(0)';
+                typeMessage(content, message);
+            }, 100);
+        }
+        
+        function showAIProcess() {
+            const processBox = document.getElementById('ai-process');
+            const stepsContainer = document.getElementById('process-steps');
+            processBox.style.display = 'block';
+            
+            const steps = [
+                {icon: '🧠', text: 'AI analyzing customer intent...', delay: 500},
+                {icon: '🔍', text: 'Searching knowledge base for "password reset" + "invalid token"...', delay: 1000},
+                {icon: '📚', text: 'Found 4 relevant articles with 98% confidence match', delay: 1500},
+                {icon: '✨', text: 'Generating personalized response with OpenAI GPT-4...', delay: 2000}
+            ];
+            
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'process-step';
+                    stepDiv.innerHTML = '<span class="step-icon">' + step.icon + '</span><span>' + step.text + '</span>';
+                    stepsContainer.appendChild(stepDiv);
+                }, step.delay);
+            });
+        }
+        
+        function startDemo() {
+            const chatContainer = document.getElementById('demo-chat');
+            chatContainer.innerHTML = ''; // Clear previous demo
+            document.getElementById('process-steps').innerHTML = '';
+            
+            // Customer message
+            setTimeout(() => {
+                addMessage(chatContainer, 'customer', 
+                    "I can't reset my password. When I click the reset link in my email, it says 'Invalid token'. This is urgent!");
+            }, 500);
+            
+            // Show AI process
+            setTimeout(() => {
+                showAIProcess();
+            }, 2500);
+            
+            // Agent response with AI
+            setTimeout(() => {
+                document.getElementById('ai-process').style.display = 'none';
+                addMessage(chatContainer, 'agent',
+                    "I understand how frustrating this must be. The 'Invalid token' error typically occurs when the password reset link has expired (valid for 24 hours) or if there's a browser cache issue. Here's how to fix it:\n\n1. Request a fresh reset link from our login page\n2. Clear your browser cache (Ctrl+Shift+Delete)\n3. Click the new link immediately\n\nI've also flagged your account for priority support. If these steps don't work, I'll escalate to our security team for immediate manual reset.",
+                    true);
+            }, 5000);
+        }
+        
+        // Auto-advance slides
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        }
+        
+        // Slide timings (in seconds)
+        const slideDurations = [5, 8, 12, 10, 10, 8, 10];
+        let slideTimer;
+        let currentDuration = 0;
+        
+        function startSlideShow() {
+            currentDuration = slideDurations[currentSlide] * 1000;
+            slideTimer = setTimeout(() => {
+                nextSlide();
+                if (currentSlide !== 0) { // Don't loop back to start
+                    startSlideShow();
+                }
+            }, currentDuration);
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            clearTimeout(slideTimer);
+            if (e.key === 'ArrowRight') {
+                nextSlide();
+                startSlideShow();
+            } else if (e.key === 'ArrowLeft' && currentSlide > 0) {
+                currentSlide--;
+                showSlide(currentSlide);
+                startSlideShow();
+            }
+        });
+        
+        // Start the presentation
+        setTimeout(startSlideShow, 2000);
+    </script>
+</body>
+</html>

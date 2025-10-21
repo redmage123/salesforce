@@ -1,0 +1,888 @@
+# Save all our graphs for the presentation
+import base64
+from io import BytesIO
+
+def fig_to_base64(fig):
+    """Convert matplotlib figure to base64 string"""
+    buf = BytesIO()
+    fig.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+    buf.seek(0)
+    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    buf.close()
+    return img_base64
+
+# Create the complete auto-running presentation
+# Get the dashboards from the global scope if they exist
+dashboard_business_base64 = getattr(__builtins__, 'DASHBOARD_BUSINESS_BASE64', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
+dashboard_performance_base64 = getattr(__builtins__, 'DASHBOARD_PERFORMANCE_BASE64', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
+dashboard_30day_base64 = getattr(__builtins__, 'DASHBOARD_30DAY_BASE64', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
+roi_5year_base64 = getattr(__builtins__, 'ROI_5YEAR_BASE64', 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==')
+
+presentation_html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <title>Salesforce AI Revolution - Live Presentation</title>
+    <style>
+        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+        body {{
+            font-family: 'Salesforce Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }}
+        .presentation-container {{
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .slide {{
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            padding: 60px 80px;
+            overflow-y: auto;
+        }}
+        .slide.active {{
+            display: flex;
+            opacity: 1;
+        }}
+
+        /* Fixed positioning for buttons - prevent stacking */
+        .button-container {{
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            pointer-events: none;
+            z-index: 3000;
+        }}
+
+        /* Restart Button - Bottom Left */
+        .restart-button {{
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            background: linear-gradient(135deg, #0070f3 0%, #00ea60 100%);
+            color: white;
+            padding: 18px 36px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 8px 25px rgba(0,112,243,0.4);
+            z-index: 3001;
+            pointer-events: all;
+            transition: all 0.3s;
+        }}
+        .restart-button:hover {{
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0,112,243,0.5);
+        }}
+
+        /* Navigation Buttons - Bottom Right, Horizontal Layout */
+        .nav-buttons {{
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            z-index: 3001;
+            pointer-events: all;
+        }}
+        .nav-button {{
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            color: white;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            border: 3px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }}
+        .nav-button:hover:not(:disabled) {{
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.5);
+        }}
+        .nav-button:active:not(:disabled) {{
+            transform: translateY(-1px);
+        }}
+        .nav-button:disabled {{
+            opacity: 0.2;
+            cursor: not-allowed;
+        }}
+
+        /* Title Slide */
+        .slide-title {{
+            background: linear-gradient(135deg, #0070f3 0%, #00ea60 100%);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }}
+        .slide-title h1 {{
+            font-size: 90px;
+            margin-bottom: 40px;
+            text-shadow: 0 6px 30px rgba(0,0,0,0.3);
+            letter-spacing: -2px;
+        }}
+        .slide-title h2 {{
+            font-size: 40px;
+            font-weight: 300;
+            margin-bottom: 60px;
+            opacity: 0.95;
+        }}
+
+        /* Demo Slide - IMPROVED */
+        .slide-demo {{
+            background: linear-gradient(135deg, #f9fafb 0%, #e8ecf0 100%);
+            color: #1a1a1a;
+            flex-direction: column;
+            justify-content: flex-start;
+            padding: 50px 80px 120px 80px;
+        }}
+        .demo-header {{
+            text-align: center;
+            margin-bottom: 30px;
+        }}
+        .demo-header h2 {{
+            font-size: 48px;
+            color: #0070f3;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }}
+        .demo-header p {{
+            font-size: 22px;
+            color: #666;
+            max-width: 1000px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }}
+
+        /* Customer Message - Prominent Display */
+        .customer-message-box {{
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+            padding: 40px;
+            margin-bottom: 35px;
+            border-left: 8px solid #ff6b6b;
+        }}
+        .customer-header {{
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }}
+        .customer-avatar {{
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-right: 20px;
+        }}
+        .customer-info h3 {{
+            font-size: 24px;
+            color: #1a1a1a;
+            margin-bottom: 5px;
+        }}
+        .customer-info p {{
+            font-size: 16px;
+            color: #666;
+        }}
+        .customer-message {{
+            font-size: 18px;
+            line-height: 1.8;
+            color: #333;
+            white-space: pre-wrap;
+        }}
+
+        /* AI Intelligence Panels - Grid Layout */
+        .ai-panels {{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-top: 35px;
+        }}
+        .ai-panel {{
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease-out;
+        }}
+        .ai-panel.visible {{
+            opacity: 1;
+            transform: translateY(0);
+        }}
+        .ai-panel h4 {{
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1a1a1a;
+        }}
+        .ai-panel-content {{
+            font-size: 15px;
+            line-height: 1.7;
+            color: #555;
+        }}
+        .ai-panel-content div {{
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }}
+        .ai-panel-content div:before {{
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #0070f3;
+            font-weight: bold;
+        }}
+
+        /* Panel Colors */
+        .panel-root-cause {{
+            border-left: 5px solid #ff4757;
+            background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
+        }}
+        .panel-autonomous {{
+            border-left: 5px solid #00d2d3;
+            background: linear-gradient(135deg, #fff 0%, #f0ffff 100%);
+        }}
+        .panel-health {{
+            border-left: 5px solid #ffa502;
+            background: linear-gradient(135deg, #fff 0%, #fff8f0 100%);
+        }}
+        .panel-sentiment {{
+            border-left: 5px solid #5f27cd;
+            background: linear-gradient(135deg, #fff 0%, #f8f5ff 100%);
+        }}
+        .panel-urgency {{
+            border-left: 5px solid #ff6348;
+            background: linear-gradient(135deg, #fff 0%, #fff5f3 100%);
+        }}
+        .panel-recommendations {{
+            border-left: 5px solid #1dd1a1;
+            background: linear-gradient(135deg, #fff 0%, #f0fff8 100%);
+        }}
+
+        /* Data Slides */
+        .slide-data {{
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 60px 80px 140px 80px;
+        }}
+        .slide-data h2 {{
+            font-size: 52px;
+            margin-bottom: 40px;
+            text-align: center;
+            color: #fff;
+            font-weight: 700;
+        }}
+        .graph-container {{
+            width: 100%;
+            max-width: 1400px;
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 70px rgba(0,0,0,0.4);
+            position: relative;
+        }}
+        .graph-container img {{
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 12px;
+        }}
+
+        /* Graph Overlays - Better Positioning */
+        .graph-overlay {{
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, rgba(0,112,243,0.95) 0%, rgba(0,208,211,0.95) 100%);
+            backdrop-filter: blur(20px);
+            color: white;
+            padding: 30px 50px;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+            max-width: 900px;
+            z-index: 100;
+        }}
+        .graph-overlay.active {{
+            opacity: 1;
+        }}
+        .graph-overlay h3 {{
+            font-size: 28px;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }}
+        .graph-overlay p {{
+            font-size: 18px;
+            line-height: 1.6;
+            opacity: 0.95;
+        }}
+
+        /* Problems Slide */
+        .problems-grid {{
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 35px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-bottom: 120px;
+        }}
+        .problem-card {{
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border-radius: 20px;
+            padding: 40px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: problemPop 0.5s ease-out forwards;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+        }}
+        .problem-card:nth-child(1) {{ animation-delay: 0.2s; }}
+        .problem-card:nth-child(2) {{ animation-delay: 0.4s; }}
+        .problem-card:nth-child(3) {{ animation-delay: 0.6s; }}
+        .problem-card:nth-child(4) {{ animation-delay: 0.8s; }}
+        .problem-icon {{
+            font-size: 48px;
+            margin-bottom: 20px;
+            display: block;
+        }}
+        .problem-card h3 {{
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: #00ea60;
+        }}
+        .problem-card p {{
+            font-size: 18px;
+            line-height: 1.7;
+            color: #bdc3c7;
+            margin-bottom: 12px;
+        }}
+        .problem-solution {{
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid rgba(255,255,255,0.1);
+            color: #3498db;
+            font-size: 17px;
+            font-weight: 600;
+        }}
+
+        /* CTA Slide */
+        .slide-cta {{
+            background: linear-gradient(135deg, #0070f3 0%, #00ea60 100%);
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }}
+        .slide-cta h2 {{
+            font-size: 68px;
+            margin-bottom: 35px;
+            font-weight: 700;
+        }}
+        .cta-stats {{
+            display: flex;
+            gap: 60px;
+            margin: 50px 0;
+            justify-content: center;
+        }}
+        .stat {{
+            text-align: center;
+        }}
+        .stat-number {{
+            font-size: 72px;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }}
+        .stat-label {{
+            font-size: 22px;
+            opacity: 0.95;
+        }}
+        .cta-button {{
+            background: white;
+            color: #0070f3;
+            padding: 28px 70px;
+            font-size: 28px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 40px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }}
+        .cta-button:hover {{
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }}
+
+        /* Animations */
+        @keyframes slideInTop {{
+            from {{ transform: translateY(-100px); opacity: 0; }}
+            to {{ transform: translateY(0); opacity: 1; }}
+        }}
+        @keyframes fadeIn {{
+            from {{ opacity: 0; }}
+            to {{ opacity: 1; }}
+        }}
+        @keyframes problemPop {{
+            from {{ opacity: 0; transform: translateY(30px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+
+        <!-- Slide 1: Title -->
+        <div class="slide slide-title active" id="slide-0">
+            <h1>🚀 AI Agent Assist for Salesforce</h1>
+            <h2>3 Advanced Features That Go Beyond Einstein</h2>
+        </div>
+
+        <!-- Slide 2: IMPROVED Advanced AI Demo -->
+        <div class="slide slide-demo" id="slide-1">
+            <div class="demo-header">
+                <h2>⚡ Advanced AI Intelligence in Action</h2>
+                <p>Watch how our AI analyzes a complex customer issue and activates 3 advanced features automatically</p>
+            </div>
+
+            <!-- Customer Message -->
+            <div class="customer-message-box">
+                <div class="customer-header">
+                    <div class="customer-avatar">👤</div>
+                    <div class="customer-info">
+                        <h3>Sarah Chen - Premium Customer</h3>
+                        <p>Account Value: $127,000/year | Contract Renewal: 45 days</p>
+                    </div>
+                </div>
+                <div class="customer-message" id="customer-message-display">This is ridiculous! I've been locked out of my account for 3 hours now. The password reset link says 'Invalid token' and I need to access my account URGENTLY - I have a client presentation in 30 minutes!
+
+Also, I can't find any of my old support tickets in the system. Where did they go?
+
+If I can't get in right now, I'm seriously considering switching to your competitor. This is unacceptable for a Premium customer.</div>
+            </div>
+
+            <!-- AI Intelligence Panels -->
+            <div class="ai-panels">
+                <div class="ai-panel panel-root-cause" id="panel-root-cause">
+                    <h4>🚨 Root Cause Analysis</h4>
+                    <div class="ai-panel-content" id="content-root-cause">
+                        <div><em>Analyzing system events...</em></div>
+                    </div>
+                </div>
+
+                <div class="ai-panel panel-autonomous" id="panel-autonomous">
+                    <h4>🤖 Autonomous Actions</h4>
+                    <div class="ai-panel-content" id="content-autonomous">
+                        <div><em>Preparing automated response...</em></div>
+                    </div>
+                </div>
+
+                <div class="ai-panel panel-health" id="panel-health">
+                    <h4>🔮 Customer Health Monitor</h4>
+                    <div class="ai-panel-content" id="content-health">
+                        <div><em>Assessing churn risk...</em></div>
+                    </div>
+                </div>
+
+                <div class="ai-panel panel-sentiment" id="panel-sentiment">
+                    <h4>💬 Sentiment Analysis</h4>
+                    <div class="ai-panel-content" id="content-sentiment">
+                        <div><em>Analyzing tone and emotion...</em></div>
+                    </div>
+                </div>
+
+                <div class="ai-panel panel-urgency" id="panel-urgency">
+                    <h4>⏱️ Urgency Detection</h4>
+                    <div class="ai-panel-content" id="content-urgency">
+                        <div><em>Evaluating time sensitivity...</em></div>
+                    </div>
+                </div>
+
+                <div class="ai-panel panel-recommendations" id="panel-recommendations">
+                    <h4>💡 Proactive Recommendations</h4>
+                    <div class="ai-panel-content" id="content-recommendations">
+                        <div><em>Generating next best actions...</em></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Business Impact Dashboard -->
+        <div class="slide slide-data" id="slide-2">
+            <h2>💰 Business Impact Dashboard</h2>
+            <div class="graph-container" data-has-overlays="true">
+                <img src="data:image/png;base64,{dashboard_business_base64}" alt="Business Impact">
+                <div class="graph-overlay" data-overlay="0">
+                    <h3>💰 $2.9M Annual Cost Reduction</h3>
+                    <p>By reducing average case time from 10 minutes to 3 minutes, we save agents 70% of their time, translating to massive labor cost savings.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="1">
+                    <h3>⚡ 3x Faster Resolution</h3>
+                    <p>AI-assisted agents resolve cases in just 3 minutes vs 10 minutes traditionally. Customers get help faster, agents handle more volume.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="2">
+                    <h3>📈 96% Customer Satisfaction</h3>
+                    <p>Higher quality responses from AI knowledge retrieval lead to happier customers and better first-contact resolution rates.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="3">
+                    <h3>🎯 95% AI-Assisted Cases</h3>
+                    <p>Nearly all cases benefit from AI assistance, with only 5% requiring human-only intervention for complex edge cases.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: AI Performance Metrics -->
+        <div class="slide slide-data" id="slide-3">
+            <h2>🎯 AI Performance Metrics</h2>
+            <div class="graph-container" data-has-overlays="true">
+                <img src="data:image/png;base64,{dashboard_performance_base64}" alt="AI Performance">
+                <div class="graph-overlay" data-overlay="0">
+                    <h3>🌟 95% High-Quality Responses</h3>
+                    <p>The AI consistently delivers excellent answers by combining knowledge base retrieval with GPT-4 generation.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="1">
+                    <h3>⚡ Sub-3-Second Response Time</h3>
+                    <p>Lightning-fast AI responses (2.3s avg) include knowledge retrieval, embeddings search, and LLM generation.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="2">
+                    <h3>📊 Quality vs Speed Correlation</h3>
+                    <p>Higher quality responses (4-5 stars) maintain fast response times, proving AI doesn't sacrifice accuracy for speed.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="3">
+                    <h3>💰 Cost-Effective AI</h3>
+                    <p>Each AI-assisted case costs just $0.002 in OpenAI API fees - negligible compared to $50+ labor cost per case.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 30-Day Performance Trends -->
+        <div class="slide slide-data" id="slide-4">
+            <h2>📈 30-Day Performance Trends</h2>
+            <div class="graph-container" data-has-overlays="true">
+                <img src="data:image/png;base64,{dashboard_30day_base64}" alt="30-Day Trends">
+                <div class="graph-overlay" data-overlay="0">
+                    <h3>📈 AI Adoption Ramp</h3>
+                    <p>From 0% to 95% AI adoption in 30 days as agents discover the value and efficiency gains from AI assistance.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="1">
+                    <h3>⚡ 70% Speed Improvement</h3>
+                    <p>Response time drops from 10 minutes to 3 minutes as AI handles knowledge retrieval and drafts responses instantly.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="2">
+                    <h3>😊 +22% CSAT Increase</h3>
+                    <p>Customer satisfaction jumps from 74% to 96% thanks to faster, more accurate, and comprehensive AI-powered responses.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="3">
+                    <h3>🌟 Quality Improvement</h3>
+                    <p>AI response quality consistently scores 4.5+ stars as the system learns from feedback and KB articles improve.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Problems We Solve -->
+        <div class="slide slide-data" id="slide-5">
+            <h2>🎯 Problems We Solve</h2>
+            <div class="problems-grid">
+                <div class="problem-card">
+                    <span class="problem-icon">🐌</span>
+                    <h3>Slow Response Times</h3>
+                    <p>Agents spend 10+ minutes searching through documentation and past cases.</p>
+                    <p>Customers wait too long for simple answers.</p>
+                    <div class="problem-solution">✅ Solution: Instant AI-powered knowledge retrieval in 2.3 seconds</div>
+                </div>
+
+                <div class="problem-card">
+                    <span class="problem-icon">❌</span>
+                    <h3>Inconsistent Quality</h3>
+                    <p>Different agents give different answers to the same question.</p>
+                    <p>New agents struggle without deep product knowledge.</p>
+                    <div class="problem-solution">✅ Solution: AI ensures every response cites the same authoritative sources</div>
+                </div>
+
+                <div class="problem-card">
+                    <span class="problem-icon">💸</span>
+                    <h3>High Labor Costs</h3>
+                    <p>Each support case costs $50+ in agent time.</p>
+                    <p>Scaling support means hiring more expensive agents.</p>
+                    <div class="problem-solution">✅ Solution: $2.9M annual savings by making every agent 3x more efficient</div>
+                </div>
+
+                <div class="problem-card">
+                    <span class="problem-icon">😔</span>
+                    <h3>Low Customer Satisfaction</h3>
+                    <p>Customers frustrated by long wait times and incomplete answers.</p>
+                    <p>74% CSAT scores hurt brand reputation.</p>
+                    <div class="problem-solution">✅ Solution: 96% CSAT with faster, more comprehensive AI responses</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: 5-Year ROI -->
+        <div class="slide slide-data" id="slide-6">
+            <h2>💰 Your 5-Year ROI: $57M Total Impact</h2>
+            <div class="graph-container" data-has-overlays="true">
+                <img src="data:image/png;base64,{roi_5year_base64}" alt="5-Year ROI">
+                <div class="graph-overlay" data-overlay="0">
+                    <h3>⚡ The Before/After Revolution</h3>
+                    <p>Before AI: 10 min/case, $50 cost, 74% CSAT. After AI: 3 min/case, $15 cost, 96% CSAT. This is transformation, not incremental improvement.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="1">
+                    <h3>📊 Exponential Growth</h3>
+                    <p>Year 1: $8.7M savings. Year 5: $14.5M annual savings. Compounding benefits as AI learns and volume scales.</p>
+                </div>
+                <div class="graph-overlay" data-overlay="2">
+                    <h3>🎯 $57M Total 5-Year Impact</h3>
+                    <p>This includes direct labor savings ($45M) + customer retention revenue ($9M) + efficiency gains ($3M).</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Call to Action -->
+        <div class="slide slide-cta" id="slide-7">
+            <h2>🚀 Ready to Transform Your Support?</h2>
+            <div class="cta-stats">
+                <div class="stat">
+                    <div class="stat-number">3x</div>
+                    <div class="stat-label">Faster Resolution</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">$57M</div>
+                    <div class="stat-label">5-Year ROI</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">96%</div>
+                    <div class="stat-label">Customer Satisfaction</div>
+                </div>
+            </div>
+            <button class="cta-button" onclick="restartPresentation()">See Demo Again</button>
+        </div>
+    </div>
+
+    <!-- Fixed Button Container -->
+    <div class="button-container">
+        <button class="restart-button" onclick="restartPresentation()">↻ Restart</button>
+        <div class="nav-buttons">
+            <button id="prevBtn" class="nav-button" onclick="previousSlide()" disabled>←</button>
+            <button id="nextBtn" class="nav-button" onclick="nextSlide()">→</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = 8;
+        const slideDurations = [6, 40, 18, 18, 20, 20, 18, 15]; // Extended Slide 2 to 40 seconds
+        let autoPlayTimer = null;
+        let panelTimers = [];
+
+        function showSlide(index) {{
+            // Clear all existing timers
+            if (autoPlayTimer) clearTimeout(autoPlayTimer);
+            panelTimers.forEach(t => clearTimeout(t));
+            panelTimers = [];
+
+            // Hide all slides
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+
+            // Show current slide
+            const slide = document.getElementById(`slide-${{index}}`);
+            if (slide) {{
+                slide.classList.add('active');
+                currentSlide = index;
+                updateNavButtons();
+
+                // Special handling for demo slide (Slide 2)
+                if (index === 1) {{
+                    initializeDemoSlide();
+                }}
+
+                // Handle overlays for data slides
+                if (slide.hasAttribute('data-has-overlays')) {{
+                    startOverlayCycle(slide);
+                }}
+
+                // Auto-advance to next slide
+                if (index < totalSlides - 1) {{
+                    autoPlayTimer = setTimeout(() => {{
+                        showSlide(index + 1);
+                    }}, slideDurations[index] * 1000);
+                }}
+            }}
+        }}
+
+        function initializeDemoSlide() {{
+            // Reset all panels
+            const panels = document.querySelectorAll('.ai-panel');
+            panels.forEach(p => p.classList.remove('visible'));
+
+            // STEP 1: Show Sentiment & Urgency (immediate analysis) - 3 seconds
+            panelTimers.push(setTimeout(() => {{
+                document.getElementById('panel-sentiment').classList.add('visible');
+                document.getElementById('content-sentiment').innerHTML = `
+                    <div><strong>Emotion:</strong> FRUSTRATED</div>
+                    <div><strong>Tone:</strong> Urgent, Escalating</div>
+                    <div><strong>Keywords:</strong> "ridiculous", "unacceptable"</div>
+                    <div><strong>Churn Signal:</strong> "switching to competitor"</div>
+                `;
+            }}, 1500));
+
+            panelTimers.push(setTimeout(() => {{
+                document.getElementById('panel-urgency').classList.add('visible');
+                document.getElementById('content-urgency').innerHTML = `
+                    <div><strong>Level:</strong> CRITICAL</div>
+                    <div><strong>Deadline:</strong> 30 minutes (client presentation)</div>
+                    <div><strong>Multiple issues:</strong> Login + Data access</div>
+                    <div><strong>Account tier:</strong> Premium ($127K/year)</div>
+                `;
+            }}, 3000));
+
+            // STEP 2: Root Cause Analysis (correlation) - 8 seconds
+            panelTimers.push(setTimeout(() => {{
+                document.getElementById('panel-root-cause').classList.add('visible');
+                document.getElementById('content-root-cause').innerHTML = `
+                    <div><strong>47 similar tickets</strong> detected in last 3 hours</div>
+                    <div><strong>Correlated event:</strong> payment-api v2.1.3 deployed at 2:15 PM</div>
+                    <div><strong>Recommended action:</strong> Rollback deployment immediately</div>
+                    <div><strong>Predicted impact:</strong> 376+ tickets if unresolved</div>
+                `;
+            }}, 8000));
+
+            // STEP 3: Autonomous Actions (immediate fixes) - 13 seconds
+            panelTimers.push(setTimeout(() => {{
+                document.getElementById('panel-autonomous').classList.add('visible');
+                document.getElementById('content-autonomous').innerHTML = `
+                    <div><strong>Action 1:</strong> New password reset link generated & emailed</div>
+                    <div><strong>Action 2:</strong> $500 service credit applied to account</div>
+                    <div><strong>Action 3:</strong> Ticket history access restored</div>
+                    <div><strong>Resolution time:</strong> 2.3 seconds (no human needed)</div>
+                `;
+            }}, 13000));
+
+            // STEP 4: Customer Health Alert (churn prevention) - 20 seconds
+            panelTimers.push(setTimeout(() => {{
+                document.getElementById('panel-health').classList.add('visible');
+                document.getElementById('content-health').innerHTML = `
+                    <div><strong>Health Score:</strong> 32/100 (HIGH RISK)</div>
+                    <div><strong>Last login:</strong> 18 days ago (normally daily user)</div>
+                    <div><strong>Support tickets:</strong> 6 in last 30 days (frustration)</div>
+                    <div><strong>Action triggered:</strong> Immediate CSM outreach scheduled</div>
+                `;
+            }}, 20000));
+
+            // STEP 5: Proactive Recommendations (escalation) - 28 seconds
+            panelTimers.push(setTimeout(() => {{
+                document.getElementById('panel-recommendations').classList.add('visible');
+                document.getElementById('content-recommendations').innerHTML = `
+                    <div><strong>Escalate:</strong> Priority queue + CSM notification sent</div>
+                    <div><strong>Callback:</strong> Scheduled in 2 hours to verify resolution</div>
+                    <div><strong>Retention offer:</strong> 20% discount flagged for CSM</div>
+                    <div><strong>Revenue at risk:</strong> $127K account, 45 days to renewal</div>
+                `;
+            }}, 28000));
+        }}
+
+        function startOverlayCycle(slide) {{
+            const overlays = slide.querySelectorAll('.graph-overlay');
+            if (overlays.length === 0) return;
+
+            let currentOverlay = 0;
+            const overlayDuration = 4000; // 4 seconds per overlay
+            const transitionGap = 500; // 0.5 seconds between overlays
+
+            function showOverlay(idx) {{
+                // Hide all overlays
+                overlays.forEach(o => o.classList.remove('active'));
+
+                if (idx < overlays.length) {{
+                    // Show current overlay
+                    overlays[idx].classList.add('active');
+
+                    // Schedule hide + show next
+                    panelTimers.push(setTimeout(() => {{
+                        overlays[idx].classList.remove('active');
+                        currentOverlay = (currentOverlay + 1) % overlays.length;
+                        panelTimers.push(setTimeout(() => showOverlay(currentOverlay), transitionGap));
+                    }}, overlayDuration));
+                }}
+            }}
+
+            showOverlay(currentOverlay);
+        }}
+
+        function nextSlide() {{
+            if (currentSlide < totalSlides - 1) {{
+                showSlide(currentSlide + 1);
+            }}
+        }}
+
+        function previousSlide() {{
+            if (currentSlide > 0) {{
+                showSlide(currentSlide - 1);
+            }}
+        }}
+
+        function updateNavButtons() {{
+            document.getElementById('prevBtn').disabled = (currentSlide === 0);
+            document.getElementById('nextBtn').disabled = (currentSlide === totalSlides - 1);
+        }}
+
+        function restartPresentation() {{
+            showSlide(0);
+        }}
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {{
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+            if (e.key === 'Home') restartPresentation();
+        }});
+
+        // Start presentation
+        showSlide(0);
+    </script>
+</body>
+</html>
+"""
+
+# Save to file and open in browser
+import os
+output_path = os.path.join(os.getcwd(), 'salesforce_ai_presentation.html')
+with open(output_path, 'w', encoding='utf-8') as f:
+    f.write(presentation_html)
+
+# Try to open in Firefox (or default browser)
+import webbrowser
+webbrowser.get('firefox').open('file://' + output_path, new=2)

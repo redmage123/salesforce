@@ -1,0 +1,404 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Salesforce AI Agent Assist - Live Demo</title>
+    <style>
+        body {
+            font-family: 'Salesforce Sans', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #333;
+        }
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: #0070f3;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 48px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .header p {
+            font-size: 20px;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+        .chat-container {
+            padding: 40px;
+            background: #f9fafb;
+            border-bottom: 3px solid #e5e7eb;
+        }
+        .message {
+            margin: 20px 0;
+            display: flex;
+            align-items: flex-start;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.5s forwards;
+        }
+        .message.customer {
+            justify-content: flex-start;
+        }
+        .message.agent {
+            justify-content: flex-start;
+        }
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .customer .avatar {
+            background: #ff6b6b;
+        }
+        .agent .avatar {
+            background: #4ecdc4;
+        }
+        .ai-label {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ffd700;
+            color: #333;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .message-content {
+            background: white;
+            padding: 20px 25px;
+            border-radius: 15px;
+            max-width: 70%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            position: relative;
+        }
+        .agent .message-content {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+        }
+        .typing {
+            display: inline-block;
+            width: 0;
+            overflow: hidden;
+            border-right: 3px solid #333;
+            animation: typing 2s steps(40, end), blink 0.5s step-end infinite;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        @keyframes blink {
+            from, to { border-color: transparent }
+            50% { border-color: #333 }
+        }
+        .metrics-container {
+            padding: 40px;
+            background: white;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            transform: scale(0);
+            animation: popIn 0.5s forwards;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .metric-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        .metric-value {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .metric-comparison {
+            font-size: 16px;
+            opacity: 0.8;
+        }
+        @keyframes popIn {
+            to {
+                transform: scale(1);
+            }
+        }
+        .ai-process {
+            background: #f0f9ff;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            border: 2px dashed #3b82f6;
+        }
+        .process-step {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+        }
+        .step-icon {
+            font-size: 30px;
+            margin-right: 15px;
+        }
+        .highlight {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .cta-container {
+            background: #0070f3;
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .cta-button {
+            display: inline-block;
+            background: #ffd700;
+            color: #333;
+            padding: 20px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 50px;
+            text-decoration: none;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s;
+        }
+        .cta-button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="header">
+            <h1>🚀 AI Agent Assist Demo</h1>
+            <p>Watch AI transform customer service in real-time</p>
+        </div>
+        
+        <div class="chat-container" id="chat">
+            <!-- Messages will be added here by JavaScript -->
+        </div>
+        
+        <div class="ai-process" id="ai-process" style="display: none;">
+            <h2>🤖 AI Processing Behind the Scenes</h2>
+            <div id="process-steps"></div>
+        </div>
+        
+        <div class="metrics-container">
+            <h2 style="text-align: center; font-size: 36px; margin-bottom: 10px;">📊 Real-Time Performance Metrics</h2>
+            <p style="text-align: center; font-size: 18px; color: #666;">Watch how AI transforms your support metrics</p>
+            <div class="metrics-grid" id="metrics">
+                <!-- Metrics will be added here -->
+            </div>
+        </div>
+        
+        <div class="cta-container">
+            <h2 style="font-size: 36px;">Ready to Transform Your Service Cloud?</h2>
+            <p style="font-size: 20px;">Join the AI revolution and deliver exceptional customer experiences</p>
+            <a href="#" class="cta-button">Get Started Today</a>
+        </div>
+    </div>
+    
+    <script>
+        const chatContainer = document.getElementById('chat');
+        const processContainer = document.getElementById('ai-process');
+        const processSteps = document.getElementById('process-steps');
+        const metricsContainer = document.getElementById('metrics');
+        
+        // Conversation script
+        const conversation = [
+            {
+                type: 'customer',
+                message: "I can't reset my password. When I click the reset link in my email, it says 'Invalid token' and won't let me proceed. This is urgent as I need to access my account for an important meeting!",
+                delay: 1000
+            },
+            {
+                type: 'ai-process',
+                steps: [
+                    {icon: '🧠', text: 'AI analyzing customer intent...', delay: 500},
+                    {icon: '🔍', text: 'Searching knowledge base for "password reset" + "invalid token"...', delay: 800},
+                    {icon: '📚', text: 'Found 4 relevant articles with 98% confidence match', delay: 600},
+                    {icon: '✨', text: 'Generating personalized response with OpenAI GPT-4...', delay: 1000}
+                ]
+            },
+            {
+                type: 'agent',
+                message: "I understand how frustrating this must be, especially with an important meeting coming up. I'll help you resolve this right away.\n\nThe 'Invalid token' error typically occurs when the password reset link has expired (they're valid for 24 hours) or if there's a browser caching issue. Here's how to fix it:\n\n1. **Request a fresh reset link:**\n   • Go to our login page\n   • Click 'Forgot Password' again\n   • Enter your email address\n\n2. **Clear your browser cache:**\n   • Press Ctrl+Shift+Delete (Windows) or Cmd+Shift+Delete (Mac)\n   • Select 'Cached images and files'\n   • Click 'Clear data'\n\n3. **Use the new link immediately:**\n   • Check your email (including spam folder)\n   • Click the link within 5 minutes of receiving it\n   • Complete the password reset process\n\n**Pro tip:** If you're using a VPN or your company network, try disconnecting temporarily as some security settings can interfere with the token validation.\n\nI've also flagged your account for priority support. If these steps don't work, reply here and I'll escalate to our security team for immediate manual reset.\n\nIs there anything specific about your account setup I should know about? (Multi-factor authentication, SSO, etc.)",
+                delay: 2000,
+                isAI: true
+            }
+        ];
+        
+        const metrics = [
+            {
+                title: "Response Time",
+                oldValue: "10 min",
+                newValue: "18 sec",
+                comparison: "33x faster with AI"
+            },
+            {
+                title: "Resolution Quality",
+                oldValue: "2-3 steps",
+                newValue: "Complete solution",
+                comparison: "100% comprehensive"
+            },
+            {
+                title: "Customer Effort",
+                oldValue: "3-4 exchanges",
+                newValue: "Single response",
+                comparison: "75% less back-and-forth"
+            },
+            {
+                title: "Agent Productivity",
+                oldValue: "40 cases/day",
+                newValue: "130+ cases/day",
+                comparison: "225% increase"
+            }
+        ];
+        
+        function typeMessage(element, text, callback) {
+            let index = 0;
+            element.innerHTML = '';
+            
+            function type() {
+                if (index < text.length) {
+                    if (text.substring(index, index + 2) === '\n') {
+                        element.innerHTML += '<br>';
+                        index += 2;
+                    } else {
+                        element.innerHTML += text.charAt(index);
+                        index++;
+                    }
+                    setTimeout(type, 20);
+                } else {
+                    if (callback) callback();
+                }
+            }
+            type();
+        }
+        
+        function addMessage(type, message, isAI = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.animationDelay = '0.3s';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.style.position = 'relative';
+            avatar.innerHTML = type === 'customer' ? '👤' : '🧑‍💼';
+            
+            if (isAI && type === 'agent') {
+                const aiLabel = document.createElement('div');
+                aiLabel.className = 'ai-label';
+                aiLabel.innerHTML = 'AI';
+                avatar.appendChild(aiLabel);
+            }
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            
+            messageDiv.appendChild(avatar);
+            messageDiv.appendChild(content);
+            chatContainer.appendChild(messageDiv);
+            
+            typeMessage(content, message);
+        }
+        
+        function showAIProcess(steps) {
+            processContainer.style.display = 'block';
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'process-step';
+                    stepDiv.style.animationDelay = `${index * 0.2}s`;
+                    stepDiv.innerHTML = `
+                        <span class="step-icon">${step.icon}</span>
+                        <span>${step.text}</span>
+                    `;
+                    processSteps.appendChild(stepDiv);
+                }, step.delay);
+            });
+        }
+        
+        function showMetrics() {
+            metrics.forEach((metric, index) => {
+                setTimeout(() => {
+                    const card = document.createElement('div');
+                    card.className = 'metric-card';
+                    card.style.animationDelay = `${index * 0.2}s`;
+                    card.innerHTML = `
+                        <h3>${metric.title}</h3>
+                        <div style="display: flex; justify-content: space-around; align-items: center;">
+                            <div style="text-align: center;">
+                                <div style="font-size: 14px; opacity: 0.7;">Before</div>
+                                <div style="font-size: 24px; text-decoration: line-through; opacity: 0.6;">${metric.oldValue}</div>
+                            </div>
+                            <div style="font-size: 30px;">→</div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 14px; opacity: 0.7;">With AI</div>
+                                <div class="metric-value" style="font-size: 32px;">${metric.newValue}</div>
+                            </div>
+                        </div>
+                        <div class="metric-comparison">${metric.comparison}</div>
+                    `;
+                    metricsContainer.appendChild(card);
+                }, 3000 + (index * 300));
+            });
+        }
+        
+        // Run the demo
+        let totalDelay = 0;
+        conversation.forEach((item) => {
+            totalDelay += item.delay;
+            if (item.type === 'ai-process') {
+                setTimeout(() => showAIProcess(item.steps), totalDelay);
+                totalDelay += 2000;
+            } else {
+                setTimeout(() => {
+                    addMessage(item.type, item.message, item.isAI);
+                    if (item.type === 'agent') {
+                        processContainer.style.display = 'none';
+                        showMetrics();
+                    }
+                }, totalDelay);
+            }
+        });
+    </script>
+</body>
+</html>

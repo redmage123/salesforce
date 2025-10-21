@@ -1,0 +1,164 @@
+{
+  "execution_success": true,
+  "python_errors": [],
+  "html_generated": true,
+  "html_file_size_kb": 1412.92,
+  "html_file_lines": 1932,
+  "slides_validated": {
+    "0": {
+      "exists": true,
+      "unique_content": true,
+      "title": "AI Agent Assist for Salesforce",
+      "subtitle": "3 Advanced Features That Go Beyond Einstein",
+      "errors": []
+    },
+    "1": {
+      "exists": true,
+      "unique_content": true,
+      "title": "Advanced AI Intelligence in Action",
+      "ai_panels_count": 6,
+      "panels": [
+        "panel-root-cause",
+        "panel-autonomous",
+        "panel-health",
+        "panel-sentiment",
+        "panel-urgency",
+        "panel-proactive"
+      ],
+      "errors": []
+    },
+    "2": {
+      "exists": true,
+      "unique_content": true,
+      "title": "How The AI Agent Delivers Value",
+      "description": "Workflow steps demonstration",
+      "errors": []
+    },
+    "3": {
+      "exists": true,
+      "unique_content": true,
+      "title": "RAG in Action: Contextual Intelligence",
+      "description": "Chat interface demonstration with RAG retrieval process",
+      "errors": []
+    },
+    "4": {
+      "exists": true,
+      "unique_content": true,
+      "title": "Business Impact Dashboard",
+      "content_type": "Graph visualization with data overlay",
+      "errors": []
+    },
+    "5": {
+      "exists": true,
+      "unique_content": true,
+      "title": "AI Performance Metrics",
+      "content_type": "Graph visualization with data overlay",
+      "errors": []
+    },
+    "6": {
+      "exists": true,
+      "unique_content": true,
+      "title": "Resolution Time Comparison",
+      "content_type": "Graph visualization with data overlay",
+      "errors": []
+    },
+    "7": {
+      "exists": true,
+      "unique_content": true,
+      "title": "Cost per Ticket Analysis",
+      "content_type": "Graph visualization with data overlay",
+      "errors": []
+    },
+    "8": {
+      "exists": true,
+      "unique_content": true,
+      "title": "5-Year ROI Projection",
+      "content_type": "ROI charts container",
+      "errors": []
+    },
+    "9": {
+      "exists": true,
+      "unique_content": true,
+      "title": "Key Takeaways: Building AI Agents That Drive Value",
+      "content_type": "Takeaways container",
+      "errors": []
+    },
+    "10": {
+      "exists": true,
+      "unique_content": true,
+      "title": "Questions?",
+      "content_type": "Questions slide with icon",
+      "errors": []
+    },
+    "11": {
+      "exists": true,
+      "unique_content": true,
+      "title": "Ready to Transform Your Support?",
+      "content_type": "CTA slide with stats",
+      "errors": []
+    }
+  },
+  "javascript_valid": true,
+  "javascript_errors": [],
+  "javascript_functions_validated": {
+    "showSlide": {
+      "exists": true,
+      "line_number": 1493
+    },
+    "nextSlide": {
+      "exists": true,
+      "line_number": 1657
+    },
+    "previousSlide": {
+      "exists": true,
+      "line_number": 1663
+    },
+    "scheduleNextSlide": {
+      "exists": true,
+      "line_number": "found"
+    },
+    "togglePause": {
+      "exists": true,
+      "line_number": 1904
+    }
+  },
+  "javascript_variables_validated": {
+    "currentSlide": {
+      "exists": true,
+      "type": "let",
+      "initial_value": 0,
+      "line_number": 1485
+    },
+    "totalSlides": {
+      "exists": true,
+      "type": "const",
+      "initial_value": 12,
+      "line_number": 1486
+    },
+    "autoPlayTimer": {
+      "exists": true,
+      "type": "let",
+      "initial_value": "null",
+      "line_number": 1488
+    },
+    "isPaused": {
+      "exists": true,
+      "type": "let",
+      "initial_value": "false",
+      "line_number": 1491
+    }
+  },
+  "html_structure_validated": {
+    "doctype": true,
+    "html_tag": true,
+    "head_tag": true,
+    "body_tag": true,
+    "closing_html_tag": true,
+    "style_block": true,
+    "script_block": true
+  },
+  "overall_pass": true,
+  "critical_issues": [],
+  "warnings": [],
+  "summary": "All validation checks passed successfully. The presentation HTML was generated correctly with all 12 slides, proper JavaScript functions and variables, valid syntax, and unique content for each slide. Slide 1 contains the required 6 AI intelligence panels. No Python errors were detected during notebook execution."
+}

@@ -1,0 +1,79 @@
+{
+  "solution_id": "dev-b-sample-001",
+  "task_id": "sample-task-001",
+  "developer": "developer-b",
+  "submitted_at": "2025-10-21T08:00:00Z",
+  "implementation_files": [
+    {
+      "file_path": "/tmp/solution/main.py",
+      "file_type": "python",
+      "lines_of_code": 145
+    },
+    {
+      "file_path": "/tmp/solution/utils.py",
+      "file_type": "python",
+      "lines_of_code": 78
+    }
+  ],
+  "test_files": [
+    {
+      "file_path": "/tmp/tests/unit/test_main.py",
+      "test_type": "unit",
+      "test_count": 12,
+      "tests_passing": 12,
+      "tests_failing": 0,
+      "coverage_percent": 95
+    },
+    {
+      "file_path": "/tmp/tests/integration/test_workflow.py",
+      "test_type": "integration",
+      "test_count": 6,
+      "tests_passing": 6,
+      "tests_failing": 0,
+      "coverage_percent": 88
+    },
+    {
+      "file_path": "/tmp/tests/acceptance/test_feature.py",
+      "test_type": "acceptance",
+      "test_count": 4,
+      "tests_passing": 4,
+      "tests_failing": 0,
+      "coverage_percent": 85
+    }
+  ],
+  "test_execution_report": {
+    "total_tests": 22,
+    "tests_passing": 22,
+    "tests_failing": 0,
+    "tests_skipped": 0,
+    "overall_coverage": 89,
+    "execution_time_seconds": 8.4,
+    "tdd_compliance": true,
+    "coverage_by_file": {
+      "main.py": 95,
+      "utils.py": 88
+    }
+  },
+  "tdd_workflow": {
+    "tests_written_first": true,
+    "red_phase_timestamp": "2025-10-21T07:00:00Z",
+    "green_phase_timestamp": "2025-10-21T07:25:00Z",
+    "refactor_phase_timestamp": "2025-10-21T07:45:00Z",
+    "phases_documented": true
+  },
+  "code_quality": {
+    "linting_errors": 0,
+    "linting_warnings": 2,
+    "complexity_score": 7.2,
+    "maintainability_index": 82,
+    "code_smells": 1
+  },
+  "documentation": {
+    "docstrings_present": true,
+    "docstring_coverage": 100,
+    "readme_updated": true,
+    "inline_comments": true
+  },
+  "estimated_story_points": 5,
+  "actual_time_hours": 2.5
+}
