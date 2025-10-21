@@ -435,6 +435,7 @@
             <button id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
             <span class="slide-counter" id="slideCounter">1 / 14</span>
             <button id="nextBtn" onclick="changeSlide(1)">Next ▶</button>
+            <button id="restartBtn" onclick="restartDemo()" style="background: #f5576c; margin-left: 20px;">🔄 Restart Demo</button>
         </div>
     </div>
 
@@ -477,6 +478,14 @@
             const btn = document.getElementById('pauseBtn');
             if (isPaused) { btn.textContent = '▶ Play'; stopAutoAdvance(); }
             else { btn.textContent = '⏸ Pause'; startAutoAdvance(); }
+        }
+
+        function restartDemo() {
+            currentSlide = 0;
+            isPaused = false;
+            document.getElementById('pauseBtn').textContent = '⏸ Pause';
+            updateSlideDisplay();
+            resetAutoAdvance();
         }
 
         function startAutoAdvance() {
