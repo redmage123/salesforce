@@ -97,6 +97,23 @@
         .slide-counter { font-size: 14px; color: #666; font-weight: bold; }
         .progress-bar { height: 5px; background: #e0e0e0; position: relative; overflow: hidden; }
         .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.1s linear; }
+        .suggestion-btn {
+            width: 100%;
+            padding: 12px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            color: #667eea;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+        .suggestion-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateX(5px);
+        }
     </style>
 </head>
 <body>
@@ -289,10 +306,49 @@
             </div>
         </div>
 
+        <div class="slide" id="slide6">
+            <div class="slide-header">
+                <h2>Try It Yourself: Interactive AI Assistant</h2>
+                <p>Ask questions about your revenue pipeline and get instant AI insights</p>
+            </div>
+            <div class="demo-area" style="flex-direction: row; gap: 30px;">
+                <div class="chat-container" style="flex: 2;">
+                    <div class="chat-header">💬 Revenue Intelligence AI Assistant</div>
+                    <div id="interactiveChatMessages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 10px;">
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 15px; border-bottom-left-radius: 5px;">
+                            <strong style="color: #667eea; display: block; margin-bottom: 5px;">AI Assistant</strong>
+                            Hello! I'm your Revenue Intelligence AI. Ask me questions like:<br>
+                            • "Show me at-risk deals"<br>
+                            • "What's our forecast for this quarter?"<br>
+                            • "Which rep needs coaching?"<br>
+                            • "What deals should I focus on?"
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <input type="text" id="userQuery" placeholder="Ask about your pipeline..."
+                               style="flex: 1; padding: 12px; border: 2px solid #667eea; border-radius: 25px; font-size: 14px;"
+                               onkeypress="if(event.key === 'Enter') sendQuery()">
+                        <button onclick="sendQuery()" style="padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 25px; font-weight: bold; cursor: pointer;">
+                            Send
+                        </button>
+                    </div>
+                </div>
+                <div style="flex: 1; background: #f8f9fa; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                    <h3 style="color: #667eea; margin: 0;">💡 Try These Questions:</h3>
+                    <button onclick="setQuery('Show me at-risk deals')" class="suggestion-btn">Show me at-risk deals</button>
+                    <button onclick="setQuery('What is our Q4 forecast?')" class="suggestion-btn">What is our Q4 forecast?</button>
+                    <button onclick="setQuery('Which opportunities should I prioritize?')" class="suggestion-btn">Which opportunities should I prioritize?</button>
+                    <button onclick="setQuery('Who needs coaching on my team?')" class="suggestion-btn">Who needs coaching on my team?</button>
+                    <button onclick="setQuery('Show me competitive analysis')" class="suggestion-btn">Show me competitive analysis</button>
+                    <button onclick="setQuery('What deals are closing this month?')" class="suggestion-btn">What deals are closing this month?</button>
+                </div>
+            </div>
+        </div>
+
         <div class="controls">
             <button id="prevBtn" onclick="changeSlide(-1)">◀ Previous</button>
             <button id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
-            <span class="slide-counter" id="slideCounter">1 / 5</span>
+            <span class="slide-counter" id="slideCounter">1 / 6</span>
             <button id="nextBtn" onclick="changeSlide(1)">Next ▶</button>
             <button id="restartBtn" onclick="restartDemo()" style="background: #f5576c; margin-left: 20px;">🔄 Restart Demo</button>
         </div>
@@ -400,6 +456,135 @@
                     setTimeout(() => box.classList.add('highlight'), 500);
                 });
             }, 3000);
+        }
+
+        // Interactive query functions
+        function setQuery(query) {
+            document.getElementById('userQuery').value = query;
+            document.getElementById('userQuery').focus();
+        }
+
+        function sendQuery() {
+            const input = document.getElementById('userQuery');
+            const query = input.value.trim();
+            if (!query) return;
+
+            const chatContainer = document.getElementById('interactiveChatMessages');
+
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.style.cssText = 'background: #e8f5e9; padding: 15px; border-radius: 15px; border-bottom-right-radius: 5px; align-self: flex-end; max-width: 80%;';
+            userMsg.innerHTML = `<strong style="color: #2c3e50;">You</strong><br>${query}`;
+            chatContainer.appendChild(userMsg);
+
+            // Clear input
+            input.value = '';
+
+            // Simulate AI response with typing indicator
+            const typingIndicator = document.createElement('div');
+            typingIndicator.style.cssText = 'background: #f0f0f0; padding: 15px; border-radius: 15px; border-bottom-left-radius: 5px; align-self: flex-start;';
+            typingIndicator.innerHTML = '<span style="color: #667eea;">AI is thinking</span><span class="dots">...</span>';
+            chatContainer.appendChild(typingIndicator);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Generate AI response
+            setTimeout(() => {
+                chatContainer.removeChild(typingIndicator);
+
+                const aiMsg = document.createElement('div');
+                aiMsg.style.cssText = 'background: #e3f2fd; padding: 15px; border-radius: 15px; border-bottom-left-radius: 5px; align-self: flex-start; max-width: 80%;';
+                aiMsg.innerHTML = `<strong style="color: #667eea; display: block; margin-bottom: 5px;">AI Assistant</strong>${getAIResponse(query)}`;
+                chatContainer.appendChild(aiMsg);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }, 1500);
+        }
+
+        function getAIResponse(query) {
+            const lowerQuery = query.toLowerCase();
+
+            if (lowerQuery.includes('at-risk') || lowerQuery.includes('at risk')) {
+                return `I found <strong>23 high-risk opportunities</strong> worth $2.4M that need immediate attention:<br><br>
+                🔴 <strong>Acme Corp - Enterprise Cloud ($850K)</strong><br>
+                • 22% win probability<br>
+                • No activity in 18 days<br>
+                • Action: Schedule executive call immediately<br><br>
+                🔴 <strong>TechStart Inc - Analytics Platform ($620K)</strong><br>
+                • 18% win probability<br>
+                • Stuck in Negotiation for 45 days<br>
+                • Action: Address pricing concerns with ROI analysis`;
+            }
+
+            if (lowerQuery.includes('forecast') || lowerQuery.includes('q4')) {
+                return `Here's your Q4 forecast based on AI analysis:<br><br>
+                💰 <strong>Expected Revenue:</strong> $9.2M (61% confidence)<br>
+                📈 <strong>Best Case:</strong> $11.8M (+28% upside)<br>
+                📉 <strong>Worst Case:</strong> $7.1M (-23% downside)<br><br>
+                <strong>Key Insights:</strong><br>
+                • 67 high-probability deals contributing $8.7M<br>
+                • 35 medium-risk deals need intervention to secure $1.5M<br>
+                • 23 at-risk deals could recover $900K with immediate action<br>
+                • Forecast accuracy: 92% vs. actual close rates`;
+            }
+
+            if (lowerQuery.includes('prioritize') || lowerQuery.includes('focus')) {
+                return `Based on AI scoring, here are your top priorities:<br><br>
+                1. <strong>High-Value At-Risk Deals:</strong> 8 deals >$500K with <30% win probability need executive intervention<br><br>
+                2. <strong>Accelerate Stuck Deals:</strong> 23 opportunities stuck in current stage >30 days<br><br>
+                3. <strong>Close This Month:</strong> 15 high-probability deals ($3.2M) closing in next 30 days - ensure stakeholder alignment<br><br>
+                4. <strong>Competitive Threats:</strong> 12 deals facing CompetitorA - need differentiation strategy`;
+            }
+
+            if (lowerQuery.includes('coaching') || lowerQuery.includes('rep') || lowerQuery.includes('team')) {
+                return `AI analysis shows these coaching opportunities:<br><br>
+                🎓 <strong>Needs Development:</strong><br>
+                • Rep_3: Win rate 18% (below team average) - Schedule deal qualification training<br>
+                • Rep_7: Average cycle time 78 days - Focus on deal acceleration<br><br>
+                ⭐ <strong>Top Performers to Shadow:</strong><br>
+                • Rep_12: 64% win rate, $2.1M closed this quarter<br>
+                • Rep_5: Excellent at competitive deals (72% win rate vs. CompetitorA)<br><br>
+                📊 <strong>Team Trends:</strong><br>
+                • Average AI score: 48/100 - Improve qualification<br>
+                • 47 deals have no activity in 14+ days across team`;
+            }
+
+            if (lowerQuery.includes('competitive') || lowerQuery.includes('competitor')) {
+                return `Competitive intelligence analysis:<br><br>
+                <strong>Win Rates by Competitor:</strong><br>
+                • vs. None: 52% win rate<br>
+                • vs. CompetitorA: 38% win rate<br>
+                • vs. CompetitorB: 44% win rate<br>
+                • vs. CompetitorC: 49% win rate<br><br>
+                <strong>Recommendations:</strong><br>
+                🎯 Focus on differentiating against CompetitorA (lowest win rate)<br>
+                💪 Bring in product specialists for technical differentiation<br>
+                📊 Leverage ROI calculator in competitive situations<br>
+                🤝 Executive sponsorship for deals >$1M facing competition`;
+            }
+
+            if (lowerQuery.includes('closing') || lowerQuery.includes('this month')) {
+                return `Deals closing this month:<br><br>
+                <strong>High Confidence (>70%):</strong><br>
+                • Global Industries - AI Suite ($1.2M) - 87% probability<br>
+                • Tech Innovators - Analytics ($680K) - 76% probability<br><br>
+                <strong>Need Push (50-70%):</strong><br>
+                • Enterprise Corp - Cloud ($950K) - 64% probability<br>
+                • Action: Executive alignment meeting needed<br><br>
+                <strong>At Risk (<50%):</strong><br>
+                • Data Systems - Integration ($720K) - 42% probability<br>
+                • Action: Address security concerns in final review<br><br>
+                💡 <strong>Tip:</strong> Focus on the "Need Push" category - highest ROI for your time investment!`;
+            }
+
+            // Default response
+            return `Great question! Based on the AI analysis:<br><br>
+            I can help you with:<br>
+            • Identifying at-risk deals that need attention<br>
+            • Forecasting revenue with confidence intervals<br>
+            • Prioritizing opportunities for maximum impact<br>
+            • Sales team coaching recommendations<br>
+            • Competitive intelligence and win/loss analysis<br>
+            • Pipeline health and deal velocity metrics<br><br>
+            Try asking something like "Show me at-risk deals" or "What's our Q4 forecast?"`;
         }
 
         // Initialize
