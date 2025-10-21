@@ -1,0 +1,67 @@
+name: Automated Tests
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov pytest-html beautifulsoup4 lxml
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f .venv/requirements.txt ]; then pip install -r .venv/requirements.txt; fi
+
+    - name: Create test directories
+      run: |
+        mkdir -p /tmp/developer_a/tests
+        mkdir -p /tmp/developer_b/tests
+
+    - name: Run tests with pytest
+      run: |
+        # Run any existing tests in the repository
+        if [ -d "tests" ]; then
+          pytest tests/ -v --cov=. --cov-report=html --cov-report=term
+        fi
+
+        # Run developer A tests if they exist
+        if [ -d "/tmp/developer_a/tests" ] && [ "$(ls -A /tmp/developer_a/tests)" ]; then
+          pytest /tmp/developer_a/tests/ -v
+        fi
+
+        # Run developer B tests if they exist
+        if [ -d "/tmp/developer_b/tests" ] && [ "$(ls -A /tmp/developer_b/tests)" ]; then
+          pytest /tmp/developer_b/tests/ -v
+        fi
+
+    - name: Upload coverage reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: coverage-report-py${{ matrix.python-version }}
+        path: htmlcov/
+        retention-days: 30
+
+    - name: Display test summary
+      if: always()
+      run: |
+        echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Python Version: ${{ matrix.python-version }}" >> $GITHUB_STEP_SUMMARY

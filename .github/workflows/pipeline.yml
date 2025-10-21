@@ -1,0 +1,92 @@
+name: Agile/TDD Pipeline
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      card_id:
+        description: 'Card ID to process (optional)'
+        required: false
+        type: string
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov beautifulsoup4 lxml
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Create required directories
+      run: |
+        mkdir -p /tmp/adr
+        mkdir -p /tmp/developer_a/tests
+        mkdir -p /tmp/developer_b/tests
+
+    - name: List Kanban cards
+      run: |
+        python3 .agents/agile/kanban_manager.py show
+
+    - name: Run pipeline for latest card
+      if: github.event.inputs.card_id == ''
+      run: |
+        # Get latest card in backlog or development
+        LATEST_CARD=$(python3 -c "
+        import json
+        with open('.agents/agile/kanban_board.json', 'r') as f:
+            board = json.load(f)
+            cards = board.get('cards', {})
+            # Find cards in backlog or development columns
+            for card_id, card in cards.items():
+                if card.get('column') in ['backlog', 'development']:
+                    print(card_id)
+                    break
+        ")
+
+        if [ -n "$LATEST_CARD" ]; then
+          echo "Running pipeline for card: $LATEST_CARD"
+          .agents/agile/run_pipeline.sh full "$LATEST_CARD" || true
+        else
+          echo "No cards found in backlog or development"
+        fi
+
+    - name: Run pipeline for specific card
+      if: github.event.inputs.card_id != ''
+      run: |
+        echo "Running pipeline for card: ${{ github.event.inputs.card_id }}"
+        .agents/agile/run_pipeline.sh full "${{ github.event.inputs.card_id }}" || true
+
+    - name: Upload pipeline reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: pipeline-reports
+        path: /tmp/pipeline_*.json
+        retention-days: 30
+
+    - name: Upload ADRs
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: architecture-decisions
+        path: /tmp/adr/*.md
+        retention-days: 90
+
+    - name: Show Kanban board status
+      if: always()
+      run: |
+        python3 .agents/agile/kanban_manager.py show

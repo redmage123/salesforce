@@ -1,0 +1,119 @@
+name: Pull Request Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest beautifulsoup4 lxml
+
+    - name: Validate PR description
+      run: |
+        PR_BODY="${{ github.event.pull_request.body }}"
+        if [ -z "$PR_BODY" ]; then
+          echo "⚠️  PR description is empty. Please add a description."
+          echo "## ⚠️  Missing PR Description" >> $GITHUB_STEP_SUMMARY
+          echo "Please add a description to explain what this PR does." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ PR has description"
+          echo "## ✅ PR Description Present" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Check for related Kanban card
+      run: |
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        PR_BODY="${{ github.event.pull_request.body }}"
+
+        # Check if PR mentions a card ID
+        if echo "$PR_TITLE $PR_BODY" | grep -q "card-[0-9]"; then
+          CARD_ID=$(echo "$PR_TITLE $PR_BODY" | grep -o "card-[0-9][0-9]*" | head -1)
+          echo "✅ Found related card: $CARD_ID"
+          echo "## 📋 Related Kanban Card" >> $GITHUB_STEP_SUMMARY
+          echo "Card ID: \`$CARD_ID\`" >> $GITHUB_STEP_SUMMARY
+
+          # Show card details
+          python3 -c "
+          import json
+          with open('.agents/agile/kanban_board.json', 'r') as f:
+              board = json.load(f)
+              card = board.get('cards', {}).get('$CARD_ID')
+              if card:
+                  print(f\"Title: {card.get('title')}\")
+                  print(f\"Priority: {card.get('priority')}\")
+                  print(f\"Points: {card.get('points')}\")
+          " >> $GITHUB_STEP_SUMMARY
+        else
+          echo "ℹ️  No card ID found in PR. Consider linking to a Kanban card."
+          echo "## ℹ️  No Linked Card" >> $GITHUB_STEP_SUMMARY
+          echo "Consider adding a card ID (e.g., card-20251021122355) to link this PR to your Kanban board." >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Check file changes
+      run: |
+        echo "## 📝 Files Changed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        git diff --name-status origin/${{ github.base_ref }}...HEAD >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+    - name: Suggest reviewers
+      run: |
+        # Count changed files by type
+        PYTHON_CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -c "\.py$" || true)
+        HTML_CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -c "\.html$" || true)
+        NOTEBOOK_CHANGES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -c "\.ipynb$" || true)
+
+        echo "## 👥 Suggested Review Focus" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ "$PYTHON_CHANGES" -gt 0 ]; then
+          echo "- 🐍 Python code changes: $PYTHON_CHANGES files" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ "$HTML_CHANGES" -gt 0 ]; then
+          echo "- 🌐 HTML/Frontend changes: $HTML_CHANGES files" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ "$NOTEBOOK_CHANGES" -gt 0 ]; then
+          echo "- 📓 Jupyter notebook changes: $NOTEBOOK_CHANGES files" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Add PR labels
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const labels = [];
+
+          // Auto-label based on file changes
+          const { data: files } = await github.rest.pulls.listFiles({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            pull_number: context.issue.number,
+          });
+
+          if (files.some(f => f.filename.endsWith('.py'))) labels.push('python');
+          if (files.some(f => f.filename.endsWith('.html'))) labels.push('frontend');
+          if (files.some(f => f.filename.endsWith('.ipynb'))) labels.push('notebook');
+          if (files.some(f => f.filename.includes('test'))) labels.push('tests');
+          if (files.some(f => f.filename.includes('.github/workflows'))) labels.push('ci-cd');
+
+          if (labels.length > 0) {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labels
+            });
+          }

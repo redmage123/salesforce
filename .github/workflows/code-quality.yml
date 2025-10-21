@@ -1,0 +1,66 @@
+name: Code Quality Checks
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install pylint flake8 black isort mypy
+
+    - name: Run Black (code formatter check)
+      run: |
+        black --check . || echo "⚠️  Code formatting issues found. Run 'black .' to fix."
+      continue-on-error: true
+
+    - name: Run isort (import sorting check)
+      run: |
+        isort --check-only . || echo "⚠️  Import sorting issues found. Run 'isort .' to fix."
+      continue-on-error: true
+
+    - name: Run Flake8 (style guide enforcement)
+      run: |
+        # Ignore common issues: line too long (E501), import not at top (E402)
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      continue-on-error: true
+
+    - name: Run Pylint (comprehensive linting)
+      run: |
+        # Run pylint on Python files, continue even if issues found
+        find . -name "*.py" -not -path "./.venv/*" -not -path "./venv/*" | xargs pylint --exit-zero --output-format=text
+      continue-on-error: true
+
+    - name: Check for common security issues
+      run: |
+        pip install bandit
+        bandit -r . -ll -x ./.venv,./venv,./tests || echo "⚠️  Security issues detected"
+      continue-on-error: true
+
+    - name: Generate code quality report
+      if: always()
+      run: |
+        echo "## Code Quality Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Checks completed. Review the logs above for details." >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Quick Fixes" >> $GITHUB_STEP_SUMMARY
+        echo "- Format code: \`black .\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Sort imports: \`isort .\`" >> $GITHUB_STEP_SUMMARY
+        echo "- Check types: \`mypy .\`" >> $GITHUB_STEP_SUMMARY
