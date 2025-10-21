@@ -1,6 +1,35 @@
 # Pipeline Orchestrator - Quick Reference Guide
 
-The Pipeline Orchestrator automates the execution of pipeline stages without requiring user authorization for each action.
+The Pipeline Orchestrator automates the execution of pipeline stages with **dynamic workflow planning** that adapts to task complexity, type, and requirements.
+
+## ✨ New: Dynamic Workflow Planning
+
+The orchestrator now automatically analyzes each task and creates a custom execution plan:
+
+- **Task Complexity Analysis**: Evaluates priority, story points, and description keywords
+- **Parallel Developer Scaling**: Runs 1-3 developers based on complexity
+  - Simple tasks: 1 developer
+  - Medium tasks: 2 developers in parallel
+  - Complex tasks: 3 developers in parallel
+- **Smart Stage Skipping**: Skips unnecessary stages (e.g., arbitration for single developer, testing for documentation)
+- **Resource Management**: Optimizes execution based on task type
+
+### Complexity Scoring
+
+The planner analyzes:
+1. **Priority**: High priority tasks get +2 complexity points
+2. **Story Points**: More points = higher complexity
+3. **Keywords**:
+   - Complex: 'integrate', 'architecture', 'refactor', 'performance', 'api'
+   - Simple: 'fix', 'update', 'small', 'minor', 'quick'
+
+### Task Types
+
+Automatically detected:
+- **Feature**: New functionality (full workflow)
+- **Bugfix**: Error corrections (standard workflow)
+- **Refactor**: Code restructuring (standard workflow)
+- **Documentation**: Docs updates (skips automated testing)
 
 ## 🚀 Quick Start
 

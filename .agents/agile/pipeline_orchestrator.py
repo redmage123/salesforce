@@ -23,12 +23,173 @@ import argparse
 import json
 import subprocess
 import sys
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 from bs4 import BeautifulSoup
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from kanban_manager import KanbanBoard
+
+
+class WorkflowPlanner:
+    """
+    Dynamic Workflow Planner
+
+    Analyzes task requirements and creates custom execution plans
+    based on complexity, type, and resource availability.
+    """
+
+    def __init__(self, card: Dict, verbose: bool = True):
+        self.card = card
+        self.verbose = verbose
+        self.complexity = self._analyze_complexity()
+        self.task_type = self._determine_task_type()
+
+    def _analyze_complexity(self) -> str:
+        """
+        Analyze task complexity based on multiple factors
+
+        Returns:
+            'simple', 'medium', or 'complex'
+        """
+        complexity_score = 0
+
+        # Factor 1: Priority (high = more complex planning needed)
+        priority = self.card.get('priority', 'medium')
+        if priority == 'high':
+            complexity_score += 2
+        elif priority == 'medium':
+            complexity_score += 1
+
+        # Factor 2: Estimated story points
+        points = self.card.get('points', 5)
+        if points >= 13:
+            complexity_score += 3
+        elif points >= 8:
+            complexity_score += 2
+        elif points >= 5:
+            complexity_score += 1
+
+        # Factor 3: Description length and keywords
+        description = self.card.get('description', '')
+        description_lower = description.lower()
+
+        # Complex keywords
+        complex_keywords = ['integrate', 'architecture', 'refactor', 'migrate',
+                           'performance', 'scalability', 'distributed', 'api']
+        complex_count = sum(1 for kw in complex_keywords if kw in description_lower)
+        complexity_score += min(complex_count, 3)
+
+        # Simple keywords
+        simple_keywords = ['fix', 'update', 'small', 'minor', 'simple', 'quick']
+        simple_count = sum(1 for kw in simple_keywords if kw in description_lower)
+        complexity_score -= min(simple_count, 2)
+
+        # Determine final complexity
+        if complexity_score >= 6:
+            return 'complex'
+        elif complexity_score >= 3:
+            return 'medium'
+        else:
+            return 'simple'
+
+    def _determine_task_type(self) -> str:
+        """
+        Determine the type of task
+
+        Returns:
+            'feature', 'bugfix', 'refactor', 'documentation', or 'other'
+        """
+        description = self.card.get('description', '').lower()
+        title = self.card.get('title', '').lower()
+        combined = f"{title} {description}"
+
+        if any(kw in combined for kw in ['bug', 'fix', 'error', 'issue']):
+            return 'bugfix'
+        elif any(kw in combined for kw in ['refactor', 'restructure', 'cleanup']):
+            return 'refactor'
+        elif any(kw in combined for kw in ['docs', 'documentation', 'readme']):
+            return 'documentation'
+        elif any(kw in combined for kw in ['feature', 'implement', 'add', 'create', 'integrate', 'build']):
+            return 'feature'
+        else:
+            return 'other'
+
+    def create_workflow_plan(self) -> Dict:
+        """
+        Create a dynamic workflow plan based on task analysis
+
+        Returns:
+            Dict containing:
+            - stages: list of stages to execute
+            - parallel_developers: number of parallel developer agents
+            - skip_stages: stages that can be skipped
+            - execution_strategy: 'sequential' or 'parallel'
+        """
+        plan = {
+            'complexity': self.complexity,
+            'task_type': self.task_type,
+            'stages': [],
+            'parallel_developers': 1,
+            'skip_stages': [],
+            'execution_strategy': 'sequential',
+            'reasoning': []
+        }
+
+        # All tasks start with architecture
+        plan['stages'].append('architecture')
+
+        # Dependency validation - always needed
+        plan['stages'].append('dependencies')
+
+        # Decide on parallel developers based on complexity
+        if self.complexity == 'complex':
+            plan['parallel_developers'] = 3
+            plan['execution_strategy'] = 'parallel'
+            plan['reasoning'].append(
+                f"Complex task (score-based): Running {plan['parallel_developers']} parallel developers for diverse approaches"
+            )
+        elif self.complexity == 'medium':
+            plan['parallel_developers'] = 2
+            plan['execution_strategy'] = 'parallel'
+            plan['reasoning'].append(
+                f"Medium complexity: Running {plan['parallel_developers']} parallel developers"
+            )
+        else:
+            plan['parallel_developers'] = 1
+            plan['execution_strategy'] = 'sequential'
+            plan['reasoning'].append(
+                "Simple task: Running single developer (no need for parallel approaches)"
+            )
+
+        # Validation stage
+        plan['stages'].append('validation')
+
+        # Arbitration - only if multiple developers
+        if plan['parallel_developers'] > 1:
+            plan['stages'].append('arbitration')
+        else:
+            plan['skip_stages'].append('arbitration')
+            plan['reasoning'].append("Skipping arbitration (only one developer)")
+
+        # Integration - always needed
+        plan['stages'].append('integration')
+
+        # Testing - skip for documentation tasks
+        if self.task_type == 'documentation':
+            plan['skip_stages'].append('testing')
+            plan['reasoning'].append("Skipping automated testing for documentation task")
+        else:
+            plan['stages'].append('testing')
+
+        return plan
+
+    def log(self, message: str):
+        """Log planning decisions"""
+        if self.verbose:
+            print(f"[WorkflowPlanner] {message}")
 
 
 class PipelineOrchestrator:
@@ -537,53 +698,112 @@ class PipelineOrchestrator:
     # STAGE 3: VALIDATION
     # ========================================================================
 
-    def run_validation_stage(self) -> Dict:
+    def run_parallel_developers(self, num_developers: int) -> Dict:
         """
-        Run validation stage for both Developer A and B
+        Run multiple developer agents in parallel
+
+        Args:
+            num_developers: Number of parallel developer agents to run
+
+        Returns:
+            Dict with results from all developers
+        """
+        self.log(f"Running {num_developers} developer agents in parallel", "INFO")
+
+        developer_names = ['developer-a', 'developer-b', 'developer-c'][:num_developers]
+        developer_paths = [f'/tmp/developer_a', f'/tmp/developer_b', f'/tmp/developer_c'][:num_developers]
+
+        results = {
+            "num_developers": num_developers,
+            "developers": {},
+            "timestamp": datetime.utcnow().isoformat() + 'Z',
+            "execution_strategy": "parallel"
+        }
+
+        def run_single_developer(dev_name: str, dev_path: str) -> Tuple[str, Dict]:
+            """Run a single developer agent"""
+            self.log(f"Starting {dev_name}...", "INFO")
+            try:
+                # Simulate developer agent execution
+                # In production, this would spawn actual developer agents
+                result = {
+                    "name": dev_name,
+                    "path": dev_path,
+                    "status": "RUNNING",
+                    "started_at": datetime.utcnow().isoformat() + 'Z'
+                }
+                self.log(f"{dev_name} started at {dev_path}", "SUCCESS")
+                return dev_name, result
+            except Exception as e:
+                self.log(f"{dev_name} failed: {e}", "ERROR")
+                return dev_name, {
+                    "name": dev_name,
+                    "status": "FAILED",
+                    "error": str(e)
+                }
+
+        # Run developers in parallel using ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=num_developers) as executor:
+            future_to_dev = {
+                executor.submit(run_single_developer, dev_name, dev_path): dev_name
+                for dev_name, dev_path in zip(developer_names, developer_paths)
+            }
+
+            for future in as_completed(future_to_dev):
+                dev_name, result = future.result()
+                results["developers"][dev_name] = result
+
+        self.log(f"All {num_developers} developers launched", "SUCCESS")
+        return results
+
+    def run_validation_stage(self, num_developers: int = 2) -> Dict:
+        """
+        Run validation stage for developers (supports 1-3 parallel developers)
+
+        Args:
+            num_developers: Number of developers to validate (1-3)
 
         Returns:
             Dict with validation results
         """
-        self.log("Starting Validation Stage", "STAGE")
+        self.log(f"Starting Validation Stage ({num_developers} developer(s))", "STAGE")
+
+        developer_names = ['developer-a', 'developer-b', 'developer-c'][:num_developers]
+        developer_paths = ['/tmp/developer_a', '/tmp/developer_b', '/tmp/developer_c'][:num_developers]
 
         validation_results = {
             "stage": "validation",
             "card_id": self.card_id,
             "timestamp": datetime.utcnow().isoformat() + 'Z',
-            "developer_a": None,
-            "developer_b": None,
+            "num_developers": num_developers,
+            "developers": {},
             "decision": None
         }
 
-        # Validate Developer A
-        self.log("Validating Developer A solution")
-        dev_a_result = self._validate_developer("developer-a", "/tmp/developer_a")
-        validation_results["developer_a"] = dev_a_result
+        # Validate all developers (can be parallel in future)
+        approved_developers = []
+        for dev_name, dev_path in zip(developer_names, developer_paths):
+            self.log(f"Validating {dev_name} solution")
+            dev_result = self._validate_developer(dev_name, dev_path)
+            validation_results["developers"][dev_name] = dev_result
 
-        # Validate Developer B
-        self.log("Validating Developer B solution")
-        dev_b_result = self._validate_developer("developer-b", "/tmp/developer_b")
-        validation_results["developer_b"] = dev_b_result
+            if dev_result["status"] == "APPROVED":
+                approved_developers.append(dev_name)
 
-        # Make decision
-        dev_a_approved = dev_a_result["status"] == "APPROVED"
-        dev_b_approved = dev_b_result["status"] == "APPROVED"
-
-        if dev_a_approved and dev_b_approved:
-            decision = "BOTH_APPROVED"
-            next_stage = "arbitration"
-        elif dev_a_approved:
-            decision = "DEVELOPER_A_ONLY"
-            next_stage = "arbitration"
-        elif dev_b_approved:
-            decision = "DEVELOPER_B_ONLY"
-            next_stage = "arbitration"
-        else:
-            decision = "BOTH_BLOCKED"
+        # Make decision based on number of approved developers
+        if len(approved_developers) == 0:
+            decision = "ALL_BLOCKED"
             next_stage = "development"
+        elif len(approved_developers) == num_developers:
+            decision = "ALL_APPROVED"
+            next_stage = "arbitration" if num_developers > 1 else "integration"
+        else:
+            decision = f"PARTIAL_APPROVED_{len(approved_developers)}_OF_{num_developers}"
+            next_stage = "arbitration" if num_developers > 1 else "integration"
 
         validation_results["decision"] = decision
         validation_results["next_stage"] = next_stage
+        validation_results["approved_developers"] = approved_developers
 
         # Save validation report
         report_path = self.tmp_dir / "validation_report_autonomous.json"
@@ -1089,85 +1309,121 @@ class PipelineOrchestrator:
 
     def run_full_pipeline(self) -> Dict:
         """
-        Run complete pipeline from architecture to done
+        Run complete pipeline with dynamic workflow planning
 
         Returns:
             Dict with results from all stages
         """
         self.log("=" * 60, "INFO")
-        self.log("STARTING FULL PIPELINE EXECUTION", "STAGE")
+        self.log("🚀 STARTING DYNAMIC PIPELINE EXECUTION", "STAGE")
         self.log("=" * 60, "INFO")
+
+        # Get card information for workflow planning
+        card, column = self.board._find_card(self.card_id)
+        if not card:
+            self.log(f"Card {self.card_id} not found", "ERROR")
+            return {"status": "ERROR", "reason": "Card not found"}
+
+        # Create dynamic workflow plan
+        self.log("\n📊 ANALYZING TASK AND CREATING WORKFLOW PLAN", "STAGE")
+        planner = WorkflowPlanner(card, verbose=self.verbose)
+        workflow_plan = planner.create_workflow_plan()
+
+        # Display workflow plan
+        self.log(f"\n{'='*60}", "INFO")
+        self.log(f"📋 WORKFLOW PLAN", "INFO")
+        self.log(f"{'='*60}", "INFO")
+        self.log(f"Task Type: {workflow_plan['task_type']}", "INFO")
+        self.log(f"Complexity: {workflow_plan['complexity']}", "INFO")
+        self.log(f"Parallel Developers: {workflow_plan['parallel_developers']}", "INFO")
+        self.log(f"Execution Strategy: {workflow_plan['execution_strategy']}", "INFO")
+        self.log(f"\nStages to Execute: {', '.join(workflow_plan['stages'])}", "INFO")
+        if workflow_plan['skip_stages']:
+            self.log(f"Stages to Skip: {', '.join(workflow_plan['skip_stages'])}", "WARNING")
+        self.log(f"\nReasoning:", "INFO")
+        for reason in workflow_plan['reasoning']:
+            self.log(f"  • {reason}", "INFO")
+        self.log(f"{'='*60}\n", "INFO")
 
         results = {
             "card_id": self.card_id,
             "started_at": datetime.utcnow().isoformat() + 'Z',
+            "workflow_plan": workflow_plan,
             "stages": {}
         }
 
         try:
-            # Stage 1: Architecture
-            self.log("\n📋 STAGE 1/6: ARCHITECTURE", "STAGE")
-            architecture = self.run_architecture_stage()
-            results["stages"]["architecture"] = architecture
+            stage_num = 1
+            total_stages = len(workflow_plan['stages'])
 
-            if architecture["status"] != "COMPLETE":
-                self.log("Pipeline stopped: Architecture stage failed", "ERROR")
-                results["status"] = "STOPPED_AT_ARCHITECTURE"
-                return results
+            # Execute stages according to dynamic plan
+            for stage_name in workflow_plan['stages']:
+                self.log(f"\n📋 STAGE {stage_num}/{total_stages}: {stage_name.upper()}", "STAGE")
+                stage_num += 1
 
-            # Stage 2: Dependency Validation
-            self.log("\n📋 STAGE 2/6: DEPENDENCY VALIDATION", "STAGE")
-            dependencies = self.run_dependency_validation_stage()
-            results["stages"]["dependencies"] = dependencies
+                # Run appropriate stage
+                if stage_name == 'architecture':
+                    stage_result = self.run_architecture_stage()
+                    results["stages"]["architecture"] = stage_result
 
-            if dependencies["status"] == "BLOCKED":
-                self.log("Pipeline stopped: Dependency validation failed", "ERROR")
-                results["status"] = "STOPPED_AT_DEPENDENCIES"
-                return results
+                    if stage_result["status"] != "COMPLETE":
+                        results["status"] = "STOPPED_AT_ARCHITECTURE"
+                        self.log("Pipeline stopped: Architecture stage failed", "ERROR")
+                        return results
 
-            # Stage 3: Validation
-            self.log("\n📋 STAGE 3/6: VALIDATION", "STAGE")
-            validation = self.run_validation_stage()
-            results["stages"]["validation"] = validation
+                elif stage_name == 'dependencies':
+                    stage_result = self.run_dependency_validation_stage()
+                    results["stages"]["dependencies"] = stage_result
 
-            if validation["decision"] == "BOTH_BLOCKED":
-                self.log("Pipeline stopped: Both developers blocked", "ERROR")
-                results["status"] = "STOPPED_AT_VALIDATION"
-                return results
+                    if stage_result["status"] == "BLOCKED":
+                        results["status"] = "STOPPED_AT_DEPENDENCIES"
+                        self.log("Pipeline stopped: Dependency validation blocked", "ERROR")
+                        return results
 
-            # Stage 4: Arbitration
-            self.log("\n📋 STAGE 4/6: ARBITRATION", "STAGE")
-            arbitration = self.run_arbitration_stage()
-            results["stages"]["arbitration"] = arbitration
+                elif stage_name == 'validation':
+                    # Use dynamic number of developers
+                    num_devs = workflow_plan['parallel_developers']
+                    stage_result = self.run_validation_stage(num_developers=num_devs)
+                    results["stages"]["validation"] = stage_result
 
-            if not arbitration.get("winner"):
-                self.log("Pipeline stopped: No winner selected", "ERROR")
-                results["status"] = "STOPPED_AT_ARBITRATION"
-                return results
+                    if stage_result["decision"] == "ALL_BLOCKED":
+                        results["status"] = "STOPPED_AT_VALIDATION"
+                        self.log("Pipeline stopped: All developers blocked", "ERROR")
+                        return results
 
-            # Stage 5: Integration
-            self.log("\n📋 STAGE 5/6: INTEGRATION", "STAGE")
-            integration = self.run_integration_stage()
-            results["stages"]["integration"] = integration
+                elif stage_name == 'arbitration':
+                    stage_result = self.run_arbitration_stage()
+                    results["stages"]["arbitration"] = stage_result
 
-            if integration["status"] == "FAILED":
-                self.log("Pipeline stopped: Integration failed", "ERROR")
-                results["status"] = "STOPPED_AT_INTEGRATION"
-                return results
+                    if not stage_result.get("winner"):
+                        results["status"] = "STOPPED_AT_ARBITRATION"
+                        self.log("Pipeline stopped: No winner selected", "ERROR")
+                        return results
 
-            # Stage 6: Testing
-            self.log("\n📋 STAGE 6/6: TESTING", "STAGE")
-            testing = self.run_testing_stage()
-            results["stages"]["testing"] = testing
+                elif stage_name == 'integration':
+                    stage_result = self.run_integration_stage()
+                    results["stages"]["integration"] = stage_result
 
-            if testing["status"] == "PASS":
-                results["status"] = "COMPLETED_SUCCESSFULLY"
-                self.log("\n" + "=" * 60, "INFO")
-                self.log("🎉 PIPELINE COMPLETED SUCCESSFULLY!", "SUCCESS")
-                self.log("=" * 60, "INFO")
-            else:
-                results["status"] = "FAILED_AT_TESTING"
-                self.log("Pipeline failed at testing stage", "ERROR")
+                    if stage_result["status"] == "FAILED":
+                        self.log("Pipeline stopped: Integration failed", "ERROR")
+                        results["status"] = "STOPPED_AT_INTEGRATION"
+                        return results
+
+                elif stage_name == 'testing':
+                    stage_result = self.run_testing_stage()
+                    results["stages"]["testing"] = stage_result
+
+                    if stage_result["status"] != "PASS":
+                        results["status"] = "FAILED_AT_TESTING"
+                        self.log("Pipeline failed at testing stage", "ERROR")
+                        return results
+
+            # All stages completed successfully
+            results["status"] = "COMPLETED_SUCCESSFULLY"
+            self.log("\n" + "=" * 60, "INFO")
+            self.log("🎉 DYNAMIC PIPELINE COMPLETED SUCCESSFULLY!", "SUCCESS")
+            self.log(f"Executed {total_stages} stages with {workflow_plan['parallel_developers']} parallel developer(s)", "INFO")
+            self.log("=" * 60, "INFO")
 
         except Exception as e:
             self.log(f"Pipeline error: {e}", "ERROR")
