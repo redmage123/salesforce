@@ -1,7 +1,7 @@
 {
   "board_id": "salesforce-pipeline-board-001",
   "created": "2025-10-21T08:00:00Z",
-  "last_updated": "2025-10-21T08:00:44.373246Z",
+  "last_updated": "2025-10-21T11:31:14.694616Z",
   "version": "1.0",
   "columns": [
     {
@@ -421,6 +421,96 @@
           ],
           "completed_at": "2025-10-21T08:00:44.373182Z",
           "cycle_time_hours": 2.04
+        },
+        {
+          "card_id": "card-20251021113036",
+          "task_id": "--title",
+          "title": "Create 13-slide AI Agent Demo with Chat UI and Dashboards --description Build interactive HTML presentation showcasing advanced AI capabilities: RAG, sentiment analysis, semantic search, multi-agent coordination. Includes live chat demo, AI process cards, Chart.js dashboards, and predictive intelligence metrics. --priority high --points 8 --agents developer-a,developer-b",
+          "description": "Created via CLI",
+          "priority": "medium",
+          "labels": [],
+          "size": "medium",
+          "story_points": 3,
+          "created_at": "2025-10-21T11:30:36.837539Z",
+          "moved_to_current_column_at": "2025-10-21T11:31:14.694494Z",
+          "assigned_agents": [],
+          "current_column": "done",
+          "blocked": false,
+          "blocked_reason": null,
+          "test_status": {
+            "unit_tests_written": false,
+            "unit_tests_passing": false,
+            "integration_tests_written": false,
+            "integration_tests_passing": false,
+            "test_coverage_percent": 0
+          },
+          "acceptance_criteria": [],
+          "definition_of_done": {
+            "code_complete": false,
+            "tests_passing": false,
+            "code_reviewed": false,
+            "documentation_updated": false,
+            "deployed_to_production": false
+          },
+          "history": [
+            {
+              "timestamp": "2025-10-21T11:30:36.837584Z",
+              "action": "created",
+              "column": "backlog",
+              "agent": "system",
+              "comment": "Card created"
+            },
+            {
+              "timestamp": "2025-10-21T11:31:04.903371Z",
+              "action": "moved",
+              "from_column": "backlog",
+              "to_column": "development",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from backlog to development"
+            },
+            {
+              "timestamp": "2025-10-21T11:31:04.915540Z",
+              "action": "moved",
+              "from_column": "development",
+              "to_column": "development",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from development to development"
+            },
+            {
+              "timestamp": "2025-10-21T11:31:08.858684Z",
+              "action": "moved",
+              "from_column": "development",
+              "to_column": "arbitration",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from development to arbitration"
+            },
+            {
+              "timestamp": "2025-10-21T11:31:08.914908Z",
+              "action": "moved",
+              "from_column": "arbitration",
+              "to_column": "integration",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from arbitration to integration"
+            },
+            {
+              "timestamp": "2025-10-21T11:31:11.910228Z",
+              "action": "moved",
+              "from_column": "integration",
+              "to_column": "testing",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from integration to testing"
+            },
+            {
+              "timestamp": "2025-10-21T11:31:14.694507Z",
+              "action": "moved",
+              "from_column": "testing",
+              "to_column": "done",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from testing to done"
+            }
+          ],
+          "completed_at": "2025-10-21T11:31:14.694537Z",
+          "cycle_time_hours": 0.01
         }
       ]
     },
@@ -433,16 +523,16 @@
     }
   ],
   "metrics": {
-    "cycle_time_avg_hours": 1.9,
-    "cycle_time_min_hours": 1.75,
+    "cycle_time_avg_hours": 1.27,
+    "cycle_time_min_hours": 0.01,
     "cycle_time_max_hours": 2.04,
     "throughput_last_7_days": 1,
-    "throughput_current_sprint": 2,
-    "wip_violations_count": 0,
+    "throughput_current_sprint": 3,
+    "wip_violations_count": 1,
     "blocked_items_count": 0,
     "cards_in_progress": 1,
-    "cards_completed": 2,
-    "velocity_current_sprint": 13,
+    "cards_completed": 3,
+    "velocity_current_sprint": 16,
     "velocity_last_sprint": 0
   },
   "current_sprint": {
@@ -451,7 +541,7 @@
     "end_date": "2025-10-27",
     "sprint_goal": "Implement Agile/TDD/Kanban pipeline integration",
     "committed_story_points": 13,
-    "completed_story_points": 13,
+    "completed_story_points": 16,
     "remaining_story_points": 5
   }
 }

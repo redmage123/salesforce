@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Customer Support Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .presentation-container {
+            width: 90vw; height: 90vh; background: white; border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden;
+        }
+        .slide { flex: 1; padding: 60px; display: none; flex-direction: column; overflow-y: auto; }
+        .slide.active { display: flex; }
+        .slide-header { text-align: center; margin-bottom: 40px; }
+        .slide-header h1 { font-size: 48px; color: #2c3e50; margin-bottom: 10px; }
+        .slide-header h2 { font-size: 36px; color: #2c3e50; margin-bottom: 10px; }
+        .slide-header p { font-size: 20px; color: #7f8c8d; }
+        .cards-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px;
+            border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.3s ease;
+        }
+        .card:hover { transform: translateY(-5px); }
+        .card h3 { font-size: 22px; margin-bottom: 10px; }
+        .card p { font-size: 16px; line-height: 1.6; opacity: 0.95; }
+        .card.green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .card.orange { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .card.blue { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .card.yellow { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .demo-area { display: flex; gap: 30px; flex: 1; }
+        .chat-container { flex: 1; background: #f8f9fa; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .chat-header {
+            background: #667eea; color: white; padding: 15px; border-radius: 10px 10px 0 0;
+            margin: -20px -20px 20px -20px; font-weight: bold; display: flex; align-items: center; gap: 10px;
+        }
+        .chat-messages { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .message { padding: 15px 20px; border-radius: 15px; max-width: 80%; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.user { background: #e8f5e9; align-self: flex-end; border-bottom-right-radius: 5px; }
+        .message.agent { background: #e3f2fd; align-self: flex-start; border-bottom-left-radius: 5px; }
+        .message.agent strong { color: #667eea; display: block; margin-bottom: 5px; }
+        .message .context-highlight { background: #fff9c4; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .typing-indicator { display: none; align-self: flex-start; padding: 15px 20px; background: #f0f0f0; border-radius: 15px; border-bottom-left-radius: 5px; }
+        .typing-indicator.active { display: block; }
+        .typing-indicator span {
+            display: inline-block; width: 8px; height: 8px; background: #667eea;
+            border-radius: 50%; margin: 0 3px; animation: typing 1.4s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-10px); } }
+        .process-cards { flex: 0 0 350px; display: flex; flex-direction: column; gap: 15px; }
+        .process-card {
+            background: white; border: 2px solid #e0e0e0; border-radius: 10px; padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s ease;
+        }
+        .process-card.active { border-color: #667eea; background: #f8f9ff; box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3); }
+        .process-card h4 { color: #667eea; margin-bottom: 10px; font-size: 16px; }
+        .process-card p { color: #666; font-size: 14px; line-height: 1.5; }
+        .process-card .status { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-top: 10px; }
+        .process-card .status.processing { background: #fff3cd; color: #856404; }
+        .process-card .status.complete { background: #d4edda; color: #155724; }
+        .dashboard-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 30px; flex: 1; }
+        .dashboard-card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .dashboard-card h3 { color: #2c3e50; margin-bottom: 20px; font-size: 22px; }
+        .metric { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8f9fa; border-radius: 10px; margin-bottom: 10px; }
+        .metric .label { font-size: 16px; color: #666; }
+        .metric .value { font-size: 24px; font-weight: bold; color: #667eea; }
+        .metric .value.green { color: #38ef7d; }
+        .metric .value.red { color: #f5576c; }
+        .comparison-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .comparison-table th, .comparison-table td { padding: 15px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        .comparison-table th { background: #667eea; color: white; font-weight: bold; }
+        .comparison-table tr:hover { background: #f8f9fa; }
+        .comparison-table .better { color: #38ef7d; font-weight: bold; }
+        .controls { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 20px; background: #f8f9fa; border-top: 1px solid #e0e0e0; }
+        .controls button {
+            padding: 12px 30px; border: none; border-radius: 25px; font-size: 16px; font-weight: bold;
+            cursor: pointer; transition: all 0.3s ease; background: #667eea; color: white;
+        }
+        .controls button:hover { background: #5568d3; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        .controls button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .progress-bar { height: 5px; background: #e0e0e0; position: relative; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.1s linear; }
+        .slide-counter { font-size: 14px; color: #666; font-weight: bold; }
+        .grid-2x3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .agent-card { background: white; border: 3px solid #667eea; border-radius: 15px; padding: 25px; text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .agent-card h3 { color: #667eea; font-size: 20px; margin-bottom: 15px; }
+        .agent-card p { color: #666; font-size: 14px; line-height: 1.6; }
+        .agent-icon {
+            width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 24px; font-weight: bold;
+        }
+        canvas { max-height: 300px; }
+    </style>
+</head>
+<body>
+    <div class="presentation-container">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        
+        <div class="slide active" id="slide1">
+            <div class="slide-header">
+                <h1>AI-Powered Customer Support</h1>
+                <p>Next-Generation Agent Assist with RAG, Sentiment Analysis & Multi-Agent Coordination</p>
+            </div>
+            <div class="cards-container">
+                <div class="card"><h3>RAG-Enhanced Responses</h3><p>Ground every response in verified knowledge base articles, eliminating hallucinations and ensuring accuracy</p></div>
+                <div class="card green"><h3>Real-Time Sentiment Analysis</h3><p>Detect customer emotions instantly and adapt response tone for empathetic, contextual interactions</p></div>
+                <div class="card orange"><h3>Semantic Search Intelligence</h3><p>Understand customer intent beyond keywords using vector embeddings and contextual understanding</p></div>
+                <div class="card blue"><h3>Multi-Agent Coordination</h3><p>Specialized AI agents collaborate seamlessly to deliver comprehensive, intelligent support</p></div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide2">
+            <div class="slide-header"><h2>Live Customer Interaction</h2><p>Watch how AI handles a frustrated customer in real-time</p></div>
+            <div class="demo-area">
+                <div class="chat-container">
+                    <div class="chat-header"><span>💬</span> Customer Support Chat - <strong>Marcus Chen</strong> (Premium Customer)</div>
+                    <div class="chat-messages" id="chatMessages1"></div>
+                    <div class="typing-indicator" id="typingIndicator1"><span></span><span></span><span></span></div>
+                </div>
+                <div class="process-cards">
+                    <div class="process-card" id="process1"><h4>🎯 Sentiment Detection</h4><p>Analyzing customer emotion: <strong>Frustrated</strong></p><span class="status processing">Processing</span></div>
+                    <div class="process-card" id="process2"><h4>🔍 Semantic Search</h4><p>Understanding intent: Password reset + account access</p><span class="status processing">Processing</span></div>
+                    <div class="process-card" id="process3"><h4>📚 RAG Retrieval</h4><p>Fetching relevant KB articles: 3 matches found</p><span class="status processing">Processing</span></div>
+                    <div class="process-card" id="process4"><h4>✨ Response Generation</h4><p>Crafting empathetic, solution-focused response</p><span class="status processing">Processing</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide3">
+            <div class="slide-header"><h2>Core Capabilities</h2><p>Technical features powering intelligent customer support</p></div>
+            <div class="grid-2x3">
+                <div class="card"><h3>Sentiment-Aware Responses</h3><p>Detects 8 emotion types with 96% accuracy, adapting tone dynamically</p></div>
+                <div class="card green"><h3>RAG Diagnosis</h3><p>Grounds responses in 10,000+ KB articles with citation tracking</p></div>
+                <div class="card orange"><h3>Context Retention</h3><p>Maintains conversation history across 30-day windows</p></div>
+                <div class="card blue"><h3>Proactive Execution</h3><p>Automatically triggers actions like password resets, refunds</p></div>
+                <div class="card yellow"><h3>Natural Communication</h3><p>Sounds human, not robotic - trained on 500K+ real conversations</p></div>
+                <div class="card"><h3>Sub-Second Speed</h3><p>Average response time: 680ms (vs 8.5min human average)</p></div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide4">
+            <div class="slide-header"><h2>Human vs AI Performance</h2><p>Quantitative comparison across key metrics</p></div>
+            <table class="comparison-table">
+                <thead><tr><th>Metric</th><th>Human Agent</th><th>AI Agent</th><th>Improvement</th></tr></thead>
+                <tbody>
+                    <tr><td>Average Response Time</td><td>8.5 minutes</td><td class="better">0.68 seconds</td><td class="better">750x faster</td></tr>
+                    <tr><td>First Contact Resolution</td><td>68%</td><td class="better">94%</td><td class="better">+26 points</td></tr>
+                    <tr><td>Customer Satisfaction (CSAT)</td><td>4.2/5</td><td class="better">4.8/5</td><td class="better">+14% increase</td></tr>
+                    <tr><td>Cost Per Interaction</td><td>$12.50</td><td class="better">$0.08</td><td class="better">99.4% cost reduction</td></tr>
+                    <tr><td>24/7 Availability</td><td>No (shifts required)</td><td class="better">Yes</td><td class="better">100% uptime</td></tr>
+                    <tr><td>Consistency</td><td>Variable (mood, training)</td><td class="better">Perfect</td><td class="better">Zero variance</td></tr>
+                    <tr><td>Concurrent Conversations</td><td>1-2</td><td class="better">Unlimited</td><td class="better">Infinite scale</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="slide" id="slide5">
+            <div class="slide-header"><h2>Context-Aware Follow-Up</h2><p>AI remembers previous interactions and provides personalized support</p></div>
+            <div class="demo-area">
+                <div class="chat-container">
+                    <div class="chat-header"><span>💬</span> Customer Support Chat - <strong>Marcus Chen</strong> (Premium Customer)</div>
+                    <div class="chat-messages" id="chatMessages2"></div>
+                    <div class="typing-indicator" id="typingIndicator2"><span></span><span></span><span></span></div>
+                </div>
+                <div class="process-cards">
+                    <div class="process-card" id="process5"><h4>🧠 Conversation Memory</h4><p>Retrieved interaction from yesterday: password reset completed</p><span class="status complete">Complete</span></div>
+                    <div class="process-card" id="process6"><h4>🔬 Root Cause Analysis</h4><p>Identified billing cycle timing as answer source</p><span class="status complete">Complete</span></div>
+                    <div class="process-card" id="process7"><h4>🎯 Proactive Prevention</h4><p>Detected potential archive access need, offered solution</p><span class="status complete">Complete</span></div>
+                    <div class="process-card" id="process8"><h4>📊 Sentiment Shift</h4><p>Customer emotion: Frustrated → Satisfied</p><span class="status complete">Complete</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slides 6-13 placeholders for brevity - continuing pattern -->
+        <div class="slide" id="slide6">
+            <div class="slide-header"><h2>Real-Time Performance Metrics</h2></div>
+            <div class="dashboard-container">
+                <div class="dashboard-card"><h3>Response Metrics</h3>
+                    <div class="metric"><span class="label">Avg Response Time</span><span class="value green">0.68s</span></div>
+                    <div class="metric"><span class="label">Peak Response Time</span><span class="value">1.2s</span></div>
+                    <div class="metric"><span class="label">Throughput (24h)</span><span class="value green">28,472</span></div>
+                </div>
+                <div class="dashboard-card"><h3>Quality Metrics</h3>
+                    <div class="metric"><span class="label">CSAT Score</span><span class="value green">4.8/5</span></div>
+                    <div class="metric"><span class="label">First Contact Resolution</span><span class="value green">94%</span></div>
+                    <div class="metric"><span class="label">Escalation Rate</span><span class="value green">3.2%</span></div>
+                </div>
+                <div class="dashboard-card"><canvas id="responseTimeChart"></canvas></div>
+                <div class="dashboard-card"><canvas id="resolutionChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide7">
+            <div class="slide-header"><h2>ROI & Cost Analysis</h2></div>
+            <div class="dashboard-container">
+                <div class="dashboard-card"><h3>Cost Savings</h3>
+                    <div class="metric"><span class="label">Monthly Savings</span><span class="value green">$342,000</span></div>
+                    <div class="metric"><span class="label">Annual Projection</span><span class="value green">$4.1M</span></div>
+                    <div class="metric"><span class="label">Cost Per Interaction</span><span class="value green">$0.08</span></div>
+                    <div class="metric"><span class="label">ROI (12 months)</span><span class="value green">850%</span></div>
+                </div>
+                <div class="dashboard-card"><h3>Resource Efficiency</h3>
+                    <div class="metric"><span class="label">Human Agents Freed</span><span class="value">23 FTEs</span></div>
+                    <div class="metric"><span class="label">Redirected to Complex Cases</span><span class="value green">100%</span></div>
+                    <div class="metric"><span class="label">Training Cost Reduction</span><span class="value green">$156K/year</span></div>
+                </div>
+                <div class="dashboard-card"><canvas id="costComparisonChart"></canvas></div>
+                <div class="dashboard-card"><canvas id="roiChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide8">
+            <div class="slide-header"><h2>Sentiment Analysis Dashboard</h2></div>
+            <div class="dashboard-container">
+                <div class="dashboard-card"><canvas id="sentimentPieChart"></canvas></div>
+                <div class="dashboard-card"><canvas id="sentimentLineChart"></canvas></div>
+                <div class="dashboard-card"><h3>Detection Accuracy</h3>
+                    <div class="metric"><span class="label">Overall Accuracy</span><span class="value green">96.2%</span></div>
+                    <div class="metric"><span class="label">False Positives</span><span class="value green">2.1%</span></div>
+                    <div class="metric"><span class="label">Emotions Detected</span><span class="value">8 types</span></div>
+                </div>
+                <div class="dashboard-card"><canvas id="resolutionBySentimentChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide9">
+            <div class="slide-header"><h2>RAG Performance Metrics</h2></div>
+            <div class="dashboard-container">
+                <div class="dashboard-card"><h3>Retrieval Metrics</h3>
+                    <div class="metric"><span class="label">Knowledge Base Articles</span><span class="value">10,847</span></div>
+                    <div class="metric"><span class="label">Avg Retrieval Time</span><span class="value green">0.12s</span></div>
+                    <div class="metric"><span class="label">Relevance Score</span><span class="value green">94.8%</span></div>
+                    <div class="metric"><span class="label">Hallucination Rate</span><span class="value green">0.3%</span></div>
+                </div>
+                <div class="dashboard-card"><canvas id="citationChart"></canvas></div>
+                <div class="dashboard-card"><canvas id="ragAccuracyChart"></canvas></div>
+                <div class="dashboard-card"><h3>Knowledge Base Coverage</h3>
+                    <div class="metric"><span class="label">Article Usage Rate</span><span class="value green">87%</span></div>
+                    <div class="metric"><span class="label">Stale Articles</span><span class="value">8%</span></div>
+                    <div class="metric"><span class="label">New Articles (30d)</span><span class="value green">147</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide10">
+            <div class="slide-header"><h2>Multi-Agent Architecture</h2></div>
+            <div class="cards-container">
+                <div class="agent-card"><div class="agent-icon">S</div><h3>Sentiment Agent</h3><p>Analyzes customer emotions in real-time using transformer-based models. Detects 8 emotion types with 96% accuracy.</p></div>
+                <div class="agent-card"><div class="agent-icon">Q</div><h3>Semantic Search Agent</h3><p>Converts queries to vector embeddings and performs semantic search across knowledge base.</p></div>
+                <div class="agent-card"><div class="agent-icon">R</div><h3>RAG Context Agent</h3><p>Retrieves relevant knowledge base articles and grounds responses in verified information.</p></div>
+                <div class="agent-card"><div class="agent-icon">A</div><h3>Action Agent</h3><p>Executes proactive actions like password resets, refunds, ticket creation.</p></div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide11">
+            <div class="slide-header"><h2>Advanced Capabilities</h2></div>
+            <div class="cards-container">
+                <div class="card"><h3>Context Retention</h3><p>Maintains full conversation history across 30-day windows</p></div>
+                <div class="card green"><h3>Proactive Problem Solving</h3><p>Identifies potential issues before customers ask</p></div>
+                <div class="card orange"><h3>Multi-Language Support</h3><p>Supports 47 languages with native-level fluency</p></div>
+                <div class="card blue"><h3>Predictive Intelligence</h3><p>Uses ML models to predict customer needs and churn risk</p></div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide12">
+            <div class="slide-header"><h2>Predictive Intelligence Deep Dive</h2></div>
+            <div class="dashboard-container">
+                <div class="dashboard-card"><h3>Prediction Accuracy</h3>
+                    <div class="metric"><span class="label">Churn Prediction</span><span class="value green">92.4%</span></div>
+                    <div class="metric"><span class="label">Issue Escalation</span><span class="value green">88.7%</span></div>
+                    <div class="metric"><span class="label">Product Recommendation</span><span class="value green">84.2%</span></div>
+                </div>
+                <div class="dashboard-card"><h3>Proactive Interventions</h3>
+                    <div class="metric"><span class="label">Customers Contacted</span><span class="value">2,847</span></div>
+                    <div class="metric"><span class="label">Churn Prevented</span><span class="value green">1,923</span></div>
+                    <div class="metric"><span class="label">Prevention Rate</span><span class="value green">67.5%</span></div>
+                </div>
+                <div class="dashboard-card"><canvas id="predictionAccuracyChart"></canvas></div>
+                <div class="dashboard-card"><canvas id="proactiveInterventionsChart"></canvas></div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide13">
+            <div class="slide-header"><h2>Key Takeaways</h2></div>
+            <div class="cards-container">
+                <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"><h3>750x Faster Responses</h3><p>From 8.5 minutes to 0.68 seconds</p></div>
+                <div class="card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);"><h3>$4.1M Annual Savings</h3><p>99.4% cost reduction per interaction with 850% ROI</p></div>
+                <div class="card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"><h3>94% First Contact Resolution</h3><p>Superior problem-solving with RAG-grounded responses</p></div>
+                <div class="card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"><h3>24/7 Unlimited Scale</h3><p>Perfect consistency, infinite concurrent conversations</p></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="prevBtn" onclick="changeSlide(-1)">◀ Previous</button>
+            <button id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+            <span class="slide-counter" id="slideCounter">1 / 13</span>
+            <button id="nextBtn" onclick="changeSlide(1)">Next ▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        let isPaused = false;
+        let autoAdvanceTimer = null;
+        let progressTimer = null;
+        let slideStartTime = 0;
+        const SLIDE_DURATION = 10000;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSlideDisplay();
+            startAutoAdvance();
+            initializeCharts();
+            initializeSlideAnimations();
+        });
+
+        function changeSlide(direction) {
+            const slides = document.querySelectorAll('.slide');
+            currentSlide += direction;
+            if (currentSlide < 0) currentSlide = 0;
+            if (currentSlide >= slides.length) currentSlide = slides.length - 1;
+            updateSlideDisplay();
+            if (!isPaused) resetAutoAdvance();
+        }
+
+        function updateSlideDisplay() {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach((slide, index) => { slide.classList.toggle('active', index === currentSlide); });
+            document.getElementById('prevBtn').disabled = currentSlide === 0;
+            document.getElementById('nextBtn').disabled = currentSlide === slides.length - 1;
+            document.getElementById('slideCounter').textContent = `${currentSlide + 1} / ${slides.length}`;
+            document.getElementById('progressFill').style.width = '0%';
+            slideStartTime = Date.now();
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('pauseBtn');
+            if (isPaused) { btn.textContent = '▶ Play'; stopAutoAdvance(); }
+            else { btn.textContent = '⏸ Pause'; startAutoAdvance(); }
+        }
+
+        function startAutoAdvance() {
+            slideStartTime = Date.now();
+            autoAdvanceTimer = setTimeout(() => {
+                const slides = document.querySelectorAll('.slide');
+                if (currentSlide < slides.length - 1) changeSlide(1);
+            }, SLIDE_DURATION);
+            updateProgressBar();
+        }
+
+        function resetAutoAdvance() { stopAutoAdvance(); startAutoAdvance(); }
+
+        function stopAutoAdvance() {
+            if (autoAdvanceTimer) { clearTimeout(autoAdvanceTimer); autoAdvanceTimer = null; }
+            if (progressTimer) { cancelAnimationFrame(progressTimer); progressTimer = null; }
+        }
+
+        function updateProgressBar() {
+            const elapsed = Date.now() - slideStartTime;
+            const progress = Math.min((elapsed / SLIDE_DURATION) * 100, 100);
+            document.getElementById('progressFill').style.width = progress + '%';
+            if (progress < 100 && !isPaused) progressTimer = requestAnimationFrame(updateProgressBar);
+        }
+
+        function initializeSlideAnimations() {
+            const slide2Observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && entry.target.id === 'slide2') animateSlide2();
+                });
+            });
+            const slide5Observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && entry.target.id === 'slide5') animateSlide5();
+                });
+            });
+            slide2Observer.observe(document.getElementById('slide2'));
+            slide5Observer.observe(document.getElementById('slide5'));
+        }
+
+        function animateSlide2() {
+            const messages = document.getElementById('chatMessages1');
+            const typing = document.getElementById('typingIndicator1');
+            messages.innerHTML = '';
+            setTimeout(() => {
+                const userMsg = document.createElement('div');
+                userMsg.className = 'message user';
+                userMsg.textContent = "I've been trying to reset my password for 20 minutes now and NOTHING is working. This is ridiculous!";
+                messages.appendChild(userMsg);
+                document.getElementById('process1').classList.add('active');
+            }, 1000);
+            setTimeout(() => { document.getElementById('process2').classList.add('active'); }, 2500);
+            setTimeout(() => { document.getElementById('process3').classList.add('active'); }, 4000);
+            setTimeout(() => { typing.classList.add('active'); document.getElementById('process4').classList.add('active'); }, 5500);
+            setTimeout(() => {
+                typing.classList.remove('active');
+                const agentMsg = document.createElement('div');
+                agentMsg.className = 'message agent';
+                agentMsg.innerHTML = `<strong>Sarah (Support Agent)</strong>
+                    Hey there! I can see you've hit a roadblock with the password reset - let me help you out right away.<br><br>
+                    I just checked your account and found the issue: there's a security hold because of multiple failed login attempts. I've cleared that for you and sent a fresh password reset link to your email (ends in @gmail.com).<br><br>
+                    The new link will arrive within 2 minutes and will be valid for the next hour. Once you get it, click it and you'll be able to set a new password immediately.<br><br>
+                    Is there anything else you need help with while we're here?`;
+                messages.appendChild(agentMsg);
+            }, 8500);
+        }
+
+        function animateSlide5() {
+            const messages = document.getElementById('chatMessages2');
+            const typing = document.getElementById('typingIndicator2');
+            messages.innerHTML = '';
+            setTimeout(() => {
+                const userMsg = document.createElement('div');
+                userMsg.className = 'message user';
+                userMsg.textContent = "Hi! Quick question about yesterday - did that $500 credit you mentioned actually get applied? And I still can't access my old tickets.";
+                messages.appendChild(userMsg);
+            }, 1000);
+            setTimeout(() => { typing.classList.add('active'); }, 3500);
+            setTimeout(() => {
+                typing.classList.remove('active');
+                const agentMsg = document.createElement('div');
+                agentMsg.className = 'message agent';
+                agentMsg.innerHTML = `<strong>Sarah (Support Agent)</strong>
+                    Hi again! Great to hear from you. Let me check both of those for you.<br><br>
+                    <strong>About the $500 credit:</strong> Yes! It was applied right after we fixed your login issue yesterday. You'll see it reflected on your <span class="context-highlight">next invoice on March 1st</span> - your total will be $10,083 instead of $10,583.<br><br>
+                    <strong>For the ticket history:</strong> I see what's happening. Your <span class="context-highlight">access was restored yesterday</span>, but that only covers tickets from the last 90 days. Older tickets need a separate archive request.<br><br>
+                    Want me to submit that archive request now? I can have your older tickets available within 2 hours.`;
+                messages.appendChild(agentMsg);
+            }, 7000);
+        }
+
+        function initializeCharts() {
+            new Chart(document.getElementById('responseTimeChart'), {
+                type: 'line',
+                data: { labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    datasets: [{ label: 'Response Time (seconds)', data: [0.65, 0.72, 0.68, 0.71, 0.66, 0.69],
+                        borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.1)', tension: 0.4 }]},
+                options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Response Time (24h)' }}}
+            });
+            new Chart(document.getElementById('resolutionChart'), {
+                type: 'doughnut',
+                data: { labels: ['First Contact', 'Escalated', 'Multi-Touch'],
+                    datasets: [{ data: [94, 3, 3], backgroundColor: ['#38ef7d', '#f5576c', '#ffd700'] }]},
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            new Chart(document.getElementById('costComparisonChart'), {
+                type: 'bar',
+                data: { labels: ['Human Agent', 'AI Agent'],
+                    datasets: [{ label: 'Cost Per Interaction ($)', data: [12.50, 0.08], backgroundColor: ['#f5576c', '#38ef7d'] }]},
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            new Chart(document.getElementById('roiChart'), {
+                type: 'line',
+                data: { labels: ['Month 1', 'Month 3', 'Month 6', 'Month 9', 'Month 12'],
+                    datasets: [{ label: 'Cumulative ROI (%)', data: [120, 350, 550, 700, 850],
+                        borderColor: '#38ef7d', backgroundColor: 'rgba(56, 239, 125, 0.1)', tension: 0.4 }]},
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            new Chart(document.getElementById('sentimentPieChart'), {
+                type: 'pie',
+                data: { labels: ['Happy', 'Neutral', 'Frustrated', 'Angry', 'Confused', 'Satisfied', 'Anxious', 'Grateful'],
+                    datasets: [{ data: [32, 28, 15, 5, 8, 7, 3, 2],
+                        backgroundColor: ['#38ef7d', '#667eea', '#ffd700', '#f5576c', '#ff8c42', '#4facfe', '#f093fb', '#fee140'] }]},
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            new Chart(document.getElementById('sentimentLineChart'), {
+                type: 'line',
+                data: { labels: ['Start', '25%', '50%', '75%', 'End'],
+                    datasets: [{ label: 'Sentiment Score', data: [2.5, 3.2, 4.1, 4.5, 4.8],
+                        borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.1)', tension: 0.4 }]},
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 5 }}}
+            });
+            new Chart(document.getElementById('resolutionBySentimentChart'), {
+                type: 'bar',
+                data: { labels: ['Happy', 'Neutral', 'Frustrated', 'Angry'],
+                    datasets: [{ label: 'Resolution Rate (%)', data: [98, 94, 89, 82], backgroundColor: '#667eea' }]},
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 }}}
+            });
+            new Chart(document.getElementById('citationChart'), {
+                type: 'doughnut',
+                data: { labels: ['1 Source', '2 Sources', '3+ Sources', 'No Citation'],
+                    datasets: [{ data: [45, 35, 18, 2], backgroundColor: ['#667eea', '#38ef7d', '#fee140', '#f5576c'] }]},
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+            new Chart(document.getElementById('ragAccuracyChart'), {
+                type: 'bar',
+                data: { labels: ['Billing', 'Technical', 'Account', 'Product', 'Policy'],
+                    datasets: [{ label: 'Accuracy (%)', data: [97, 93, 96, 92, 98], backgroundColor: '#667eea' }]},
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 }}}
+            });
+            new Chart(document.getElementById('predictionAccuracyChart'), {
+                type: 'bar',
+                data: { labels: ['Churn', 'Escalation', 'Product Rec', 'Sentiment'],
+                    datasets: [{ label: 'Accuracy (%)', data: [92.4, 88.7, 84.2, 96.2],
+                        backgroundColor: ['#667eea', '#38ef7d', '#fee140', '#4facfe'] }]},
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 0, max: 100 }}}
+            });
+            new Chart(document.getElementById('proactiveInterventionsChart'), {
+                type: 'line',
+                data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [
+                        { label: 'Customers Contacted', data: [520, 680, 750, 897], borderColor: '#667eea', backgroundColor: 'rgba(102, 126, 234, 0.1)', tension: 0.4 },
+                        { label: 'Churn Prevented', data: [340, 450, 520, 613], borderColor: '#38ef7d', backgroundColor: 'rgba(56, 239, 125, 0.1)', tension: 0.4 }
+                    ]},
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') changeSlide(-1);
+            if (e.key === 'ArrowRight') changeSlide(1);
+            if (e.key === ' ') { e.preventDefault(); togglePause(); }
+        });
+    </script>
+</body>
+</html>
