@@ -147,6 +147,45 @@
 
         <div class="slide" id="slide2">
             <div class="slide-header">
+                <h2>Try It Yourself: Interactive AI Assistant</h2>
+                <p>Ask questions about your revenue pipeline and get instant AI insights</p>
+            </div>
+            <div class="demo-area" style="flex-direction: row; gap: 30px;">
+                <div class="chat-container" style="flex: 2;">
+                    <div class="chat-header">💬 Revenue Intelligence AI Assistant</div>
+                    <div id="interactiveChatMessages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 10px;">
+                        <div style="background: #e3f2fd; padding: 15px; border-radius: 15px; border-bottom-left-radius: 5px;">
+                            <strong style="color: #667eea; display: block; margin-bottom: 5px;">AI Assistant</strong>
+                            Hello! I'm your Revenue Intelligence AI. Ask me questions like:<br>
+                            • "Show me at-risk deals"<br>
+                            • "What's our forecast for this quarter?"<br>
+                            • "Which rep needs coaching?"<br>
+                            • "What deals should I focus on?"
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <input type="text" id="userQuery" placeholder="Ask about your pipeline..."
+                               style="flex: 1; padding: 12px; border: 2px solid #667eea; border-radius: 25px; font-size: 14px;"
+                               onkeypress="if(event.key === 'Enter') sendQuery()">
+                        <button onclick="sendQuery()" style="padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 25px; font-weight: bold; cursor: pointer;">
+                            Send
+                        </button>
+                    </div>
+                </div>
+                <div style="flex: 1; background: #f8f9fa; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                    <h3 style="color: #667eea; margin: 0;">💡 Try These Questions:</h3>
+                    <button onclick="setQuery('Show me at-risk deals')" class="suggestion-btn">Show me at-risk deals</button>
+                    <button onclick="setQuery('What is our Q4 forecast?')" class="suggestion-btn">What is our Q4 forecast?</button>
+                    <button onclick="setQuery('Which opportunities should I prioritize?')" class="suggestion-btn">Which opportunities should I prioritize?</button>
+                    <button onclick="setQuery('Who needs coaching on my team?')" class="suggestion-btn">Who needs coaching on my team?</button>
+                    <button onclick="setQuery('Show me competitive analysis')" class="suggestion-btn">Show me competitive analysis</button>
+                    <button onclick="setQuery('What deals are closing this month?')" class="suggestion-btn">What deals are closing this month?</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide3">
+            <div class="slide-header">
                 <h2>Opportunity Scoring Workflow</h2>
                 <p>How AI evaluates every deal in your pipeline</p>
             </div>
@@ -185,7 +224,7 @@
             </div>
         </div>
 
-        <div class="slide" id="slide3">
+        <div class="slide" id="slide4">
             <div class="slide-header">
                 <h2>Pipeline Risk Dashboard</h2>
                 <p>Real-time visibility into deal health</p>
@@ -236,7 +275,7 @@
             </div>
         </div>
 
-        <div class="slide" id="slide4">
+        <div class="slide" id="slide5">
             <div class="slide-header">
                 <h2>AI-Powered Revenue Forecasting</h2>
                 <p>Predictive models with confidence intervals</p>
@@ -271,7 +310,7 @@
             </div>
         </div>
 
-        <div class="slide" id="slide5">
+        <div class="slide" id="slide6">
             <div class="slide-header">
                 <h2>Executive AI Summary</h2>
                 <p>Key actions to maximize revenue</p>
@@ -306,41 +345,50 @@
             </div>
         </div>
 
-        <div class="slide" id="slide6">
+        <div class="slide" id="slide7">
             <div class="slide-header">
-                <h2>Try It Yourself: Interactive AI Assistant</h2>
-                <p>Ask questions about your revenue pipeline and get instant AI insights</p>
+                <h1>Key Takeaways</h1>
+                <p>Transform your revenue operations with AI-powered intelligence</p>
             </div>
-            <div class="demo-area" style="flex-direction: row; gap: 30px;">
-                <div class="chat-container" style="flex: 2;">
-                    <div class="chat-header">💬 Revenue Intelligence AI Assistant</div>
-                    <div id="interactiveChatMessages" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 10px;">
-                        <div style="background: #e3f2fd; padding: 15px; border-radius: 15px; border-bottom-left-radius: 5px;">
-                            <strong style="color: #667eea; display: block; margin-bottom: 5px;">AI Assistant</strong>
-                            Hello! I'm your Revenue Intelligence AI. Ask me questions like:<br>
-                            • "Show me at-risk deals"<br>
-                            • "What's our forecast for this quarter?"<br>
-                            • "Which rep needs coaching?"<br>
-                            • "What deals should I focus on?"
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <input type="text" id="userQuery" placeholder="Ask about your pipeline..."
-                               style="flex: 1; padding: 12px; border: 2px solid #667eea; border-radius: 25px; font-size: 14px;"
-                               onkeypress="if(event.key === 'Enter') sendQuery()">
-                        <button onclick="sendQuery()" style="padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 25px; font-weight: bold; cursor: pointer;">
-                            Send
-                        </button>
-                    </div>
+            <div class="cards-container">
+                <div class="card green">
+                    <h3>🎯 Predictive Accuracy</h3>
+                    <p>92% forecast accuracy vs. actual close rates - improve revenue predictability by 20-30%</p>
                 </div>
-                <div style="flex: 1; background: #f8f9fa; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
-                    <h3 style="color: #667eea; margin: 0;">💡 Try These Questions:</h3>
-                    <button onclick="setQuery('Show me at-risk deals')" class="suggestion-btn">Show me at-risk deals</button>
-                    <button onclick="setQuery('What is our Q4 forecast?')" class="suggestion-btn">What is our Q4 forecast?</button>
-                    <button onclick="setQuery('Which opportunities should I prioritize?')" class="suggestion-btn">Which opportunities should I prioritize?</button>
-                    <button onclick="setQuery('Who needs coaching on my team?')" class="suggestion-btn">Who needs coaching on my team?</button>
-                    <button onclick="setQuery('Show me competitive analysis')" class="suggestion-btn">Show me competitive analysis</button>
-                    <button onclick="setQuery('What deals are closing this month?')" class="suggestion-btn">What deals are closing this month?</button>
+                <div class="card blue">
+                    <h3>⚡ Proactive Intervention</h3>
+                    <p>Identify at-risk deals before they slip - recover up to 30% of high-risk pipeline worth millions</p>
+                </div>
+                <div class="card orange">
+                    <h3>📊 Data-Driven Decisions</h3>
+                    <p>AI-powered insights eliminate guesswork - prioritize the right deals at the right time</p>
+                </div>
+                <div class="card yellow">
+                    <h3>🚀 Accelerated Velocity</h3>
+                    <p>Reduce sales cycle time and increase win rates through intelligent coaching and deal guidance</p>
+                </div>
+            </div>
+            <div style="margin-top: 40px; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; color: white;">
+                <h2 style="margin: 0 0 20px 0; font-size: 32px;">Ready to Get Started?</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; font-size: 18px;">
+                    <div>
+                        <strong>📈 Expected Impact:</strong><br>
+                        • $2-5M additional revenue<br>
+                        • 15% increase in win rates<br>
+                        • 40% time savings
+                    </div>
+                    <div>
+                        <strong>🔧 Implementation:</strong><br>
+                        • Salesforce native integration<br>
+                        • Real-time AI scoring<br>
+                        • Custom Lightning components
+                    </div>
+                    <div>
+                        <strong>💡 Next Steps:</strong><br>
+                        • Schedule pilot program<br>
+                        • Define success metrics<br>
+                        • Begin Phase 1 rollout
+                    </div>
                 </div>
             </div>
         </div>
@@ -348,7 +396,7 @@
         <div class="controls">
             <button id="prevBtn" onclick="changeSlide(-1)">◀ Previous</button>
             <button id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
-            <span class="slide-counter" id="slideCounter">1 / 6</span>
+            <span class="slide-counter" id="slideCounter">1 / 7</span>
             <button id="nextBtn" onclick="changeSlide(1)">Next ▶</button>
             <button id="restartBtn" onclick="restartDemo()" style="background: #f5576c; margin-left: 20px;">🔄 Restart Demo</button>
         </div>
