@@ -535,16 +535,35 @@
             chatContainer.appendChild(typingIndicator);
             chatContainer.scrollTop = chatContainer.scrollHeight;
 
-            // Generate AI response
-            setTimeout(() => {
+            // Call RAG API for real AI response
+            fetch('http://localhost:5001/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: query })
+            })
+            .then(response => response.json())
+            .then(data => {
                 chatContainer.removeChild(typingIndicator);
 
                 const aiMsg = document.createElement('div');
                 aiMsg.style.cssText = 'background: #e3f2fd; padding: 15px; border-radius: 15px; border-bottom-left-radius: 5px; align-self: flex-start; max-width: 80%;';
-                aiMsg.innerHTML = `<strong style="color: #667eea; display: block; margin-bottom: 5px;">AI Assistant</strong>${getAIResponse(query)}`;
+                aiMsg.innerHTML = `<strong style="color: #667eea; display: block; margin-bottom: 5px;">AI Assistant (RAG-Powered)</strong>${data.response}`;
                 chatContainer.appendChild(aiMsg);
                 chatContainer.scrollTop = chatContainer.scrollHeight;
-            }, 1500);
+            })
+            .catch(error => {
+                console.error('Error calling RAG API:', error);
+                chatContainer.removeChild(typingIndicator);
+
+                // Fallback to local response if API fails
+                const aiMsg = document.createElement('div');
+                aiMsg.style.cssText = 'background: #ffebee; padding: 15px; border-radius: 15px; border-bottom-left-radius: 5px; align-self: flex-start; max-width: 80%;';
+                aiMsg.innerHTML = `<strong style="color: #d32f2f; display: block; margin-bottom: 5px;">⚠️ API Error</strong>The RAG API server may not be running. Please ensure the notebook cell that starts the Flask server has been executed.<br><br>Error: ${error.message}`;
+                chatContainer.appendChild(aiMsg);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            });
         }
 
         function getAIResponse(query) {
