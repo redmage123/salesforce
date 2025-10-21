@@ -1,7 +1,7 @@
 {
   "board_id": "salesforce-pipeline-board-001",
   "created": "2025-10-21T08:00:00Z",
-  "last_updated": "2025-10-21T11:31:14.694616Z",
+  "last_updated": "2025-10-21T12:26:14.920358Z",
   "version": "1.0",
   "columns": [
     {
@@ -511,6 +511,96 @@
           ],
           "completed_at": "2025-10-21T11:31:14.694537Z",
           "cycle_time_hours": 0.01
+        },
+        {
+          "card_id": "card-20251021122355",
+          "task_id": "--title",
+          "title": "Update AI demo: slow slide 5 transition and add agent workflow slide --description 1. Increase slide 5 animation duration so users have time to read chat messages before transitioning to slide 6. 2. Add new slide after slide 5 showing agent workflow with cards explaining what each agent does during the interaction --priority high --points 5 --agents developer-a,developer-b",
+          "description": "Created via CLI",
+          "priority": "medium",
+          "labels": [],
+          "size": "medium",
+          "story_points": 3,
+          "created_at": "2025-10-21T12:23:55.547054Z",
+          "moved_to_current_column_at": "2025-10-21T12:26:14.920212Z",
+          "assigned_agents": [],
+          "current_column": "done",
+          "blocked": false,
+          "blocked_reason": null,
+          "test_status": {
+            "unit_tests_written": false,
+            "unit_tests_passing": false,
+            "integration_tests_written": false,
+            "integration_tests_passing": false,
+            "test_coverage_percent": 0
+          },
+          "acceptance_criteria": [],
+          "definition_of_done": {
+            "code_complete": false,
+            "tests_passing": false,
+            "code_reviewed": false,
+            "documentation_updated": false,
+            "deployed_to_production": false
+          },
+          "history": [
+            {
+              "timestamp": "2025-10-21T12:23:55.547079Z",
+              "action": "created",
+              "column": "backlog",
+              "agent": "system",
+              "comment": "Card created"
+            },
+            {
+              "timestamp": "2025-10-21T12:26:02.533283Z",
+              "action": "moved",
+              "from_column": "backlog",
+              "to_column": "development",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from backlog to development"
+            },
+            {
+              "timestamp": "2025-10-21T12:26:02.538186Z",
+              "action": "moved",
+              "from_column": "development",
+              "to_column": "development",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from development to development"
+            },
+            {
+              "timestamp": "2025-10-21T12:26:06.873963Z",
+              "action": "moved",
+              "from_column": "development",
+              "to_column": "arbitration",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from development to arbitration"
+            },
+            {
+              "timestamp": "2025-10-21T12:26:06.943781Z",
+              "action": "moved",
+              "from_column": "arbitration",
+              "to_column": "integration",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from arbitration to integration"
+            },
+            {
+              "timestamp": "2025-10-21T12:26:10.447600Z",
+              "action": "moved",
+              "from_column": "integration",
+              "to_column": "testing",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from integration to testing"
+            },
+            {
+              "timestamp": "2025-10-21T12:26:14.920235Z",
+              "action": "moved",
+              "from_column": "testing",
+              "to_column": "done",
+              "agent": "pipeline-orchestrator",
+              "comment": "Moved from testing to done"
+            }
+          ],
+          "completed_at": "2025-10-21T12:26:14.920263Z",
+          "cycle_time_hours": 0.04
         }
       ]
     },
@@ -523,16 +613,16 @@
     }
   ],
   "metrics": {
-    "cycle_time_avg_hours": 1.27,
+    "cycle_time_avg_hours": 0.96,
     "cycle_time_min_hours": 0.01,
     "cycle_time_max_hours": 2.04,
     "throughput_last_7_days": 1,
-    "throughput_current_sprint": 3,
-    "wip_violations_count": 1,
+    "throughput_current_sprint": 4,
+    "wip_violations_count": 2,
     "blocked_items_count": 0,
     "cards_in_progress": 1,
-    "cards_completed": 3,
-    "velocity_current_sprint": 16,
+    "cards_completed": 4,
+    "velocity_current_sprint": 19,
     "velocity_last_sprint": 0
   },
   "current_sprint": {
@@ -541,7 +631,7 @@
     "end_date": "2025-10-27",
     "sprint_goal": "Implement Agile/TDD/Kanban pipeline integration",
     "committed_story_points": 13,
-    "completed_story_points": 16,
+    "completed_story_points": 19,
     "remaining_story_points": 5
   }
 }

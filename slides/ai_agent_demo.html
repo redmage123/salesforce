@@ -100,6 +100,76 @@
             color: white; font-size: 24px; font-weight: bold;
         }
         canvas { max-height: 300px; }
+
+        /* Workflow Diagram Styles */
+        .workflow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            padding: 20px;
+            flex: 1;
+            justify-content: center;
+        }
+        .workflow-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        .workflow-row.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .workflow-box {
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            padding: 25px;
+            min-width: 200px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .workflow-box.highlight {
+            border-color: #38ef7d;
+            background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+            box-shadow: 0 5px 30px rgba(56, 239, 125, 0.4);
+        }
+        .workflow-box h4 {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .workflow-box p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 5px 0;
+        }
+        .workflow-box .action {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        .workflow-arrow {
+            font-size: 36px;
+            color: #667eea;
+            font-weight: bold;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        .workflow-label {
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
@@ -181,8 +251,68 @@
             </div>
         </div>
 
-        <!-- Slides 6-13 placeholders for brevity - continuing pattern -->
+        <!-- NEW: Agent Workflow Diagram Slide -->
         <div class="slide" id="slide6">
+            <div class="slide-header">
+                <h2>Behind the Scenes: Agent Workflow</h2>
+                <p>Watch how specialized AI agents collaborate in real-time</p>
+            </div>
+            <div class="workflow-container">
+                <div class="workflow-row" id="workflow1">
+                    <div class="workflow-box">
+                        <h4>🎯 Sentiment Agent</h4>
+                        <p class="action">Analyzes emotion</p>
+                        <p>→ Detected: "Frustrated" (96%)</p>
+                        <p>→ Triggers empathetic mode</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-box">
+                        <h4>🔍 Semantic Search</h4>
+                        <p class="action">Converts to embeddings</p>
+                        <p>→ Intent: Password reset</p>
+                        <p>→ Query vectorized</p>
+                    </div>
+                </div>
+
+                <div class="workflow-arrow" style="font-size: 48px; text-align: center;">↓</div>
+
+                <div class="workflow-row" id="workflow2">
+                    <div class="workflow-box">
+                        <h4>📚 RAG Context Agent</h4>
+                        <p class="action">Searches KB articles</p>
+                        <p>→ Found 3 articles (94.8%)</p>
+                        <p>→ Prevents hallucinations</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-box">
+                        <h4>🧠 Memory Agent</h4>
+                        <p class="action">Queries history DB</p>
+                        <p>→ Found yesterday's chat</p>
+                        <p>→ Loads context</p>
+                    </div>
+                </div>
+
+                <div class="workflow-arrow" style="font-size: 48px; text-align: center;">↓</div>
+
+                <div class="workflow-row" id="workflow3">
+                    <div class="workflow-box">
+                        <h4>✨ Response Generator</h4>
+                        <p class="action">Synthesizes all inputs</p>
+                        <p>→ Creates human response</p>
+                        <p>→ Validates tone</p>
+                    </div>
+                    <div class="workflow-arrow">→</div>
+                    <div class="workflow-box">
+                        <h4>⚡ Action Agent</h4>
+                        <p class="action">Executes tasks</p>
+                        <p>→ Cleared security hold</p>
+                        <p>→ Sent reset link</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" id="slide7">
             <div class="slide-header"><h2>Real-Time Performance Metrics</h2></div>
             <div class="dashboard-container">
                 <div class="dashboard-card"><h3>Response Metrics</h3>
@@ -200,7 +330,7 @@
             </div>
         </div>
 
-        <div class="slide" id="slide7">
+        <div class="slide" id="slide8">
             <div class="slide-header"><h2>ROI & Cost Analysis</h2></div>
             <div class="dashboard-container">
                 <div class="dashboard-card"><h3>Cost Savings</h3>
@@ -219,7 +349,7 @@
             </div>
         </div>
 
-        <div class="slide" id="slide8">
+        <div class="slide" id="slide9">
             <div class="slide-header"><h2>Sentiment Analysis Dashboard</h2></div>
             <div class="dashboard-container">
                 <div class="dashboard-card"><canvas id="sentimentPieChart"></canvas></div>
@@ -233,7 +363,7 @@
             </div>
         </div>
 
-        <div class="slide" id="slide9">
+        <div class="slide" id="slide10">
             <div class="slide-header"><h2>RAG Performance Metrics</h2></div>
             <div class="dashboard-container">
                 <div class="dashboard-card"><h3>Retrieval Metrics</h3>
@@ -252,7 +382,7 @@
             </div>
         </div>
 
-        <div class="slide" id="slide10">
+        <div class="slide" id="slide11">
             <div class="slide-header"><h2>Multi-Agent Architecture</h2></div>
             <div class="cards-container">
                 <div class="agent-card"><div class="agent-icon">S</div><h3>Sentiment Agent</h3><p>Analyzes customer emotions in real-time using transformer-based models. Detects 8 emotion types with 96% accuracy.</p></div>
@@ -262,7 +392,7 @@
             </div>
         </div>
 
-        <div class="slide" id="slide11">
+        <div class="slide" id="slide12">
             <div class="slide-header"><h2>Advanced Capabilities</h2></div>
             <div class="cards-container">
                 <div class="card"><h3>Context Retention</h3><p>Maintains full conversation history across 30-day windows</p></div>
@@ -272,7 +402,7 @@
             </div>
         </div>
 
-        <div class="slide" id="slide12">
+        <div class="slide" id="slide13">
             <div class="slide-header"><h2>Predictive Intelligence Deep Dive</h2></div>
             <div class="dashboard-container">
                 <div class="dashboard-card"><h3>Prediction Accuracy</h3>
@@ -290,7 +420,7 @@
             </div>
         </div>
 
-        <div class="slide" id="slide13">
+        <div class="slide" id="slide14">
             <div class="slide-header"><h2>Key Takeaways</h2></div>
             <div class="cards-container">
                 <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"><h3>750x Faster Responses</h3><p>From 8.5 minutes to 0.68 seconds</p></div>
@@ -303,7 +433,7 @@
         <div class="controls">
             <button id="prevBtn" onclick="changeSlide(-1)">◀ Previous</button>
             <button id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
-            <span class="slide-counter" id="slideCounter">1 / 13</span>
+            <span class="slide-counter" id="slideCounter">1 / 14</span>
             <button id="nextBtn" onclick="changeSlide(1)">Next ▶</button>
         </div>
     </div>
@@ -314,7 +444,7 @@
         let autoAdvanceTimer = null;
         let progressTimer = null;
         let slideStartTime = 0;
-        const SLIDE_DURATION = 10000;
+        const SLIDE_DURATION = 20000; // 20 seconds
 
         document.addEventListener('DOMContentLoaded', () => {
             updateSlideDisplay();
@@ -383,8 +513,14 @@
                     if (entry.isIntersecting && entry.target.id === 'slide5') animateSlide5();
                 });
             });
+            const slide6Observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && entry.target.id === 'slide6') animateSlide6();
+                });
+            });
             slide2Observer.observe(document.getElementById('slide2'));
             slide5Observer.observe(document.getElementById('slide5'));
+            slide6Observer.observe(document.getElementById('slide6'));
         }
 
         function animateSlide2() {
@@ -397,10 +533,10 @@
                 userMsg.textContent = "I've been trying to reset my password for 20 minutes now and NOTHING is working. This is ridiculous!";
                 messages.appendChild(userMsg);
                 document.getElementById('process1').classList.add('active');
-            }, 1000);
-            setTimeout(() => { document.getElementById('process2').classList.add('active'); }, 2500);
-            setTimeout(() => { document.getElementById('process3').classList.add('active'); }, 4000);
-            setTimeout(() => { typing.classList.add('active'); document.getElementById('process4').classList.add('active'); }, 5500);
+            }, 2000);
+            setTimeout(() => { document.getElementById('process2').classList.add('active'); }, 4500);
+            setTimeout(() => { document.getElementById('process3').classList.add('active'); }, 7000);
+            setTimeout(() => { typing.classList.add('active'); document.getElementById('process4').classList.add('active'); }, 9500);
             setTimeout(() => {
                 typing.classList.remove('active');
                 const agentMsg = document.createElement('div');
@@ -411,7 +547,7 @@
                     The new link will arrive within 2 minutes and will be valid for the next hour. Once you get it, click it and you'll be able to set a new password immediately.<br><br>
                     Is there anything else you need help with while we're here?`;
                 messages.appendChild(agentMsg);
-            }, 8500);
+            }, 14000);
         }
 
         function animateSlide5() {
@@ -423,8 +559,8 @@
                 userMsg.className = 'message user';
                 userMsg.textContent = "Hi! Quick question about yesterday - did that $500 credit you mentioned actually get applied? And I still can't access my old tickets.";
                 messages.appendChild(userMsg);
-            }, 1000);
-            setTimeout(() => { typing.classList.add('active'); }, 3500);
+            }, 2500);
+            setTimeout(() => { typing.classList.add('active'); }, 6500);
             setTimeout(() => {
                 typing.classList.remove('active');
                 const agentMsg = document.createElement('div');
@@ -435,7 +571,39 @@
                     <strong>For the ticket history:</strong> I see what's happening. Your <span class="context-highlight">access was restored yesterday</span>, but that only covers tickets from the last 90 days. Older tickets need a separate archive request.<br><br>
                     Want me to submit that archive request now? I can have your older tickets available within 2 hours.`;
                 messages.appendChild(agentMsg);
-            }, 7000);
+            }, 14000);
+        }
+
+        function animateSlide6() {
+            // Reset all workflow rows
+            document.querySelectorAll('.workflow-row').forEach(row => {
+                row.classList.remove('active');
+                row.querySelectorAll('.workflow-box').forEach(box => box.classList.remove('highlight'));
+            });
+
+            // Animate workflow rows sequentially
+            setTimeout(() => {
+                document.getElementById('workflow1').classList.add('active');
+                document.getElementById('workflow1').querySelectorAll('.workflow-box').forEach(box => {
+                    setTimeout(() => box.classList.add('highlight'), 500);
+                });
+            }, 500);
+
+            setTimeout(() => {
+                document.getElementById('workflow2').classList.add('active');
+                document.getElementById('workflow1').querySelectorAll('.workflow-box').forEach(box => box.classList.remove('highlight'));
+                document.getElementById('workflow2').querySelectorAll('.workflow-box').forEach(box => {
+                    setTimeout(() => box.classList.add('highlight'), 500);
+                });
+            }, 3000);
+
+            setTimeout(() => {
+                document.getElementById('workflow3').classList.add('active');
+                document.getElementById('workflow2').querySelectorAll('.workflow-box').forEach(box => box.classList.remove('highlight'));
+                document.getElementById('workflow3').querySelectorAll('.workflow-box').forEach(box => {
+                    setTimeout(() => box.classList.add('highlight'), 500);
+                });
+            }, 6000);
         }
 
         function initializeCharts() {
