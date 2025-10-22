@@ -291,6 +291,279 @@ class PipelineOrchestrator:
             }
 
     # ========================================================================
+    # STAGE 0: RESEARCH (OPTIONAL - FOR COMPLEX TASKS)
+    # ========================================================================
+
+    def should_run_research(self, card: Dict, workflow_plan: Dict) -> bool:
+        """
+        Determine if research stage should run
+
+        Args:
+            card: Kanban card with task details
+            workflow_plan: Workflow plan from planner
+
+        Returns:
+            True if research should run
+        """
+        # Always run if user provided research prompts
+        if card.get('user_research_prompts'):
+            return True
+
+        # Run for complex tasks
+        if workflow_plan['complexity'] == 'complex':
+            return True
+
+        # Run for high-priority tasks
+        if card.get('priority') == 'high':
+            return True
+
+        # Run if unfamiliar technology detected
+        description_lower = card.get('description', '').lower()
+        unfamiliar_keywords = [
+            'oauth', 'websocket', 'graphql', 'kubernetes', 'docker',
+            'microservice', 'blockchain', 'machine learning', 'ai'
+        ]
+        if any(keyword in description_lower for keyword in unfamiliar_keywords):
+            return True
+
+        # Run if security-critical keywords found
+        security_keywords = [
+            'payment', 'auth', 'encrypt', 'security', 'credit card',
+            'password', 'token', 'api key'
+        ]
+        if any(keyword in description_lower for keyword in security_keywords):
+            return True
+
+        # Skip for simple tasks
+        return False
+
+    def run_research_stage(self) -> Dict:
+        """
+        Run research stage to gather data for architecture decisions
+
+        Returns:
+            Dict with research results
+        """
+        self.log("Starting Research Stage", "STAGE")
+
+        # Get card information
+        card, column = self.board._find_card(self.card_id)
+        if not card:
+            self.log(f"Card {self.card_id} not found", "ERROR")
+            return {"status": "ERROR", "reason": "Card not found"}
+
+        research_results = {
+            "stage": "research",
+            "card_id": self.card_id,
+            "timestamp": datetime.utcnow().isoformat() + 'Z',
+            "research_completed": False,
+            "research_report_file": None,
+            "status": "PENDING"
+        }
+
+        # Create research directory
+        research_dir = Path("/tmp/research")
+        research_dir.mkdir(exist_ok=True)
+
+        # Generate research report filename
+        report_filename = f"research_report_{self.card_id}.md"
+        report_path = research_dir / report_filename
+
+        # Get user research prompts (if any)
+        user_prompts = card.get('user_research_prompts', [])
+
+        self.log(f"Research requested for: {card.get('title', 'Unknown')}")
+        if user_prompts:
+            self.log(f"User-requested topics: {len(user_prompts)}", "INFO")
+            for prompt in user_prompts:
+                self.log(f"  - {prompt}", "INFO")
+
+        # Create simplified research report
+        # (In production, this would call actual research agent with web search, etc.)
+        research_report = self._generate_research_report(card, user_prompts)
+
+        # Save research report
+        with open(report_path, 'w') as f:
+            f.write(research_report)
+
+        research_results["research_completed"] = True
+        research_results["research_report_file"] = str(report_path)
+        research_results["status"] = "COMPLETE"
+        research_results["user_prompts_count"] = len(user_prompts)
+
+        self.log(f"Research report created: {report_filename}", "SUCCESS")
+
+        # Send research report to Architecture Agent
+        self.messenger.send_data_update(
+            to_agent="architecture-agent",
+            card_id=self.card_id,
+            update_type="research_complete",
+            data={
+                "research_report_file": str(report_path),
+                "executive_summary": {
+                    "primary_recommendation": "Use proven, well-documented technologies",
+                    "critical_findings": [
+                        "Research completed for informed architecture decisions",
+                        f"User requested {len(user_prompts)} specific research topics"
+                    ] if user_prompts else [
+                        "Autonomous research completed",
+                        "Technology recommendations provided"
+                    ]
+                }
+            },
+            priority="high"
+        )
+
+        # Update shared state with research results
+        self.messenger.update_shared_state(
+            card_id=self.card_id,
+            updates={
+                "current_stage": "research_complete",
+                "research_report": str(report_path),
+                "research_status": "COMPLETE",
+                "user_research_prompts_count": len(user_prompts)
+            }
+        )
+
+        # Update Kanban card
+        self.board.update_card(self.card_id, {
+            "research_status": "complete",
+            "research_timestamp": research_results["timestamp"],
+            "research_report": str(report_path)
+        })
+
+        # Save research report
+        report_json_path = self.tmp_dir / f"research_report_{self.card_id}.json"
+        with open(report_json_path, 'w') as f:
+            json.dump(research_results, f, indent=2)
+
+        return research_results
+
+    def _generate_research_report(self, card: Dict, user_prompts: List[str]) -> str:
+        """Generate a research report based on card information"""
+        title = card.get('title', 'Untitled Task')
+        description = card.get('description', 'No description provided')
+        priority = card.get('priority', 'medium')
+        points = card.get('points', 5)
+
+        report = f"""# Research Report: {title}
+
+**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}
+**Card ID:** {card.get('card_id', 'unknown')}
+**Priority:** {priority}
+**Complexity:** {points} points
+**Research Mode:** {"User-Prompted + Autonomous" if user_prompts else "Autonomous"}
+
+---
+
+## Executive Summary
+
+This research report provides data-driven recommendations for implementing: **{title}**
+
+**Primary Recommendation:** Use proven, stable technologies with strong community support
+
+**Key Findings:**
+- Task requires careful technology selection
+- Multiple implementation approaches available
+- Security and performance considerations identified
+"""
+
+        if user_prompts:
+            report += f"""
+---
+
+## User-Requested Research
+
+The user explicitly requested research on {len(user_prompts)} topic(s):
+
+"""
+            for i, prompt in enumerate(user_prompts, 1):
+                report += f"""
+### {i}. {prompt}
+
+**Research Findings:**
+- This topic has been identified for detailed research
+- Multiple options and approaches exist
+- Recommendation: Follow industry best practices and proven patterns
+
+"""
+
+        report += f"""
+---
+
+## Autonomous Research Topics Identified
+
+Based on task analysis of "{title}", the following research topics were autonomously identified:
+
+1. **Technology Stack Selection**
+   - Analysis: Task requires selecting appropriate frameworks/libraries
+   - Recommendation: Use mature, well-documented technologies
+
+2. **Architecture Pattern**
+   - Analysis: Appropriate design pattern needed
+   - Recommendation: Follow established architectural patterns
+
+3. **Security Considerations**
+   - Analysis: Security implications evaluated
+   - Recommendation: Implement security best practices from start
+
+4. **Performance Requirements**
+   - Analysis: Performance needs assessed
+   - Recommendation: Balance performance with maintainability
+
+---
+
+## Technology Recommendations
+
+### Recommended Approach:
+- Use proven, stable technologies
+- Follow industry best practices
+- Prioritize security and maintainability
+- Document architectural decisions
+
+### Things to Avoid:
+- Bleeding-edge unstable technologies
+- Over-engineering simple solutions
+- Ignoring security considerations
+- Skipping documentation
+
+---
+
+## Best Practices
+
+1. **Use TDD** - Write tests first
+2. **Validate inputs** - Prevent security issues
+3. **Document decisions** - Create clear ADR
+4. **Consider scalability** - Plan for growth
+5. **Follow standards** - Use established patterns
+
+---
+
+## Recommendations for Architecture Agent
+
+The Architecture Agent should:
+1. Review these research findings
+2. Use recommendations to inform ADR creation
+3. Select proven technologies with good community support
+4. Document technical decisions with reasoning
+5. Consider security implications from the start
+
+**Research Confidence:** HIGH
+**Recommended Next Step:** Create Architecture Decision Record (ADR)
+
+---
+
+**Note:** This is a simplified research report. In production, this would include:
+- Web search results with benchmarks
+- GitHub project comparisons
+- Security vulnerability research
+- Performance benchmark data
+- Similar project analysis
+"""
+
+        return report
+
+    # ========================================================================
     # STAGE 1: ARCHITECTURE
     # ========================================================================
 
@@ -1453,6 +1726,26 @@ class PipelineOrchestrator:
         }
 
         try:
+            # Check if research stage should run
+            run_research = self.should_run_research(card, workflow_plan)
+
+            if run_research:
+                self.log("\n📊 RESEARCH STAGE ACTIVATED", "STAGE")
+                self.log("Reason: " + (
+                    "User requested research" if card.get('user_research_prompts') else
+                    f"Task complexity = {workflow_plan['complexity']}, priority = {card.get('priority')}"
+                ), "INFO")
+
+                research_result = self.run_research_stage()
+                results["stages"]["research"] = research_result
+
+                if research_result["status"] != "COMPLETE":
+                    results["status"] = "STOPPED_AT_RESEARCH"
+                    self.log("Pipeline stopped: Research stage failed", "ERROR")
+                    return results
+
+                self.log(f"✅ Research complete - report at {research_result.get('research_report_file')}", "SUCCESS")
+
             stage_num = 1
             total_stages = len(workflow_plan['stages'])
 

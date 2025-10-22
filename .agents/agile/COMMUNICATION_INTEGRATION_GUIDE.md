@@ -25,25 +25,75 @@ This guide demonstrates how all pipeline agents use the `AgentMessenger` communi
         ┌───────────────────┼───────────────────┐
         │                   │                   │
     ┌───▼────┐         ┌───▼────┐         ┌───▼────┐
-    │ ARCH   │         │ DEP    │         │ DEV A  │
-    │ AGENT  │────────>│ VAL    │────────>│ AGENT  │
-    │        │         │ AGENT  │         │        │
-    └────────┘         └────────┘         └────────┘
-        │                                      │
-        │                                      │
-        └──────────┐                 ┌────────┘
-                   │                 │
-                ┌──▼─────────────────▼──┐
-                │   SHARED STATE        │
-                │   • ADR file          │
-                │   • Dependencies      │
-                │   • Agent statuses    │
-                └───────────────────────┘
+    │RESEARCH│         │ ARCH   │         │ DEP    │         ┌───────┐
+    │ AGENT  │────────>│ AGENT  │────────>│ VAL    │────────>│ DEV A │
+    │(NEW!)  │         │        │         │ AGENT  │         │ AGENT │
+    └────────┘         └────────┘         └────────┘         └───────┘
+        │                   │                                      │
+        │                   │                                      │
+        └───────────────────┴──────────┐                 ┌────────┘
+                                       │                 │
+                                ┌──────▼─────────────────▼──┐
+                                │   SHARED STATE            │
+                                │   • Research report       │
+                                │   • ADR file              │
+                                │   • Dependencies          │
+                                │   • Agent statuses        │
+                                └───────────────────────────┘
 ```
 
 ---
 
 ## Integration Approach
+
+### 0. Research Agent Integration (NEW!)
+
+**When activated:** Complex tasks, high-priority tasks, or when user provides research prompts
+
+```python
+from agent_messenger import AgentMessenger
+
+class ResearchAgent:
+    def __init__(self, card_id: str):
+        self.card_id = card_id
+        self.messenger = AgentMessenger("research-agent")
+        self.messenger.register_agent(
+            capabilities=["autonomous_research", "user_prompted_research", "technology_comparison"],
+            status="active"
+        )
+
+    def conduct_research(self, task: Dict, user_prompts: List[str]) -> Dict:
+        # Autonomous topic identification
+        topics = self._identify_research_topics(task)
+
+        # Conduct research on all topics
+        research_report = self._execute_research(topics, user_prompts)
+
+        # Send to Architecture Agent
+        self.messenger.send_data_update(
+            to_agent="architecture-agent",
+            card_id=self.card_id,
+            update_type="research_complete",
+            data={
+                "research_report_file": "/tmp/research/report.md",
+                "executive_summary": research_report["summary"],
+                "recommendations": research_report["recommendations"]
+            },
+            priority="high"
+        )
+
+        # Update shared state
+        self.messenger.update_shared_state(
+            card_id=self.card_id,
+            updates={
+                "research_report": "/tmp/research/report.md",
+                "research_status": "COMPLETE",
+                "recommendations": research_report["recommendations"]
+            }
+        )
+
+        return research_report
+```
 
 ### 1. Orchestrator Integration
 
