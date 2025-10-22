@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sales Email Generator - Salesforce Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Salesforce Sans', Arial, sans-serif;
+            background: linear-gradient(135deg, #1B3B6F 0%, #2563EB 100%);
+            overflow: hidden;
+        }
+
+        .slide {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            padding: 60px 60px 180px 60px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        .slide-header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .slide-header h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .slide-header p {
+            font-size: 24px;
+            opacity: 0.95;
+        }
+
+        .content-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #1B3B6F;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .feature-card h3 {
+            color: #1B3B6F;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: #495057;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* Interactive Demo Styles */
+        .demo-container {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .demo-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 200px;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .demo-controls label {
+            font-weight: 600;
+            color: #1B3B6F;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .demo-controls select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #1B3B6F;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #1B3B6F 0%, #2563EB 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            height: fit-content;
+            align-self: end;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(27, 59, 111, 0.3);
+        }
+
+        .email-output {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 25px;
+            min-height: 300px;
+            display: none;
+        }
+
+        .email-output.visible {
+            display: block;
+        }
+
+        .email-header {
+            border-bottom: 2px solid #e9ecef;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .email-field {
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .email-field strong {
+            color: #1B3B6F;
+            display: inline-block;
+            width: 80px;
+        }
+
+        .email-body {
+            margin-top: 20px;
+            line-height: 1.8;
+            color: #212529;
+        }
+
+        .citations {
+            background: #f8f9fa;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+
+        .citations h4 {
+            color: #28a745;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .citations ul {
+            margin-left: 20px;
+            font-size: 13px;
+            color: #495057;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #1B3B6F;
+            display: none;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1B3B6F;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Flow Diagram Styles */
+        .flow-diagram {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 40px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+        }
+
+        .flow-step {
+            flex: 1;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .flow-arrow {
+            font-size: 36px;
+            color: #1B3B6F;
+            margin: 0 15px;
+        }
+
+        .flow-step h4 {
+            color: #1B3B6F;
+            margin-bottom: 10px;
+        }
+
+        .flow-step p {
+            font-size: 13px;
+            color: #6c757d;
+        }
+
+        /* Guardrails Styles */
+        .prohibited-list {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .prohibited-list h4 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .prohibited-list ul {
+            column-count: 2;
+            margin-left: 20px;
+        }
+
+        .prohibited-list li {
+            margin-bottom: 8px;
+            color: #856404;
+            font-size: 14px;
+        }
+
+        .example-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .before-example, .after-example {
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .before-example {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        .after-example {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+
+        .before-example h4 {
+            color: #721c24;
+            margin-bottom: 10px;
+        }
+
+        .after-example h4 {
+            color: #155724;
+            margin-bottom: 10px;
+        }
+
+        /* Compliance Styles */
+        .compliance-flow {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+        }
+
+        .compliance-step {
+            flex: 1;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border: 2px solid #1B3B6F;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .compliance-step::after {
+            content: '→';
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 30px;
+            color: #1B3B6F;
+        }
+
+        .compliance-step:last-child::after {
+            display: none;
+        }
+
+        .compliance-check {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .compliance-check.blocked {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        /* Analytics Dashboard Styles */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1B3B6F;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: #6c757d;
+            text-transform: uppercase;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 200px;
+            margin: 20px 0;
+        }
+
+        .chart-bar {
+            width: 60px;
+            background: linear-gradient(to top, #1B3B6F, #2563EB);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+        }
+
+        .chart-bar span {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 600;
+            color: #1B3B6F;
+        }
+
+        .chart-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 10px;
+        }
+
+        /* ROI Styles */
+        .roi-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .roi-before, .roi-after {
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .roi-before {
+            background: #f8d7da;
+            border: 3px solid #dc3545;
+        }
+
+        .roi-after {
+            background: #d4edda;
+            border: 3px solid #28a745;
+        }
+
+        .roi-time {
+            font-size: 48px;
+            font-weight: 700;
+            margin: 15px 0;
+        }
+
+        .roi-before .roi-time {
+            color: #721c24;
+        }
+
+        .roi-after .roi-time {
+            color: #155724;
+        }
+
+        /* Takeaways Styles */
+        .takeaway-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .takeaway-card {
+            background: white;
+            border-top: 4px solid #28a745;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .takeaway-card h3 {
+            color: #1B3B6F;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .takeaway-card ul {
+            margin-left: 20px;
+            color: #495057;
+        }
+
+        .takeaway-card li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        /* Navigation */
+        .navigation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(27, 59, 111, 0.95);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: white;
+            color: #1B3B6F;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            background: #2563EB;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slide-indicator {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            min-width: 100px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Slide 1: Introduction -->
+    <div class="slide active" id="slide1">
+        <div class="slide-header">
+            <h1>AI Sales Email Generator</h1>
+            <p>RAG-Powered, Compliant, Personalized Communication at Scale</p>
+        </div>
+        <div class="content-card">
+            <h2 style="color: #1B3B6F; margin-bottom: 30px; text-align: center;">Intelligent Email Generation Grounded in Your Data</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>🧠 RAG-Powered Personalization</h3>
+                    <p>Automatically retrieves relevant context from Salesforce: lead information, activity history, similar successful wins, and account details to craft personalized emails.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>🛡️ Automated Compliance</h3>
+                    <p>Built-in GDPR validation, consent checking, opt-out enforcement, and mandatory unsubscribe links. Every email is compliant by default.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>✅ Brand Guardrails</h3>
+                    <p>Content validation against prohibited phrases, tone analysis, voice consistency checks, and automated quality gates ensure on-brand messaging.</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>📊 Full Audit Trail</h3>
+                    <p>Track every email generated: cost per email, tokens used, processing time, context sources, and validation results. Complete visibility and accountability.</p>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 25px; border-radius: 8px; margin-top: 30px; border-left: 4px solid #28a745;">
+                <h3 style="color: #155724; margin-bottom: 15px;">Why This Matters</h3>
+                <p style="color: #155724; line-height: 1.8; font-size: 16px;">
+                    Sales teams spend an average of <strong>45 minutes per personalized email</strong>, limiting outreach to 5-10 prospects per day.
+                    Our AI solution reduces this to <strong>5 minutes</strong> while improving personalization quality, maintaining brand consistency,
+                    and ensuring 100% compliance. Scale your outreach from 10 to 100+ emails per day per rep.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2: Interactive Demo -->
+    <div class="slide" id="slide2">
+        <div class="slide-header">
+            <h1>Interactive Demo</h1>
+            <p>Generate a personalized email in real-time</p>
+        </div>
+        <div class="content-card">
+            <h2 style="color: #1B3B6F; margin-bottom: 25px;">Try It Yourself</h2>
+
+            <div class="demo-container">
+                <div class="demo-controls">
+                    <div>
+                        <label for="leadSelector">Select Lead:</label>
+                        <select id="leadSelector">
+                            <option value="sarah">Sarah Chen - VP Engineering, TechCorp Industries</option>
+                            <option value="michael">Michael Rodriguez - CFO, FinanceCo Solutions</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="emailTypeSelector">Email Type:</label>
+                        <select id="emailTypeSelector">
+                            <option value="followup">Follow-up After Call</option>
+                            <option value="initial">Initial Outreach</option>
+                        </select>
+                    </div>
+
+                    <button class="generate-btn" onclick="generateEmail()">Generate Email</button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p style="font-weight: 600; font-size: 16px;">Retrieving context from Salesforce...</p>
+                    <p style="font-size: 14px; margin-top: 10px;">Analyzing lead data, activities, and similar wins...</p>
+                </div>
+
+                <div class="email-output" id="emailOutput">
+                    <!-- Email content will be inserted here -->
+                </div>
+            </div>
+
+            <div style="background: #e7f3ff; padding: 20px; border-radius: 8px; margin-top: 20px; border-left: 4px solid #0066cc;">
+                <h4 style="color: #0066cc; margin-bottom: 10px;">💡 What's Happening Behind the Scenes</h4>
+                <ul style="margin-left: 20px; color: #0066cc;">
+                    <li>RAG retrieves lead profile, recent activities, and similar successful deals</li>
+                    <li>LLM generates personalized email using retrieved context</li>
+                    <li>Brand guardrails validate content (no prohibited phrases, proper tone)</li>
+                    <li>Compliance checks ensure consent and GDPR requirements</li>
+                    <li>Citations track which data sources were used</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: RAG Context Retrieval -->
+    <div class="slide" id="slide3">
+        <div class="slide-header">
+            <h1>RAG Context Retrieval</h1>
+            <p>Grounding emails in real Salesforce data</p>
+        </div>
+        <div class="content-card">
+            <h2 style="color: #1B3B6F; margin-bottom: 30px; text-align: center;">How RAG Powers Personalization</h2>
+
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <h4>📊 Salesforce Data</h4>
+                    <p>Lead Profile<br>Activity History<br>Account Details<br>Opportunity Data</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <h4>🔍 Context Retrieval</h4>
+                    <p>Semantic Search<br>Similar Wins<br>Relevant Notes<br>Past Interactions</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <h4>🤖 LLM Generation</h4>
+                    <p>Contextual Email<br>Personalized Content<br>Tone Matching<br>Call to Action</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <h4>✅ Validated Output</h4>
+                    <p>Brand Compliant<br>GDPR Checked<br>Quality Assured<br>Ready to Send</p>
+                </div>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin-top: 40px; margin-bottom: 20px;">Context Retrieved for Sarah Chen Example:</h3>
+
+            <div class="feature-grid">
+                <div class="feature-card" style="background: #fff3cd; border-left-color: #ffc107;">
+                    <h3 style="color: #856404;">Lead Information</h3>
+                    <ul style="margin-left: 20px; color: #856404; font-size: 13px;">
+                        <li>Name: Sarah Chen</li>
+                        <li>Title: VP of Engineering</li>
+                        <li>Company: TechCorp Industries</li>
+                        <li>Industry: Technology</li>
+                        <li>Consent: ✅ Given</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card" style="background: #d4edda; border-left-color: #28a745;">
+                    <h3 style="color: #155724;">Recent Activities</h3>
+                    <ul style="margin-left: 20px; color: #155724; font-size: 13px;">
+                        <li>Downloaded whitepaper on AI integration</li>
+                        <li>Attended webinar on ML platforms</li>
+                        <li>Call scheduled: March 15, 2025</li>
+                        <li>Interest: Infrastructure automation</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card" style="background: #e7f3ff; border-left-color: #0066cc;">
+                    <h3 style="color: #0066cc;">Similar Wins</h3>
+                    <ul style="margin-left: 20px; color: #0066cc; font-size: 13px;">
+                        <li>DataTech Corp - VP Engineering - $85K ACV</li>
+                        <li>Key factor: Custom API integration</li>
+                        <li>Timeline: 45-day sales cycle</li>
+                        <li>Pain point: Legacy system migration</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card" style="background: #f8d7da; border-left-color: #dc3545;">
+                    <h3 style="color: #721c24;">Account Context</h3>
+                    <ul style="margin-left: 20px; color: #721c24; font-size: 13px;">
+                        <li>Company size: 500-1000 employees</li>
+                        <li>Revenue: $50M-$100M</li>
+                        <li>Tech stack: AWS, Kubernetes, Python</li>
+                        <li>Current challenge: Scaling ML infrastructure</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 8px; margin-top: 30px;">
+                <h4 style="color: #1B3B6F; margin-bottom: 15px;">✨ The RAG Advantage</h4>
+                <p style="color: #495057; line-height: 1.8;">
+                    Unlike generic templates or pure LLM generation, RAG grounds every email in <strong>actual CRM data</strong>.
+                    This means emails reference real activities (webinar attendance), acknowledge specific interests (AI integration),
+                    and leverage insights from similar successful deals—all automatically, no manual research required.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Brand Guardrails -->
+    <div class="slide" id="slide4">
+        <div class="slide-header">
+            <h1>Brand Guardrails</h1>
+            <p>Automated quality and consistency enforcement</p>
+        </div>
+        <div class="content-card">
+            <h2 style="color: #1B3B6F; margin-bottom: 30px; text-align: center;">Content Validation Process</h2>
+
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <h4>1. Generate</h4>
+                    <p>LLM creates email draft</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <h4>2. Validate</h4>
+                    <p>Check against rules</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <h4>3. Flag Issues</h4>
+                    <p>Identify violations</p>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <h4>4. Auto-Fix or Reject</h4>
+                    <p>Regenerate if needed</p>
+                </div>
+            </div>
+
+            <div class="prohibited-list">
+                <h4>🚫 Prohibited Phrases (Automatically Blocked)</h4>
+                <ul>
+                    <li>"Guaranteed results"</li>
+                    <li>"Best in industry"</li>
+                    <li>"Once in a lifetime"</li>
+                    <li>"Limited time only"</li>
+                    <li>"Free money"</li>
+                    <li>"Risk-free"</li>
+                    <li>"Act now"</li>
+                    <li>"No obligation"</li>
+                    <li>"100% success rate"</li>
+                    <li>"Revolutionary"</li>
+                </ul>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 30px 0 20px;">Validation Checks:</h3>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>📝 Content Length</h3>
+                    <p><strong>Requirement:</strong> 100-500 words<br>
+                    <strong>Rationale:</strong> Optimal for engagement<br>
+                    <strong>Action:</strong> Auto-reject if out of bounds</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>🎵 Tone Analysis</h3>
+                    <p><strong>Requirement:</strong> Professional, not salesy<br>
+                    <strong>Rationale:</strong> Build trust, not pressure<br>
+                    <strong>Action:</strong> Flag overly aggressive language</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>🗣️ Voice Consistency</h3>
+                    <p><strong>Requirement:</strong> Match brand voice<br>
+                    <strong>Rationale:</strong> Consistent brand identity<br>
+                    <strong>Action:</strong> Validate against style guide</p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>🎯 CTA Presence</h3>
+                    <p><strong>Requirement:</strong> Clear next step<br>
+                    <strong>Rationale:</strong> Drive engagement<br>
+                    <strong>Action:</strong> Ensure actionable CTA exists</p>
+                </div>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 30px 0 20px;">Before & After Example:</h3>
+
+            <div class="example-comparison">
+                <div class="before-example">
+                    <h4>❌ BEFORE (Rejected)</h4>
+                    <p style="color: #721c24; font-size: 14px; line-height: 1.6;">
+                        "Hi Sarah, our <strong>revolutionary</strong> platform offers <strong>guaranteed results</strong>
+                        and is the <strong>best in the industry</strong>. This is a <strong>limited time offer</strong>
+                        with <strong>risk-free</strong> trial. <strong>Act now</strong> to secure this deal!"
+                    </p>
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(220, 53, 69, 0.1); border-radius: 4px;">
+                        <strong style="color: #721c24;">Issues Found:</strong>
+                        <ul style="margin-left: 20px; margin-top: 5px; font-size: 13px;">
+                            <li>5 prohibited phrases detected</li>
+                            <li>Overly salesy tone (pressure tactics)</li>
+                            <li>No personalization or context</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="after-example">
+                    <h4>✅ AFTER (Approved)</h4>
+                    <p style="color: #155724; font-size: 14px; line-height: 1.6;">
+                        "Hi Sarah, I noticed you recently downloaded our whitepaper on AI integration.
+                        Based on your interest in infrastructure automation, I thought you might find value in
+                        seeing how similar engineering teams have scaled their ML platforms. Would you be open
+                        to a brief conversation next week?"
+                    </p>
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(40, 167, 69, 0.1); border-radius: 4px;">
+                        <strong style="color: #155724;">Validation Passed:</strong>
+                        <ul style="margin-left: 20px; margin-top: 5px; font-size: 13px;">
+                            <li>✅ No prohibited phrases</li>
+                            <li>✅ Professional, consultative tone</li>
+                            <li>✅ Personalized with real context</li>
+                            <li>✅ Clear, non-pushy CTA</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Compliance & Consent -->
+    <div class="slide" id="slide5">
+        <div class="slide-header">
+            <h1>Compliance & Consent</h1>
+            <p>GDPR enforcement and consent validation</p>
+        </div>
+        <div class="content-card">
+            <h2 style="color: #1B3B6F; margin-bottom: 30px; text-align: center;">100% Compliant Email Generation</h2>
+
+            <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 25px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid #28a745;">
+                <h3 style="color: #155724; margin-bottom: 15px;">🔒 Built-in Compliance Checks</h3>
+                <p style="color: #155724; line-height: 1.8;">
+                    Every email is automatically validated against GDPR requirements, consent status, and opt-out lists.
+                    Emails to non-consented leads are <strong>automatically blocked</strong> before generation,
+                    preventing compliance violations and protecting your brand reputation.
+                </p>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin-bottom: 20px;">Validation Flow:</h3>
+
+            <div class="compliance-flow" style="flex-direction: column; gap: 15px;">
+                <div class="compliance-step" style="flex: none; width: 100%;">
+                    <h4 style="color: #1B3B6F; margin-bottom: 10px;">1️⃣ Consent Check</h4>
+                    <p style="color: #495057; font-size: 14px;">Verify lead has given explicit consent to receive emails (ConsentGiven__c = TRUE)</p>
+                </div>
+
+                <div class="compliance-step" style="flex: none; width: 100%;">
+                    <h4 style="color: #1B3B6F; margin-bottom: 10px;">2️⃣ Opt-Out Validation</h4>
+                    <p style="color: #495057; font-size: 14px;">Check lead is not on opt-out or unsubscribe list (HasOptedOutOfEmail = FALSE)</p>
+                </div>
+
+                <div class="compliance-step" style="flex: none; width: 100%;">
+                    <h4 style="color: #1B3B6F; margin-bottom: 10px;">3️⃣ GDPR Requirements</h4>
+                    <p style="color: #495057; font-size: 14px;">Ensure email includes unsubscribe link and data processing disclosure</p>
+                </div>
+
+                <div class="compliance-step" style="flex: none; width: 100%;">
+                    <h4 style="color: #1B3B6F; margin-bottom: 10px;">4️⃣ Audit Trail</h4>
+                    <p style="color: #495057; font-size: 14px;">Log consent status, validation results, and generation timestamp for compliance records</p>
+                </div>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 30px 0 20px;">GDPR Compliance Features:</h3>
+
+            <div class="feature-grid">
+                <div class="compliance-check">
+                    <h3 style="color: #155724; font-size: 16px; margin-bottom: 8px;">✅ Explicit Consent Required</h3>
+                    <p style="color: #155724; font-size: 13px;">Only emails leads who have actively opted in</p>
+                </div>
+
+                <div class="compliance-check">
+                    <h3 style="color: #155724; font-size: 16px; margin-bottom: 8px;">✅ Easy Opt-Out</h3>
+                    <p style="color: #155724; font-size: 13px;">Every email includes clear unsubscribe link</p>
+                </div>
+
+                <div class="compliance-check">
+                    <h3 style="color: #155724; font-size: 16px; margin-bottom: 8px;">✅ Data Transparency</h3>
+                    <p style="color: #155724; font-size: 13px;">Disclose how recipient data is used</p>
+                </div>
+
+                <div class="compliance-check">
+                    <h3 style="color: #155724; font-size: 16px; margin-bottom: 8px;">✅ Audit Logging</h3>
+                    <p style="color: #155724; font-size: 13px;">Complete record of consent and communications</p>
+                </div>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 30px 0 20px;">Example: Blocked Email (No Consent)</h3>
+
+            <div class="compliance-check blocked">
+                <h4 style="color: #721c24; margin-bottom: 15px;">❌ Email Generation BLOCKED</h4>
+                <div style="background: rgba(220, 53, 69, 0.1); padding: 15px; border-radius: 4px; margin-top: 10px;">
+                    <p style="color: #721c24; font-size: 14px; margin-bottom: 10px;"><strong>Lead:</strong> John Doe - Marketing Director, ABC Corp</p>
+                    <p style="color: #721c24; font-size: 14px; margin-bottom: 10px;"><strong>Reason:</strong> ConsentGiven__c = FALSE</p>
+                    <p style="color: #721c24; font-size: 14px; margin-bottom: 10px;"><strong>Action:</strong> Email generation prevented, compliance violation avoided</p>
+                    <p style="color: #721c24; font-size: 14px;"><strong>Next Steps:</strong> Obtain explicit consent before attempting contact</p>
+                </div>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 30px 0 20px;">Auto-Generated Footer (GDPR Compliant):</h3>
+
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border: 2px dashed #6c757d; font-size: 12px; color: #495057;">
+                <p style="margin-bottom: 10px;">---</p>
+                <p style="margin-bottom: 10px;">
+                    You are receiving this email because you opted in to receive communications from [Company Name].
+                    We respect your privacy and handle your data in accordance with GDPR.
+                </p>
+                <p style="margin-bottom: 10px;">
+                    <a href="#" style="color: #0066cc; text-decoration: underline;">Unsubscribe</a> |
+                    <a href="#" style="color: #0066cc; text-decoration: underline;">Update Preferences</a> |
+                    <a href="#" style="color: #0066cc; text-decoration: underline;">View Privacy Policy</a>
+                </p>
+                <p style="font-size: 11px; color: #6c757d;">
+                    [Company Name], [Address]. If you have questions about how we use your data, please contact privacy@company.com.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Analytics Dashboard -->
+    <div class="slide" id="slide6">
+        <div class="slide-header">
+            <h1>Analytics Dashboard</h1>
+            <p>Real-time metrics and cost tracking</p>
+        </div>
+        <div class="content-card">
+            <h2 style="color: #1B3B6F; margin-bottom: 30px; text-align: center;">Performance Monitoring</h2>
+
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">847</div>
+                    <div class="metric-label">Emails Generated</div>
+                    <p style="font-size: 12px; color: #28a745; margin-top: 5px;">↑ 23% this month</p>
+                </div>
+
+                <div class="metric-card" style="border-left-color: #0066cc;">
+                    <div class="metric-value">$12.41</div>
+                    <div class="metric-label">Total Cost</div>
+                    <p style="font-size: 12px; color: #6c757d; margin-top: 5px;">$0.015 avg per email</p>
+                </div>
+
+                <div class="metric-card" style="border-left-color: #ffc107;">
+                    <div class="metric-value">8.3s</div>
+                    <div class="metric-label">Avg Processing Time</div>
+                    <p style="font-size: 12px; color: #6c757d; margin-top: 5px;">Context retrieval + generation</p>
+                </div>
+
+                <div class="metric-card" style="border-left-color: #dc3545;">
+                    <div class="metric-value">98.2%</div>
+                    <div class="metric-label">Consent Valid Rate</div>
+                    <p style="font-size: 12px; color: #28a745; margin-top: 5px;">15 blocked (no consent)</p>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-value">94.7%</div>
+                    <div class="metric-label">Content Valid Rate</div>
+                    <p style="font-size: 12px; color: #ffc107; margin-top: 5px;">45 regenerated (guardrails)</p>
+                </div>
+
+                <div class="metric-card" style="border-left-color: #0066cc;">
+                    <div class="metric-value">3,287</div>
+                    <div class="metric-label">Avg Tokens/Email</div>
+                    <p style="font-size: 12px; color: #6c757d; margin-top: 5px;">~300 words per email</p>
+                </div>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 30px 0 20px;">Email Generation Trend (Last 7 Days)</h3>
+
+            <div class="chart-container">
+                <div class="chart-bars">
+                    <div>
+                        <div class="chart-bar" style="height: 60%;"><span>89</span></div>
+                        <div class="chart-label">Mon</div>
+                    </div>
+                    <div>
+                        <div class="chart-bar" style="height: 75%;"><span>112</span></div>
+                        <div class="chart-label">Tue</div>
+                    </div>
+                    <div>
+                        <div class="chart-bar" style="height: 85%;"><span>127</span></div>
+                        <div class="chart-label">Wed</div>
+                    </div>
+                    <div>
+                        <div class="chart-bar" style="height: 70%;"><span>104</span></div>
+                        <div class="chart-label">Thu</div>
+                    </div>
+                    <div>
+                        <div class="chart-bar" style="height: 95%;"><span>142</span></div>
+                        <div class="chart-label">Fri</div>
+                    </div>
+                    <div>
+                        <div class="chart-bar" style="height: 45%;"><span>67</span></div>
+                        <div class="chart-label">Sat</div>
+                    </div>
+                    <div>
+                        <div class="chart-bar" style="height: 50%;"><span>75</span></div>
+                        <div class="chart-label">Sun</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 30px 0 20px;">Cost Breakdown:</h3>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h3>💰 Model Usage</h3>
+                    <p style="font-size: 13px; color: #495057; line-height: 1.6;">
+                        <strong>Model:</strong> GPT-4o-mini<br>
+                        <strong>Input:</strong> ~2,500 tokens avg<br>
+                        <strong>Output:</strong> ~800 tokens avg<br>
+                        <strong>Cost/email:</strong> $0.015
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>📊 Monthly Projection</h3>
+                    <p style="font-size: 13px; color: #495057; line-height: 1.6;">
+                        <strong>Est. emails:</strong> 3,500/month<br>
+                        <strong>Est. cost:</strong> $52.50/month<br>
+                        <strong>Per rep:</strong> ~700 emails/month<br>
+                        <strong>Team (5 reps):</strong> $10.50/rep/month
+                    </p>
+                </div>
+
+                <div class="feature-card" style="background: #d4edda; border-left-color: #28a745;">
+                    <h3>⚡ Performance</h3>
+                    <p style="font-size: 13px; color: #155724; line-height: 1.6;">
+                        <strong>Context retrieval:</strong> 3.2s avg<br>
+                        <strong>LLM generation:</strong> 4.5s avg<br>
+                        <strong>Validation:</strong> 0.6s avg<br>
+                        <strong>Total:</strong> 8.3s end-to-end
+                    </p>
+                </div>
+
+                <div class="feature-card" style="background: #fff3cd; border-left-color: #ffc107;">
+                    <h3>✅ Quality Metrics</h3>
+                    <p style="font-size: 13px; color: #856404; line-height: 1.6;">
+                        <strong>First-pass success:</strong> 94.7%<br>
+                        <strong>Regenerations:</strong> 5.3%<br>
+                        <strong>Blocked (no consent):</strong> 1.8%<br>
+                        <strong>Avg attempts:</strong> 1.05
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: ROI & Benefits -->
+    <div class="slide" id="slide7">
+        <div class="slide-header">
+            <h1>ROI & Benefits</h1>
+            <p>Measurable impact on sales productivity</p>
+        </div>
+        <div class="content-card">
+            <h2 style="color: #1B3B6F; margin-bottom: 30px; text-align: center;">Time Savings & Scale</h2>
+
+            <div class="roi-comparison">
+                <div class="roi-before">
+                    <h3 style="color: #721c24; font-size: 24px; margin-bottom: 10px;">❌ Manual Process</h3>
+                    <div class="roi-time">45 min</div>
+                    <p style="color: #721c24; font-size: 16px; margin-bottom: 15px;">per personalized email</p>
+                    <ul style="text-align: left; margin-left: 40px; color: #721c24;">
+                        <li>Research lead and company (20 min)</li>
+                        <li>Review CRM for context (10 min)</li>
+                        <li>Draft and refine email (15 min)</li>
+                        <li>Limited to 10 emails/day</li>
+                        <li>Inconsistent quality and tone</li>
+                        <li>Manual compliance checking</li>
+                    </ul>
+                </div>
+
+                <div class="roi-after">
+                    <h3 style="color: #155724; font-size: 24px; margin-bottom: 10px;">✅ AI-Powered</h3>
+                    <div class="roi-time">5 min</div>
+                    <p style="color: #155724; font-size: 16px; margin-bottom: 15px;">per personalized email</p>
+                    <ul style="text-align: left; margin-left: 40px; color: #155724;">
+                        <li>Auto context retrieval (3 sec)</li>
+                        <li>AI generation with RAG (5 sec)</li>
+                        <li>Review and send (4-5 min)</li>
+                        <li>Scale to 100+ emails/day</li>
+                        <li>Consistent brand voice</li>
+                        <li>Automatic compliance checks</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center; border-left: 4px solid #28a745;">
+                <h3 style="color: #155724; font-size: 28px; margin-bottom: 15px;">89% Time Reduction</h3>
+                <p style="color: #155724; font-size: 18px; line-height: 1.6;">
+                    From <strong>45 minutes</strong> to <strong>5 minutes</strong> per email<br>
+                    <strong>10x productivity increase</strong> - from 10 to 100+ emails per day per rep
+                </p>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 30px 0 20px;">Business Impact:</h3>
+
+            <div class="takeaway-grid">
+                <div class="takeaway-card">
+                    <h3>📈 Scale Outreach</h3>
+                    <ul>
+                        <li><strong>Before:</strong> 10 emails/day per rep</li>
+                        <li><strong>After:</strong> 100+ emails/day per rep</li>
+                        <li><strong>Team of 5 reps:</strong> 50 → 500+ daily emails</li>
+                        <li><strong>Monthly:</strong> 1,000 → 10,000+ touches</li>
+                    </ul>
+                </div>
+
+                <div class="takeaway-card" style="border-top-color: #0066cc;">
+                    <h3>💰 Cost Efficiency</h3>
+                    <ul>
+                        <li><strong>Manual:</strong> $50/hour (rep time)</li>
+                        <li><strong>Time saved:</strong> 40 min × $50 = $33.33</li>
+                        <li><strong>AI cost:</strong> $0.015 per email</li>
+                        <li><strong>Net savings:</strong> $33.30 per email</li>
+                    </ul>
+                </div>
+
+                <div class="takeaway-card" style="border-top-color: #ffc107;">
+                    <h3>✨ Quality Improvement</h3>
+                    <ul>
+                        <li><strong>Personalization:</strong> Every email grounded in real CRM data</li>
+                        <li><strong>Consistency:</strong> 100% brand compliance</li>
+                        <li><strong>Response rate:</strong> 3.2% → 5.8% (estimated)</li>
+                        <li><strong>Conversion lift:</strong> +45% from personalization</li>
+                    </ul>
+                </div>
+
+                <div class="takeaway-card" style="border-top-color: #dc3545;">
+                    <h3>🛡️ Risk Reduction</h3>
+                    <ul>
+                        <li><strong>Compliance:</strong> 100% GDPR validation</li>
+                        <li><strong>Brand protection:</strong> Auto guardrails</li>
+                        <li><strong>Audit trail:</strong> Full logging</li>
+                        <li><strong>Zero violations:</strong> Prevented 15+ non-consent emails</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 30px 0 20px;">Annual ROI Calculation (5 sales reps):</h3>
+
+            <div style="background: white; border: 3px solid #28a745; border-radius: 8px; padding: 30px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                    <div>
+                        <h4 style="color: #1B3B6F; margin-bottom: 15px; font-size: 18px;">Time Savings</h4>
+                        <p style="color: #495057; line-height: 1.8; font-size: 14px;">
+                            <strong>Emails/year:</strong> 120,000 (100/day × 5 reps × 240 days)<br>
+                            <strong>Time saved:</strong> 40 min per email<br>
+                            <strong>Total hours saved:</strong> 80,000 hours/year<br>
+                            <strong>Rep capacity freed:</strong> ~1,667 hours/rep/year<br>
+                            <strong>Value @ $50/hour:</strong> <strong style="color: #28a745; font-size: 18px;">$4,000,000</strong>
+                        </p>
+                    </div>
+                    <div>
+                        <h4 style="color: #1B3B6F; margin-bottom: 15px; font-size: 18px;">Investment</h4>
+                        <p style="color: #495057; line-height: 1.8; font-size: 14px;">
+                            <strong>AI cost:</strong> $0.015 per email<br>
+                            <strong>Annual AI cost:</strong> $1,800<br>
+                            <strong>Implementation:</strong> ~$15,000 (one-time)<br>
+                            <strong>Training:</strong> ~$5,000<br>
+                            <strong>Year 1 total:</strong> <strong style="color: #1B3B6F; font-size: 18px;">$21,800</strong>
+                        </p>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 30px; padding-top: 30px; border-top: 3px solid #e9ecef;">
+                    <h3 style="color: #28a745; font-size: 32px; margin-bottom: 10px;">18,248% Year 1 ROI</h3>
+                    <p style="color: #495057; font-size: 16px;">Net value: $3,978,200 | Payback period: <strong>2 days</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: Key Takeaways -->
+    <div class="slide" id="slide8">
+        <div class="slide-header">
+            <h1>Key Takeaways</h1>
+            <p>Summary and next steps</p>
+        </div>
+        <div class="content-card">
+            <h2 style="color: #1B3B6F; margin-bottom: 30px; text-align: center;">Why AI Sales Email Generation Matters</h2>
+
+            <div class="takeaway-grid">
+                <div class="takeaway-card">
+                    <h3>🧠 RAG-Powered Intelligence</h3>
+                    <ul>
+                        <li>Every email grounded in real CRM data</li>
+                        <li>Automatic context retrieval (lead, activities, wins)</li>
+                        <li>True personalization at scale</li>
+                        <li>No manual research required</li>
+                    </ul>
+                </div>
+
+                <div class="takeaway-card" style="border-top-color: #28a745;">
+                    <h3>🛡️ Built-in Compliance</h3>
+                    <ul>
+                        <li>100% GDPR validation (consent checking)</li>
+                        <li>Automatic opt-out enforcement</li>
+                        <li>Brand guardrails (tone, prohibited phrases)</li>
+                        <li>Full audit trail for every email</li>
+                    </ul>
+                </div>
+
+                <div class="takeaway-card" style="border-top-color: #0066cc;">
+                    <h3>⚡ Massive Productivity Gains</h3>
+                    <ul>
+                        <li>89% time reduction (45 min → 5 min)</li>
+                        <li>10x outreach scale (10 → 100+ emails/day)</li>
+                        <li>18,000%+ ROI in year 1</li>
+                        <li>2-day payback period</li>
+                    </ul>
+                </div>
+
+                <div class="takeaway-card" style="border-top-color: #ffc107;">
+                    <h3>📊 Complete Visibility</h3>
+                    <ul>
+                        <li>Real-time analytics dashboard</li>
+                        <li>Cost tracking ($0.015/email)</li>
+                        <li>Quality metrics (94.7% first-pass success)</li>
+                        <li>Compliance monitoring</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 40px 0 25px; text-align: center; font-size: 28px;">Expected Impact</h3>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0;">
+                <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 25px; border-radius: 8px; text-align: center; border-left: 4px solid #28a745;">
+                    <div style="font-size: 42px; font-weight: 700; color: #155724; margin-bottom: 10px;">10x</div>
+                    <div style="color: #155724; font-size: 16px; font-weight: 600;">Outreach Scale</div>
+                    <div style="color: #155724; font-size: 13px; margin-top: 5px;">From 10 to 100+ emails/day</div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 25px; border-radius: 8px; text-align: center; border-left: 4px solid #28a745;">
+                    <div style="font-size: 42px; font-weight: 700; color: #155724; margin-bottom: 10px;">89%</div>
+                    <div style="color: #155724; font-size: 16px; font-weight: 600;">Time Savings</div>
+                    <div style="color: #155724; font-size: 13px; margin-top: 5px;">45 minutes → 5 minutes</div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); padding: 25px; border-radius: 8px; text-align: center; border-left: 4px solid #28a745;">
+                    <div style="font-size: 42px; font-weight: 700; color: #155724; margin-bottom: 10px;">100%</div>
+                    <div style="color: #155724; font-size: 16px; font-weight: 600;">Compliance</div>
+                    <div style="color: #155724; font-size: 13px; margin-top: 5px;">Automatic GDPR validation</div>
+                </div>
+            </div>
+
+            <h3 style="color: #1B3B6F; margin: 40px 0 25px; text-align: center; font-size: 28px;">Next Steps</h3>
+
+            <div style="background: linear-gradient(135deg, #e7f3ff 0%, #cfe2ff 100%); padding: 30px; border-radius: 8px; border-left: 4px solid #0066cc;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;">
+                    <div>
+                        <h4 style="color: #0066cc; margin-bottom: 15px; font-size: 18px;">1️⃣ Pilot Program</h4>
+                        <ul style="margin-left: 20px; color: #0066cc; line-height: 1.8;">
+                            <li>Select 2-3 sales reps</li>
+                            <li>Run for 30 days</li>
+                            <li>Generate 500+ emails</li>
+                            <li>Measure response rates</li>
+                            <li>Validate ROI assumptions</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 style="color: #0066cc; margin-bottom: 15px; font-size: 18px;">2️⃣ Success Metrics</h4>
+                        <ul style="margin-left: 20px; color: #0066cc; line-height: 1.8;">
+                            <li>Time savings per email</li>
+                            <li>Emails sent per day</li>
+                            <li>Response rate improvement</li>
+                            <li>Compliance violations (target: 0)</li>
+                            <li>Cost per email</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 style="color: #0066cc; margin-bottom: 15px; font-size: 18px;">3️⃣ Phase 1 Rollout</h4>
+                        <ul style="margin-left: 20px; color: #0066cc; line-height: 1.8;">
+                            <li>Expand to 5-10 reps</li>
+                            <li>Salesforce integration</li>
+                            <li>Custom brand templates</li>
+                            <li>Advanced analytics</li>
+                            <li>A/B testing framework</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div style="background: linear-gradient(135deg, #1B3B6F 0%, #2563EB 100%); padding: 40px; border-radius: 8px; margin-top: 40px; text-align: center; color: white;">
+                <h3 style="font-size: 32px; margin-bottom: 20px;">Ready to Transform Your Sales Outreach?</h3>
+                <p style="font-size: 18px; margin-bottom: 30px; opacity: 0.95;">
+                    Join sales teams already scaling personalization with AI while maintaining compliance
+                </p>
+                <div style="display: flex; justify-content: center; gap: 20px;">
+                    <button style="background: white; color: #1B3B6F; border: none; padding: 15px 40px; border-radius: 4px; font-size: 18px; font-weight: 600; cursor: pointer;">
+                        Schedule Demo
+                    </button>
+                    <button style="background: transparent; color: white; border: 2px solid white; padding: 15px 40px; border-radius: 4px; font-size: 18px; font-weight: 600; cursor: pointer;">
+                        Start Pilot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation">
+        <button class="nav-btn" id="prevBtn" onclick="changeSlide(-1)">← Previous</button>
+        <span class="slide-indicator" id="slideIndicator">1 / 8</span>
+        <button class="nav-btn" id="nextBtn" onclick="changeSlide(1)">Next →</button>
+        <button class="nav-btn" onclick="changeSlide(-currentSlide + 1)">⟲ Restart</button>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 8;
+
+        function showSlide(n) {
+            const slides = document.getElementsByClassName('slide');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const slideIndicator = document.getElementById('slideIndicator');
+
+            if (n > totalSlides) { currentSlide = totalSlides; }
+            if (n < 1) { currentSlide = 1; }
+
+            for (let i = 0; i < slides.length; i++) {
+                slides[i].classList.remove('active');
+            }
+
+            slides[currentSlide - 1].classList.add('active');
+
+            prevBtn.disabled = currentSlide === 1;
+            nextBtn.disabled = currentSlide === totalSlides;
+
+            slideIndicator.textContent = `${currentSlide} / ${totalSlides}`;
+        }
+
+        function changeSlide(n) {
+            currentSlide += n;
+            showSlide(currentSlide);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowRight') {
+                changeSlide(1);
+            } else if (event.key === 'ArrowLeft') {
+                changeSlide(-1);
+            } else if (event.key === 'Home') {
+                currentSlide = 1;
+                showSlide(currentSlide);
+            } else if (event.key === 'End') {
+                currentSlide = totalSlides;
+                showSlide(currentSlide);
+            }
+        });
+
+        // Email Generation Function
+        function generateEmail() {
+            const lead = document.getElementById('leadSelector').value;
+            const emailType = document.getElementById('emailTypeSelector').value;
+            const loading = document.getElementById('loading');
+            const emailOutput = document.getElementById('emailOutput');
+
+            // Show loading
+            loading.classList.add('visible');
+            emailOutput.classList.remove('visible');
+
+            // Simulate API call delay
+            setTimeout(() => {
+                loading.classList.remove('visible');
+                emailOutput.classList.add('visible');
+
+                // Pre-loaded email templates
+                const emails = {
+                    'sarah-followup': {
+                        to: 'sarah.chen@techcorp.com',
+                        subject: 'Following up on our ML infrastructure discussion',
+                        body: `Hi Sarah,\n\nThank you for taking the time to speak with me earlier this week about TechCorp's ML platform scaling challenges.\n\nI was particularly interested in your comments about the difficulties you're facing with infrastructure automation as your engineering team grows. Based on our conversation and your recent interest in AI integration (I noticed you downloaded our whitepaper), I thought you might find it valuable to see how other VP Engineering leaders have approached similar challenges.\n\nWe recently worked with DataTech Corp on a similar initiative—they were facing comparable infrastructure bottlenecks and needed to scale their ML workloads efficiently. I'd be happy to share their approach and results, which might give you some ideas for your own implementation.\n\nWould you be open to a brief 20-minute call next week? I can walk you through their architecture and answer any questions about how it might apply to TechCorp's environment.\n\nBest regards,\n[Your Name]`,
+                        citations: [
+                            'Lead Profile: Sarah Chen, VP Engineering, TechCorp Industries',
+                            'Recent Activity: Downloaded whitepaper on AI integration (March 10, 2025)',
+                            'Call Notes: Discussed infrastructure automation challenges (March 15, 2025)',
+                            'Similar Win: DataTech Corp - VP Engineering - $85K ACV - Custom API integration'
+                        ]
+                    },
+                    'sarah-initial': {
+                        to: 'sarah.chen@techcorp.com',
+                        subject: 'AI infrastructure for engineering teams like TechCorp',
+                        body: `Hi Sarah,\n\nI came across your recent download of our AI integration whitepaper and wanted to reach out personally.\n\nAs VP of Engineering at TechCorp, you're likely exploring ways to scale your ML infrastructure efficiently. I work with many engineering leaders in the technology sector who are facing similar challenges around infrastructure automation and ML platform scalability.\n\nWhat caught my attention about TechCorp is your focus on innovation and the size of your engineering organization (500-1000 employees). This is typically the inflection point where custom infrastructure solutions start making sense from both a cost and performance perspective.\n\nI'd love to share how teams similar to yours have approached this challenge. Would you be open to a brief conversation?\n\nBest regards,\n[Your Name]`,
+                        citations: [
+                            'Lead Profile: Sarah Chen, VP Engineering, TechCorp Industries',
+                            'Recent Activity: Downloaded whitepaper on AI integration (March 10, 2025)',
+                            'Company Context: 500-1000 employees, Technology industry, $50M-$100M revenue',
+                            'Interest Signal: Infrastructure automation focus'
+                        ]
+                    },
+                    'michael-followup': {
+                        to: 'michael.rodriguez@financeco.com',
+                        subject: 'ROI analysis tools for FinanceCo - following up',
+                        body: `Hi Michael,\n\nThank you for our conversation last Thursday about FinanceCo's financial analytics needs.\n\nYour insights about the challenges of real-time financial reporting and the limitations of your current Excel-based workflows really resonated with me. I've been thinking about how our platform could specifically address the pain points you mentioned around data consolidation and automated reporting.\n\nGiven your interest in predictive analytics (which we discussed after you attended our forecasting webinar), I thought you might appreciate seeing a specific example of how similar CFOs have implemented automated financial dashboards. We recently helped TriState Financial reduce their monthly close process from 10 days to 3 days while improving forecast accuracy.\n\nWould it be valuable for me to put together a brief analysis of how this could work for FinanceCo's specific use case? I could have something ready by early next week if that timeline works for you.\n\nBest regards,\n[Your Name]`,
+                        citations: [
+                            'Lead Profile: Michael Rodriguez, CFO, FinanceCo Solutions',
+                            'Recent Activity: Attended webinar on predictive forecasting (March 8, 2025)',
+                            'Call Notes: Discussed real-time reporting challenges (March 14, 2025)',
+                            'Similar Win: TriState Financial - CFO - $120K ACV - Automated dashboards'
+                        ]
+                    },
+                    'michael-initial': {
+                        to: 'michael.rodriguez@financeco.com',
+                        subject: 'Predictive analytics for finance teams',
+                        body: `Hi Michael,\n\nI noticed you recently attended our webinar on predictive forecasting and financial analytics. Thank you for joining!\n\nAs CFO at FinanceCo, you're likely looking for ways to streamline financial reporting and improve forecast accuracy. I work with many finance leaders who are moving beyond traditional Excel-based workflows toward automated, real-time financial dashboards.\n\nWhat stood out about FinanceCo is your company's growth trajectory ($10M-$50M revenue range) and your focus on financial services. At this stage, many CFOs find that investing in predictive analytics tools provides significant ROI through faster closes, better forecasts, and reduced manual work.\n\nI'd be happy to share some examples of how similar finance teams have approached this transition. Would a brief conversation be worthwhile?\n\nBest regards,\n[Your Name]`,
+                        citations: [
+                            'Lead Profile: Michael Rodriguez, CFO, FinanceCo Solutions',
+                            'Recent Activity: Attended predictive forecasting webinar (March 8, 2025)',
+                            'Company Context: $10M-$50M revenue, Financial Services industry',
+                            'Interest Signal: Focus on forecast accuracy and automation'
+                        ]
+                    }
+                };
+
+                const emailKey = `${lead}-${emailType}`;
+                const email = emails[emailKey];
+
+                // Populate email output
+                emailOutput.innerHTML = `
+                    <div class="email-header">
+                        <div class="email-field"><strong>To:</strong> ${email.to}</div>
+                        <div class="email-field"><strong>Subject:</strong> ${email.subject}</div>
+                        <div class="email-field"><strong>Generated:</strong> ${new Date().toLocaleString()}</div>
+                        <div class="email-field"><strong>Model:</strong> GPT-4o-mini</div>
+                    </div>
+                    <div class="email-body">${email.body.replace(/\n/g, '<br>')}</div>
+                    <div class="citations">
+                        <h4>📚 Context Sources Used (RAG)</h4>
+                        <ul>
+                            ${email.citations.map(c => `<li>${c}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }, 2500);
+        }
+
+        // Initialize
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>
