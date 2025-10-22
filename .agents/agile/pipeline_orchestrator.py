@@ -31,6 +31,7 @@ from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from kanban_manager import KanbanBoard
+from agent_messenger import AgentMessenger
 
 
 class WorkflowPlanner:
@@ -202,6 +203,22 @@ class PipelineOrchestrator:
         self.html_file = Path("/home/bbrelin/src/repos/salesforce/src/salesforce_ai_presentation.html")
         self.tmp_dir = Path("/tmp")
 
+        # Initialize AgentMessenger for inter-agent communication
+        self.messenger = AgentMessenger("pipeline-orchestrator")
+
+        # Register orchestrator in agent registry
+        self.messenger.register_agent(
+            capabilities=[
+                "coordinate_pipeline",
+                "manage_workflow",
+                "handle_errors",
+                "broadcast_notifications"
+            ],
+            status="active"
+        )
+
+        self.log("Pipeline Orchestrator initialized with AgentMessenger", "INFO")
+
     def log(self, message: str, level: str = "INFO"):
         """Log message if verbose"""
         if self.verbose:
@@ -342,6 +359,32 @@ class PipelineOrchestrator:
         architecture_results["status"] = "COMPLETE"
 
         self.log(f"ADR created: {adr_filename}", "SUCCESS")
+
+        # Send ADR data to Dependency Validation Agent
+        self.messenger.send_data_update(
+            to_agent="dependency-validation-agent",
+            card_id=self.card_id,
+            update_type="adr_created",
+            data={
+                "adr_file": str(adr_path),
+                "adr_number": adr_number,
+                "technical_decisions": {
+                    "approach": "TDD with parallel developers"
+                }
+            },
+            priority="high"
+        )
+
+        # Update shared state with architecture results
+        self.messenger.update_shared_state(
+            card_id=self.card_id,
+            updates={
+                "current_stage": "architecture_complete",
+                "adr_file": str(adr_path),
+                "adr_number": adr_number,
+                "architecture_status": "COMPLETE"
+            }
+        )
 
         # Update Kanban card
         self.board.update_card(self.card_id, {
@@ -567,9 +610,42 @@ class PipelineOrchestrator:
         if len(validation_results["blockers"]) > 0:
             validation_results["status"] = "BLOCKED"
             self.log(f"Dependency validation BLOCKED: {len(validation_results['blockers'])} blockers", "ERROR")
+
+            # Send error to orchestrator (self)
+            self.messenger.send_error(
+                to_agent="pipeline-orchestrator",
+                card_id=self.card_id,
+                error_type="dependency_validation_failed",
+                message=f"{len(validation_results['blockers'])} dependency blockers found",
+                severity="high",
+                blocks_pipeline=True,
+                resolution_suggestions=[b["message"] for b in validation_results["blockers"]]
+            )
         else:
             validation_results["status"] = "PASS"
             self.log("Dependency validation PASSED", "SUCCESS")
+
+            # Broadcast to all developer agents that dependencies are validated
+            self.messenger.send_notification(
+                to_agent="all",
+                card_id=self.card_id,
+                notification_type="dependencies_validated",
+                data={
+                    "requirements_file": str(requirements_file),
+                    "all_dependencies_validated": True
+                },
+                priority="high"
+            )
+
+        # Update shared state
+        self.messenger.update_shared_state(
+            card_id=self.card_id,
+            updates={
+                "current_stage": "dependencies_complete",
+                "dependencies_status": validation_results["status"],
+                "requirements_file": str(requirements_file)
+            }
+        )
 
         # Save validation report
         report_path = self.tmp_dir / f"dependency_validation_{self.card_id}.json"
@@ -1324,6 +1400,30 @@ class PipelineOrchestrator:
             self.log(f"Card {self.card_id} not found", "ERROR")
             return {"status": "ERROR", "reason": "Card not found"}
 
+        # Broadcast pipeline start to all agents
+        self.messenger.send_notification(
+            to_agent="all",
+            card_id=self.card_id,
+            notification_type="pipeline_started",
+            data={
+                "pipeline_id": self.card_id,
+                "card_title": card.get("title", "Unknown"),
+                "started_at": datetime.utcnow().isoformat() + 'Z'
+            },
+            priority="medium"
+        )
+
+        # Update shared state with pipeline initialization
+        self.messenger.update_shared_state(
+            card_id=self.card_id,
+            updates={
+                "pipeline_status": "running",
+                "current_stage": "planning",
+                "started_at": datetime.utcnow().isoformat() + 'Z',
+                "card_title": card.get("title", "Unknown")
+            }
+        )
+
         # Create dynamic workflow plan
         self.log("\n📊 ANALYZING TASK AND CREATING WORKFLOW PLAN", "STAGE")
         planner = WorkflowPlanner(card, verbose=self.verbose)
@@ -1420,6 +1520,34 @@ class PipelineOrchestrator:
 
             # All stages completed successfully
             results["status"] = "COMPLETED_SUCCESSFULLY"
+            results["completed_at"] = datetime.utcnow().isoformat() + 'Z'
+
+            # Broadcast pipeline completion to all agents
+            self.messenger.send_notification(
+                to_agent="all",
+                card_id=self.card_id,
+                notification_type="pipeline_completed",
+                data={
+                    "pipeline_id": self.card_id,
+                    "status": "COMPLETED_SUCCESSFULLY",
+                    "completed_at": results["completed_at"],
+                    "stages_executed": total_stages,
+                    "parallel_developers": workflow_plan['parallel_developers']
+                },
+                priority="medium"
+            )
+
+            # Update shared state with completion
+            self.messenger.update_shared_state(
+                card_id=self.card_id,
+                updates={
+                    "pipeline_status": "complete",
+                    "current_stage": "done",
+                    "completed_at": results["completed_at"],
+                    "final_status": "COMPLETED_SUCCESSFULLY"
+                }
+            )
+
             self.log("\n" + "=" * 60, "INFO")
             self.log("🎉 DYNAMIC PIPELINE COMPLETED SUCCESSFULLY!", "SUCCESS")
             self.log(f"Executed {total_stages} stages with {workflow_plan['parallel_developers']} parallel developer(s)", "INFO")
@@ -1429,10 +1557,29 @@ class PipelineOrchestrator:
             self.log(f"Pipeline error: {e}", "ERROR")
             results["status"] = "ERROR"
             results["error"] = str(e)
+            results["completed_at"] = datetime.utcnow().isoformat() + 'Z'
             import traceback
             results["traceback"] = traceback.format_exc()
 
-        results["completed_at"] = datetime.utcnow().isoformat() + 'Z'
+            # Send error notification
+            self.messenger.send_error(
+                to_agent="all",
+                card_id=self.card_id,
+                error_type="pipeline_failure",
+                message=f"Pipeline failed with error: {str(e)}",
+                severity="high",
+                blocks_pipeline=True
+            )
+
+            # Update shared state with error
+            self.messenger.update_shared_state(
+                card_id=self.card_id,
+                updates={
+                    "pipeline_status": "error",
+                    "error": str(e),
+                    "completed_at": results["completed_at"]
+                }
+            )
 
         # Save full pipeline report
         report_path = self.tmp_dir / f"pipeline_full_report_{self.card_id}.json"
