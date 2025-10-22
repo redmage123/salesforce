@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 """
-PIPELINE ORCHESTRATOR - Autonomous Pipeline Execution
+ARTEMIS - Autonomous Multi-Agent TDD Pipeline
 
-This script automates the execution of pipeline stages without requiring
-user authorization for each action.
+Artemis is a competitive pipeline that hunts for optimal solutions using
+parallel agents, automated validation, and continuous learning through RAG.
+
+Named after the Greek goddess of the hunt, Artemis relentlessly pursues
+the best implementation through:
+- Competitive parallel development (2-3 developer agents)
+- Automated TDD validation and quality gates
+- Objective arbitration and scoring
+- Continuous learning via RAG institutional memory
 
 Usage:
-    # Run full pipeline
+    # Run full Artemis pipeline
     python3 pipeline_orchestrator.py --card-id card-123 --full
 
     # Run specific stage
@@ -194,8 +201,29 @@ class WorkflowPlanner:
             print(f"[WorkflowPlanner] {message}")
 
 
-class PipelineOrchestrator:
-    """Autonomous pipeline stage executor"""
+class ArtemisOrchestrator:
+    """
+    Artemis Orchestrator - Hunt for Optimal Solutions
+
+    Artemis coordinates autonomous multi-agent TDD pipelines to deliver
+    high-quality solutions through competitive parallel development.
+
+    Named after the Greek goddess of the hunt, Artemis relentlessly pursues
+    the best implementation by:
+    - Running 1-3 parallel developer agents based on task complexity
+    - Validating TDD compliance and test coverage (80-90%)
+    - Scoring solutions objectively (100-point system)
+    - Learning from every task via RAG institutional memory
+
+    Workflow Stages:
+    1. Research (optional) - Autonomous web research for complex tasks
+    2. Architecture - Create ADR with implementation guidance
+    3. Dependencies - Validate runtime environment
+    4. Validation - Check TDD compliance and test quality
+    5. Arbitration - Score and select winning solution
+    6. Integration - Deploy and run regression tests
+    7. Testing - Final quality gates (UI/UX, performance)
+    """
 
     def __init__(self, card_id: str, verbose: bool = True):
         self.card_id = card_id
@@ -205,15 +233,16 @@ class PipelineOrchestrator:
         self.tmp_dir = Path("/tmp")
 
         # Initialize AgentMessenger for inter-agent communication
-        self.messenger = AgentMessenger("pipeline-orchestrator")
+        self.messenger = AgentMessenger("artemis-orchestrator")
 
-        # Register orchestrator in agent registry
+        # Register Artemis orchestrator in agent registry
         self.messenger.register_agent(
             capabilities=[
-                "coordinate_pipeline",
-                "manage_workflow",
+                "coordinate_artemis_pipeline",
+                "manage_competitive_workflow",
                 "handle_errors",
-                "broadcast_notifications"
+                "broadcast_notifications",
+                "rag_learning"
             ],
             status="active"
         )
@@ -221,7 +250,7 @@ class PipelineOrchestrator:
         # Initialize RAG Agent for institutional memory
         self.rag = RAGAgent(db_path="/tmp/rag_db", verbose=verbose)
 
-        self.log("Pipeline Orchestrator initialized with AgentMessenger and RAG Agent", "INFO")
+        self.log("🏹 Artemis Orchestrator initialized with AgentMessenger and RAG Agent", "INFO")
 
     def log(self, message: str, level: str = "INFO"):
         """Log message if verbose"""
@@ -1756,7 +1785,7 @@ The Architecture Agent should:
             Dict with results from all stages
         """
         self.log("=" * 60, "INFO")
-        self.log("🚀 STARTING DYNAMIC PIPELINE EXECUTION", "STAGE")
+        self.log("🏹 ARTEMIS - STARTING AUTONOMOUS HUNT FOR OPTIMAL SOLUTION", "STAGE")
         self.log("=" * 60, "INFO")
 
         # Get card information for workflow planning
@@ -1976,9 +2005,9 @@ The Architecture Agent should:
                         self.log(f"    - {artifact_type}: {count}", "INFO")
 
             self.log("\n" + "=" * 60, "INFO")
-            self.log("🎉 DYNAMIC PIPELINE COMPLETED SUCCESSFULLY!", "SUCCESS")
+            self.log("🎉 ARTEMIS HUNT SUCCESSFUL - OPTIMAL SOLUTION DELIVERED!", "SUCCESS")
             self.log(f"Executed {total_stages} stages with {workflow_plan['parallel_developers']} parallel developer(s)", "INFO")
-            self.log("  Pipeline institutional memory growing - RAG learning enabled", "INFO")
+            self.log("  Artemis institutional memory growing - RAG learning enabled", "INFO")
             self.log("=" * 60, "INFO")
 
         except Exception as e:
@@ -2090,7 +2119,7 @@ The Architecture Agent should:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Pipeline Orchestrator - Autonomous Pipeline Execution"
+        description="Artemis - Autonomous Multi-Agent TDD Pipeline"
     )
     parser.add_argument(
         "--card-id",
@@ -2105,7 +2134,7 @@ def main():
     parser.add_argument(
         "--full",
         action="store_true",
-        help="Run full pipeline from validation to done"
+        help="Run full Artemis pipeline from validation to done"
     )
     parser.add_argument(
         "--continue",
@@ -2121,7 +2150,7 @@ def main():
 
     args = parser.parse_args()
 
-    orchestrator = PipelineOrchestrator(
+    orchestrator = ArtemisOrchestrator(
         card_id=args.card_id,
         verbose=not args.quiet
     )
