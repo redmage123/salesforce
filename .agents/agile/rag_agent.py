@@ -80,6 +80,19 @@ class RAGAgent:
             timestamp = datetime.utcnow().strftime("%H:%M:%S")
             print(f"[{timestamp}] [RAG] {message}")
 
+    def _deserialize_metadata(self, metadata: Dict) -> Dict:
+        """Convert JSON strings back to Python objects in metadata"""
+        deserialized = {}
+        for key, value in metadata.items():
+            if isinstance(value, str) and value.startswith(('[', '{')):
+                try:
+                    deserialized[key] = json.loads(value)
+                except (json.JSONDecodeError, ValueError):
+                    deserialized[key] = value
+            else:
+                deserialized[key] = value
+        return deserialized
+
     def _initialize_collections(self):
         """Initialize ChromaDB collections for each artifact type"""
         self.collections = {}
@@ -135,15 +148,27 @@ class RAGAgent:
         # Store in ChromaDB or mock storage
         if CHROMADB_AVAILABLE and self.client:
             collection = self.collections[artifact_type]
+
+            # Prepare metadata for ChromaDB (convert lists to JSON strings)
+            chromadb_metadata = {
+                "card_id": card_id,
+                "task_title": task_title,
+                "timestamp": artifact.timestamp
+            }
+
+            # Convert lists and dicts to JSON strings for ChromaDB compatibility
+            for key, value in metadata.items():
+                if isinstance(value, (list, dict)):
+                    chromadb_metadata[key] = json.dumps(value)
+                elif value is None:
+                    chromadb_metadata[key] = ""
+                else:
+                    chromadb_metadata[key] = value
+
             collection.add(
                 ids=[artifact_id],
                 documents=[content],
-                metadatas=[{
-                    "card_id": card_id,
-                    "task_title": task_title,
-                    "timestamp": artifact.timestamp,
-                    **metadata
-                }]
+                metadatas=[chromadb_metadata]
             )
         else:
             # Mock storage
@@ -199,11 +224,14 @@ class RAGAgent:
                 # Process results
                 if query_results and query_results['ids']:
                     for i, artifact_id in enumerate(query_results['ids'][0]):
+                        # Deserialize metadata (convert JSON strings back to lists/dicts)
+                        metadata = self._deserialize_metadata(query_results['metadatas'][0][i])
+
                         results.append({
                             "artifact_id": artifact_id,
                             "artifact_type": artifact_type,
                             "content": query_results['documents'][0][i],
-                            "metadata": query_results['metadatas'][0][i],
+                            "metadata": metadata,
                             "distance": query_results['distances'][0][i] if 'distances' in query_results else None,
                             "similarity": 1.0 - query_results['distances'][0][i] if 'distances' in query_results else 1.0
                         })
