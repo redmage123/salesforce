@@ -16,6 +16,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            overflow: hidden;
         }
 
         .container {
@@ -24,30 +25,136 @@
             background: white;
             border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
+            height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
         }
 
         header {
             background: linear-gradient(135deg, #1B3B6F 0%, #2563EB 100%);
             color: white;
-            padding: 40px;
+            padding: 30px 40px;
             text-align: center;
         }
 
         header h1 {
-            font-size: 36px;
-            margin-bottom: 10px;
+            font-size: 32px;
+            margin-bottom: 8px;
         }
 
         header p {
-            font-size: 18px;
+            font-size: 16px;
             opacity: 0.9;
         }
 
+        .slide-container {
+            flex: 1;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .slide {
+            display: none;
+            padding: 40px;
+            min-height: 100%;
+        }
+
+        .slide.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .navigation {
+            background: #f8f9fa;
+            padding: 20px 40px;
+            border-top: 2px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .nav-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slide-indicator {
+            font-size: 14px;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        /* Slide 1: Introduction */
+        .intro-content {
+            text-align: center;
+            padding: 60px 0;
+        }
+
+        .intro-content h2 {
+            font-size: 48px;
+            color: #1B3B6F;
+            margin-bottom: 20px;
+        }
+
+        .intro-content .subtitle {
+            font-size: 24px;
+            color: #6c757d;
+            margin-bottom: 40px;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .benefit-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 30px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            text-align: left;
+        }
+
+        .benefit-card h3 {
+            color: #1B3B6F;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .benefit-card p {
+            color: #495057;
+            line-height: 1.6;
+        }
+
+        /* Slide 2: Interactive Demo */
         .controls {
             background: #f8f9fa;
-            padding: 30px;
-            border-bottom: 2px solid #dee2e6;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
         }
 
         .control-group {
@@ -94,12 +201,8 @@
             cursor: not-allowed;
         }
 
-        .dashboard {
-            padding: 40px;
-        }
-
         .section {
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .section h2 {
@@ -240,6 +343,217 @@
             color: #495057;
             margin-top: 10px;
         }
+
+        /* Slide 3: Dashboard */
+        .chart-container {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1B3B6F;
+            margin-bottom: 20px;
+        }
+
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .bar {
+            background: linear-gradient(to top, #667eea 0%, #764ba2 100%);
+            width: 80px;
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+        }
+
+        .bar-label {
+            position: absolute;
+            bottom: -30px;
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: #495057;
+        }
+
+        .bar-value {
+            position: absolute;
+            top: -25px;
+            width: 100%;
+            text-align: center;
+            font-weight: 700;
+            color: #1B3B6F;
+        }
+
+        .sentiment-timeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 0;
+        }
+
+        .sentiment-point {
+            text-align: center;
+            padding: 15px;
+            background: #e7f3ff;
+            border-radius: 8px;
+            min-width: 120px;
+        }
+
+        .sentiment-point.positive {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+
+        .sentiment-point.very-positive {
+            background: #c3f0ca;
+            border-left: 4px solid #155724;
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 300px;
+            height: 150px;
+            margin: 30px auto;
+        }
+
+        .gauge-arc {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Slide 4: Advanced AI Features */
+        .feature-showcase {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            background: white;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .feature-item h3 {
+            color: #1B3B6F;
+            margin-bottom: 15px;
+        }
+
+        .confidence-bar {
+            background: #e9ecef;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .confidence-fill {
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 5px;
+        }
+
+        .risk-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .risk-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .risk-low {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        /* Slide 5: Key Takeaways */
+        .takeaways-container {
+            padding: 40px 0;
+        }
+
+        .takeaway-card {
+            background: linear-gradient(135deg, #e7f3ff 0%, #cfe2ff 100%);
+            padding: 30px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 6px solid #0066cc;
+        }
+
+        .takeaway-card h3 {
+            color: #1B3B6F;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        .takeaway-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .takeaway-card li {
+            padding: 10px 0;
+            color: #495057;
+            line-height: 1.6;
+        }
+
+        .takeaway-card li:before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: 700;
+            margin-right: 10px;
+        }
+
+        .closing-message {
+            text-align: center;
+            margin-top: 40px;
+            padding: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+        }
+
+        .closing-message h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        .closing-message p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -249,95 +563,382 @@
             <p>AI-Powered Deal Analysis & Next-Best Action Recommendations</p>
         </header>
 
-        <div class="controls">
-            <div class="control-group">
-                <div>
-                    <label for="opportunitySelector">Select Opportunity:</label><br>
-                    <select id="opportunitySelector">
-                        <option value="acme-corp">Acme Corp - Enterprise Sales Cloud ($125K)</option>
-                        <option value="techstart">TechStart - Marketing Cloud ($75K)</option>
-                        <option value="financeco">FinanceCo - Service Cloud Expansion ($285K)</option>
-                    </select>
+        <div class="slide-container">
+            <!-- Slide 1: Introduction -->
+            <div class="slide active" id="slide1">
+                <div class="intro-content">
+                    <h2>AI-Powered Opportunity Intelligence</h2>
+                    <p class="subtitle">Transform sales data into actionable insights with advanced AI</p>
+
+                    <div class="benefits-grid">
+                        <div class="benefit-card">
+                            <h3>🔍 Deep Activity Analysis</h3>
+                            <p>Automatically analyze email exchanges, meetings, and calls to extract engagement patterns, sentiment trends, and buying signals that humans might miss.</p>
+                        </div>
+                        <div class="benefit-card">
+                            <h3>💡 Smart Recommendations</h3>
+                            <p>AI-powered next-best action recommendations based on deal context, stage, engagement history, and proven sales patterns.</p>
+                        </div>
+                        <div class="benefit-card">
+                            <h3>📊 Deal Health Scoring</h3>
+                            <p>Multi-factor health scoring that weighs engagement level, buying signals, sentiment, and deal stage to predict likelihood of close.</p>
+                        </div>
+                        <div class="benefit-card">
+                            <h3>✉️ Contextual Email Generation</h3>
+                            <p>Generate personalized follow-up emails with brand guardrails, tone analysis, and quality scoring for every communication.</p>
+                        </div>
+                        <div class="benefit-card">
+                            <h3>⚡ Real-Time Processing</h3>
+                            <p>Live API integration with backend processing in under 2 seconds. Watch AI analyze opportunities in real-time.</p>
+                        </div>
+                        <div class="benefit-card">
+                            <h3>🎯 Risk Detection</h3>
+                            <p>Identify concerns, blockers, and risk factors early with sentiment analysis and pattern recognition across all activities.</p>
+                        </div>
+                    </div>
                 </div>
-                <button id="analyzeBtn" onclick="analyzeOpportunity()">🔍 Analyze Opportunity</button>
-                <button id="recommendBtn" onclick="getRecommendations()" disabled>💡 Get Recommendations</button>
-                <button id="emailBtn" onclick="generateEmail()" disabled>✉️ Generate Email</button>
+            </div>
+
+            <!-- Slide 2: Interactive Demo -->
+            <div class="slide" id="slide2">
+                <h2 style="color: #1B3B6F; font-size: 32px; margin-bottom: 20px;">Interactive Demo</h2>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <div>
+                            <label for="opportunitySelector">Select Opportunity:</label><br>
+                            <select id="opportunitySelector">
+                                <option value="acme-corp">Acme Corp - Enterprise Sales Cloud ($125K)</option>
+                                <option value="techstart">TechStart - Marketing Cloud ($75K)</option>
+                                <option value="financeco">FinanceCo - Service Cloud Expansion ($285K)</option>
+                            </select>
+                        </div>
+                        <button id="analyzeBtn" onclick="analyzeOpportunity()">🔍 Analyze Opportunity</button>
+                        <button id="recommendBtn" onclick="getRecommendations()" disabled>💡 Get Recommendations</button>
+                        <button id="emailBtn" onclick="generateEmail()" disabled>✉️ Generate Email</button>
+                    </div>
+                </div>
+
+                <div id="loadingState" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p><strong>Calling Backend API...</strong></p>
+                    <p id="loadingMessage">Analyzing opportunity data...</p>
+                </div>
+
+                <div id="errorState" class="error" style="display: none;"></div>
+
+                <div id="analysisSection" class="section" style="display: none;">
+                    <h2>📊 Activity Analysis</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalActivities">--</div>
+                            <div class="stat-label">Total Activities</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="engagementLevel">--</div>
+                            <div class="stat-label">Engagement Level</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="responseRate">--</div>
+                            <div class="stat-label">Response Rate</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="sentiment">--</div>
+                            <div class="stat-label">Current Sentiment</div>
+                        </div>
+                    </div>
+
+                    <div class="health-score">
+                        <div class="health-score-value" id="healthScore">--</div>
+                        <div class="health-label" id="healthLabel">Deal Health</div>
+                    </div>
+
+                    <div class="signals-list">
+                        <h3>🟢 Buying Signals Detected</h3>
+                        <ul id="buyingSignals"></ul>
+                    </div>
+                </div>
+
+                <div id="recommendationSection" class="section" style="display: none;">
+                    <h2>💡 AI Recommendations</h2>
+                    <div class="recommendation-box">
+                        <h3 id="recommendedAction">--</h3>
+                        <p id="reasoning"></p>
+                        <div id="nextActions"></div>
+                    </div>
+                </div>
+
+                <div id="emailSection" class="section" style="display: none;">
+                    <h2>✉️ Generated Follow-Up Email</h2>
+                    <div class="email-preview">
+                        <div class="email-header">
+                            <strong>Subject:</strong> <span id="emailSubject"></span>
+                        </div>
+                        <div class="email-body" id="emailBody"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Dashboard -->
+            <div class="slide" id="slide3">
+                <h2 style="color: #1B3B6F; font-size: 32px; margin-bottom: 30px;">Analytics Dashboard</h2>
+
+                <div class="chart-container">
+                    <div class="chart-title">Activity Distribution by Type</div>
+                    <div class="bar-chart">
+                        <div class="bar" style="height: 80%;">
+                            <div class="bar-value">8</div>
+                            <div class="bar-label">Emails</div>
+                        </div>
+                        <div class="bar" style="height: 50%;">
+                            <div class="bar-value">4</div>
+                            <div class="bar-label">Calls</div>
+                        </div>
+                        <div class="bar" style="height: 35%;">
+                            <div class="bar-value">3</div>
+                            <div class="bar-label">Meetings</div>
+                        </div>
+                        <div class="bar" style="height: 15%;">
+                            <div class="bar-value">1</div>
+                            <div class="bar-label">Demos</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-title">Sentiment Trend Over Time</div>
+                    <div class="sentiment-timeline">
+                        <div class="sentiment-point">
+                            <strong>Week 1</strong>
+                            <p>Neutral</p>
+                        </div>
+                        <div style="color: #667eea; font-size: 24px;">→</div>
+                        <div class="sentiment-point positive">
+                            <strong>Week 2</strong>
+                            <p>Positive</p>
+                        </div>
+                        <div style="color: #667eea; font-size: 24px;">→</div>
+                        <div class="sentiment-point positive">
+                            <strong>Week 3</strong>
+                            <p>Positive</p>
+                        </div>
+                        <div style="color: #667eea; font-size: 24px;">→</div>
+                        <div class="sentiment-point very-positive">
+                            <strong>Week 4</strong>
+                            <p>Very Positive</p>
+                        </div>
+                    </div>
+                    <p style="text-align: center; margin-top: 20px; color: #28a745; font-weight: 600;">📈 Trend: Improving</p>
+                </div>
+
+                <div class="stats-grid" style="margin-top: 30px;">
+                    <div class="stat-card">
+                        <div class="stat-value">85%</div>
+                        <div class="stat-label">Email Response Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Buying Signals</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Activities (Last 7 Days)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">95/100</div>
+                        <div class="stat-label">Deal Health Score</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Advanced AI Features -->
+            <div class="slide" id="slide4">
+                <h2 style="color: #1B3B6F; font-size: 32px; margin-bottom: 30px;">Advanced AI Features</h2>
+
+                <div class="feature-item">
+                    <h3>🧠 AI Reasoning & Explainability</h3>
+                    <p style="margin-bottom: 15px;">Every recommendation comes with transparent reasoning:</p>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-top: 15px;">
+                        <p style="font-style: italic; color: #495057; line-height: 1.6;">
+                            "Sent final proposal 1 day ago. Give Jennifer time to review before following up. CFO meeting scheduled for Nov 12.
+                            Wait for Response is recommended because the prospect needs time to digest the proposal, and we have a confirmed executive
+                            meeting on the calendar, indicating strong interest."
+                        </p>
+                    </div>
+                    <div class="confidence-bar" style="margin-top: 20px;">
+                        <div class="confidence-fill" style="width: 85%;">Confidence: 85%</div>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <h3>🎯 Context-Aware Recommendations</h3>
+                    <p style="margin-bottom: 15px;">AI analyzes multiple factors to generate next-best actions:</p>
+                    <ul style="list-style: none; padding-left: 0;">
+                        <li style="padding: 8px 0; border-bottom: 1px solid #e9ecef;">✓ Recent activity history and engagement patterns</li>
+                        <li style="padding: 8px 0; border-bottom: 1px solid #e9ecef;">✓ Deal stage and probability to close</li>
+                        <li style="padding: 8px 0; border-bottom: 1px solid #e9ecef;">✓ Buying signals and concerns identified</li>
+                        <li style="padding: 8px 0; border-bottom: 1px solid #e9ecef;">✓ Sentiment trends (improving vs declining)</li>
+                        <li style="padding: 8px 0;">✓ Industry best practices and proven sales patterns</li>
+                    </ul>
+                </div>
+
+                <div class="feature-item">
+                    <h3>⚠️ Risk Analysis & Early Warning</h3>
+                    <p style="margin-bottom: 15px;">Automatically detect potential deal risks:</p>
+                    <div style="margin-top: 15px;">
+                        <span class="risk-badge risk-high">HIGH: Competitor evaluation in progress</span>
+                        <span class="risk-badge risk-medium">MEDIUM: Budget approval pending</span>
+                        <span class="risk-badge risk-medium">MEDIUM: Data privacy concerns raised</span>
+                        <span class="risk-badge risk-low">LOW: Timeline compressed (may impact deployment)</span>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <h3>📧 Smart Email Generation with Guardrails</h3>
+                    <p style="margin-bottom: 15px;">AI-generated emails include quality controls:</p>
+                    <div class="stats-grid" style="margin-top: 15px;">
+                        <div class="stat-card">
+                            <div class="stat-value">92%</div>
+                            <div class="stat-label">Personalization Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">88%</div>
+                            <div class="stat-label">Clarity Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">85%</div>
+                            <div class="stat-label">CTA Strength</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">72%</div>
+                            <div class="stat-label">Formality Level</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: Key Takeaways -->
+            <div class="slide" id="slide5">
+                <h2 style="color: #1B3B6F; font-size: 32px; margin-bottom: 30px; text-align: center;">Key Takeaways</h2>
+
+                <div class="takeaways-container">
+                    <div class="takeaway-card">
+                        <h3>1. AI Transforms Unstructured Data into Insights</h3>
+                        <ul>
+                            <li>Email exchanges, call notes, and meeting summaries contain valuable signals</li>
+                            <li>Manual analysis is time-consuming and prone to bias</li>
+                            <li>AI can extract engagement patterns, sentiment, and buying signals automatically</li>
+                            <li>Structured output enables data-driven decision making</li>
+                        </ul>
+                    </div>
+
+                    <div class="takeaway-card">
+                        <h3>2. Multi-Factor Scoring Predicts Deal Health</h3>
+                        <ul>
+                            <li>No single metric tells the whole story (engagement alone isn't enough)</li>
+                            <li>Combine engagement level, buying signals, sentiment, and deal stage</li>
+                            <li>Weighted scoring algorithm produces more accurate health assessment</li>
+                            <li>Early warning system identifies at-risk deals before they stall</li>
+                        </ul>
+                    </div>
+
+                    <div class="takeaway-card">
+                        <h3>3. Context-Aware Recommendations Drive Action</h3>
+                        <ul>
+                            <li>Generic advice doesn't work - every deal is unique</li>
+                            <li>AI considers deal context, history, and current state</li>
+                            <li>Recommendations include reasoning, timing, and talking points</li>
+                            <li>Confidence scores help sales reps prioritize actions</li>
+                        </ul>
+                    </div>
+
+                    <div class="takeaway-card">
+                        <h3>4. Real-Time API Integration is Critical</h3>
+                        <ul>
+                            <li>Static reports become stale quickly in fast-moving sales cycles</li>
+                            <li>Real-time processing enables immediate insights (sub-2-second response)</li>
+                            <li>RESTful API design allows integration into existing workflows</li>
+                            <li>Backend processing handles complexity while frontend stays simple</li>
+                        </ul>
+                    </div>
+
+                    <div class="takeaway-card">
+                        <h3>5. Explainability Builds Trust in AI Systems</h3>
+                        <ul>
+                            <li>Black-box recommendations reduce adoption (sales reps need to understand "why")</li>
+                            <li>Transparent reasoning shows which factors influenced the decision</li>
+                            <li>Confidence scores indicate certainty level</li>
+                            <li>Human-in-the-loop design: AI recommends, human decides</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="closing-message">
+                    <h2>Thank You</h2>
+                    <p>Questions? Explore the interactive demo or dive into the API documentation.</p>
+                </div>
             </div>
         </div>
 
-        <div class="dashboard">
-            <div id="loadingState" class="loading" style="display: none;">
-                <div class="spinner"></div>
-                <p><strong>Calling Backend API...</strong></p>
-                <p id="loadingMessage">Analyzing opportunity data...</p>
+        <div class="navigation">
+            <button class="nav-button" id="prevBtn" onclick="previousSlide()">← Previous</button>
+            <div class="slide-indicator">
+                <span id="currentSlide">1</span> / <span id="totalSlides">6</span>
             </div>
-
-            <div id="errorState" class="error" style="display: none;"></div>
-
-            <div id="analysisSection" class="section" style="display: none;">
-                <h2>📊 Activity Analysis</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalActivities">--</div>
-                        <div class="stat-label">Total Activities</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="engagementLevel">--</div>
-                        <div class="stat-label">Engagement Level</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="responseRate">--</div>
-                        <div class="stat-label">Response Rate</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="sentiment">--</div>
-                        <div class="stat-label">Current Sentiment</div>
-                    </div>
-                </div>
-
-                <div class="health-score">
-                    <div class="health-score-value" id="healthScore">--</div>
-                    <div class="health-label" id="healthLabel">Deal Health</div>
-                </div>
-
-                <div class="signals-list">
-                    <h3>🟢 Buying Signals Detected</h3>
-                    <ul id="buyingSignals"></ul>
-                </div>
-            </div>
-
-            <div id="recommendationSection" class="section" style="display: none;">
-                <h2>💡 AI Recommendations</h2>
-                <div class="recommendation-box">
-                    <h3 id="recommendedAction">--</h3>
-                    <p id="reasoning"></p>
-                    <div id="nextActions"></div>
-                </div>
-            </div>
-
-            <div id="emailSection" class="section" style="display: none;">
-                <h2>✉️ Generated Follow-Up Email</h2>
-                <div class="email-preview">
-                    <div class="email-header">
-                        <strong>Subject:</strong> <span id="emailSubject"></span>
-                    </div>
-                    <div class="email-body" id="emailBody"></div>
-                </div>
-            </div>
+            <button class="nav-button" id="nextBtn" onclick="nextSlide()">Next →</button>
         </div>
     </div>
 
     <script>
         const API_URL = 'http://localhost:5001';
         let currentData = null;
+        let currentSlideIndex = 0;
+        const totalSlides = 5;
 
+        // Slide navigation
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[index].classList.add('active');
+
+            currentSlideIndex = index;
+            document.getElementById('currentSlide').textContent = index + 1;
+
+            // Update button states
+            document.getElementById('prevBtn').disabled = index === 0;
+            document.getElementById('nextBtn').disabled = index === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlideIndex < totalSlides - 1) {
+                showSlide(currentSlideIndex + 1);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlideIndex > 0) {
+                showSlide(currentSlideIndex - 1);
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+        });
+
+        // Initialize
+        document.getElementById('totalSlides').textContent = totalSlides;
+        showSlide(0);
+
+        // API Functions
         async function analyzeOpportunity() {
             const oppId = document.getElementById('opportunitySelector').value;
-            
+
             showLoading('Analyzing opportunity and activities...');
             hideError();
             hideAllSections();
-            
+
             try {
                 const response = await fetch(`${API_URL}/api/analyze_opportunity`, {
                     method: 'POST',
@@ -351,11 +952,11 @@
 
                 const data = await response.json();
                 currentData = data;
-                
+
                 displayAnalysis(data);
                 document.getElementById('recommendBtn').disabled = false;
                 document.getElementById('emailBtn').disabled = false;
-                
+
             } catch (error) {
                 showError(`Backend connection failed: ${error.message}. Make sure the server is running on port 5001.`);
             } finally {
@@ -365,9 +966,9 @@
 
         async function getRecommendations() {
             const oppId = document.getElementById('opportunitySelector').value;
-            
+
             showLoading('Generating AI recommendations...');
-            
+
             try {
                 const response = await fetch(`${API_URL}/api/recommend_action`, {
                     method: 'POST',
@@ -377,7 +978,7 @@
 
                 const data = await response.json();
                 displayRecommendations(data);
-                
+
             } catch (error) {
                 showError(`Failed to get recommendations: ${error.message}`);
             } finally {
@@ -387,14 +988,14 @@
 
         async function generateEmail() {
             const oppId = document.getElementById('opportunitySelector').value;
-            
+
             showLoading('Generating personalized email...');
-            
+
             try {
                 const response = await fetch(`${API_URL}/api/generate_email`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         opportunity_id: oppId,
                         scenario: 'pre_meeting'
                     })
@@ -402,7 +1003,7 @@
 
                 const data = await response.json();
                 displayEmail(data);
-                
+
             } catch (error) {
                 showError(`Failed to generate email: ${error.message}`);
             } finally {
@@ -415,10 +1016,10 @@
             document.getElementById('engagementLevel').textContent = data.engagement.engagement_level;
             document.getElementById('responseRate').textContent = data.engagement.response_rate + '%';
             document.getElementById('sentiment').textContent = data.sentiment.latest_sentiment;
-            
+
             document.getElementById('healthScore').textContent = data.deal_health.score;
             document.getElementById('healthLabel').textContent = data.deal_health.health + ' Health';
-            
+
             const signalsList = document.getElementById('buyingSignals');
             signalsList.innerHTML = '';
             data.signals.all_signals.slice(0, 8).forEach(signal => {
@@ -426,22 +1027,22 @@
                 li.textContent = '✓ ' + signal;
                 signalsList.appendChild(li);
             });
-            
+
             document.getElementById('analysisSection').style.display = 'block';
         }
 
         function displayRecommendations(data) {
-            document.getElementById('recommendedAction').textContent = 
+            document.getElementById('recommendedAction').textContent =
                 `Recommended Action: ${data.recommendation.action}`;
             document.getElementById('reasoning').textContent = data.recommendation.reasoning;
-            
+
             let actionsHTML = '<h4 style="margin-top: 20px;">Next Actions:</h4><ul>';
             data.recommendation.next_actions.forEach(action => {
                 actionsHTML += `<li>${action}</li>`;
             });
             actionsHTML += '</ul>';
             document.getElementById('nextActions').innerHTML = actionsHTML;
-            
+
             document.getElementById('recommendationSection').style.display = 'block';
         }
 

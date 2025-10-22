@@ -40,6 +40,7 @@ from kanban_manager import KanbanBoard
 from agent_messenger import AgentMessenger
 from rag_agent import RAGAgent
 from config_agent import ConfigurationAgent, get_config
+from workflow_status_tracker import WorkflowStatusTracker
 
 
 class WorkflowPlanner:
@@ -373,16 +374,132 @@ class ArtemisOrchestrator:
 # CLI ENTRY POINT
 # ============================================================================
 
+def display_workflow_status(card_id: str, json_output: bool = False):
+    """Display workflow status for a given card ID"""
+    from workflow_status_tracker import WorkflowStatusTracker
+
+    tracker = WorkflowStatusTracker(card_id=card_id)
+    status_file = tracker.status_file
+
+    if not status_file.exists():
+        print(f"\n⚠️  No workflow status found for card: {card_id}")
+        print(f"   Status file would be: {status_file}")
+        print(f"   This workflow may not have started yet, or status tracking wasn't enabled.\n")
+        return
+
+    with open(status_file, 'r') as f:
+        status_data = json.load(f)
+
+    if json_output:
+        print(json.dumps(status_data, indent=2))
+        return
+
+    # Human-readable output
+    print(f"\n{'='*70}")
+    print(f"🏹 ARTEMIS WORKFLOW STATUS")
+    print(f"{'='*70}")
+    print(f"Card ID: {status_data['card_id']}")
+    print(f"Status: {status_data['status'].upper()}")
+
+    if status_data.get('current_stage'):
+        print(f"Current Stage: {status_data['current_stage']}")
+
+    if status_data.get('start_time'):
+        print(f"Started: {status_data['start_time']}")
+
+    if status_data.get('end_time'):
+        print(f"Completed: {status_data['end_time']}")
+
+    if status_data.get('error'):
+        print(f"\n❌ ERROR: {status_data['error']}")
+
+    # Display stages
+    if status_data.get('stages'):
+        print(f"\n{'-'*70}")
+        print("STAGES:")
+        print(f"{'-'*70}")
+
+        for i, stage in enumerate(status_data['stages'], 1):
+            status_icons = {
+                'pending': '⏸️',
+                'in_progress': '🔄',
+                'completed': '✅',
+                'failed': '❌',
+                'skipped': '⏭️'
+            }
+            icon = status_icons.get(stage['status'], '❓')
+            print(f"\n{i}. {icon} {stage['name']}")
+            print(f"   Status: {stage['status']}")
+
+            if stage.get('start_time'):
+                print(f"   Started: {stage['start_time']}")
+            if stage.get('end_time'):
+                print(f"   Completed: {stage['end_time']}")
+            if stage.get('error'):
+                print(f"   ❌ Error: {stage['error']}")
+
+    print(f"\n{'='*70}\n")
+
+
+def list_active_workflows():
+    """List all active workflows"""
+    from pathlib import Path
+
+    status_dir = Path("/tmp/artemis_status")
+    if not status_dir.exists():
+        print("\nNo active workflows found.\n")
+        return
+
+    status_files = list(status_dir.glob("*.json"))
+    if not status_files:
+        print("\nNo active workflows found.\n")
+        return
+
+    print(f"\n{'='*70}")
+    print("🏹 ACTIVE ARTEMIS WORKFLOWS")
+    print(f"{'='*70}\n")
+
+    for status_file in sorted(status_files):
+        card_id = status_file.stem
+        with open(status_file, 'r') as f:
+            data = json.load(f)
+
+        if data['status'] in ['running', 'failed']:
+            status_str = data['status'].upper()
+            print(f"📋 {card_id}")
+            print(f"   Status: {status_str}")
+            if data.get('current_stage'):
+                print(f"   Current: {data['current_stage']}")
+            print()
+
+    print(f"{'='*70}\n")
+
+
 def main():
     """CLI entry point (maintains backward compatibility)"""
     import argparse
 
     parser = argparse.ArgumentParser(description="Artemis Pipeline Orchestrator (SOLID)")
-    parser.add_argument("--card-id", required=True, help="Kanban card ID")
+    parser.add_argument("--card-id", help="Kanban card ID")
     parser.add_argument("--full", action="store_true", help="Run full pipeline")
     parser.add_argument("--config-report", action="store_true", help="Show configuration report")
     parser.add_argument("--skip-validation", action="store_true", help="Skip config validation (not recommended)")
+    parser.add_argument("--status", action="store_true", help="Show workflow status for card-id")
+    parser.add_argument("--list-active", action="store_true", help="List all active workflows")
+    parser.add_argument("--json", action="store_true", help="Output status in JSON format")
     args = parser.parse_args()
+
+    # Handle status queries (don't require config)
+    if args.list_active:
+        list_active_workflows()
+        return
+
+    if args.status:
+        if not args.card_id:
+            print("\n❌ Error: --card-id is required with --status\n")
+            sys.exit(1)
+        display_workflow_status(args.card_id, json_output=args.json)
+        return
 
     # Load and validate configuration
     config = get_config(verbose=True)
@@ -390,6 +507,12 @@ def main():
     if args.config_report:
         config.print_configuration_report()
         return
+
+    # Require card-id for pipeline execution
+    if not args.card_id:
+        print("\n❌ Error: --card-id is required for pipeline execution\n")
+        parser.print_help()
+        sys.exit(1)
 
     # Validate configuration before proceeding
     if not args.skip_validation:
