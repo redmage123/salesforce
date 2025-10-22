@@ -489,6 +489,157 @@
             line-height: 1.6;
         }
 
+        /* Advanced AI Features */
+        .ai-reasoning {
+            background: linear-gradient(135deg, #fff9e6 0%, #fff3cd 100%);
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .reasoning-step {
+            padding: 10px 0;
+            border-bottom: 1px solid #ffe5a1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .reasoning-step:last-child {
+            border-bottom: none;
+        }
+
+        .reasoning-icon {
+            font-size: 20px;
+            min-width: 30px;
+        }
+
+        .confidence-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .confidence-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border-left: 4px solid #28a745;
+        }
+
+        .confidence-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            transition: width 0.5s ease;
+        }
+
+        .rag-context-viz {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .context-match {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #0066cc;
+        }
+
+        .match-score {
+            min-width: 60px;
+            font-weight: 700;
+            color: #0066cc;
+            font-size: 16px;
+        }
+
+        .match-bar {
+            flex: 1;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+
+        .match-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0066cc 0%, #2563EB 100%);
+        }
+
+        .cost-breakdown {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            background: linear-gradient(135deg, #e7f3ff 0%, #cfe2ff 100%);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .cost-item {
+            text-align: center;
+        }
+
+        .cost-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0066cc;
+        }
+
+        .cost-label {
+            font-size: 12px;
+            color: #495057;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .alternatives-section {
+            background: #fff;
+            border: 2px dashed #6c757d;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .alternative-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+            border-left: 3px solid #6c757d;
+        }
+
+        .alternative-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .alternative-score {
+            background: #6c757d;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
         /* Navigation */
         .navigation {
             position: fixed;
@@ -613,8 +764,14 @@
 
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
-                    <p style="font-weight: 600; font-size: 16px;">Retrieving context from Salesforce...</p>
-                    <p style="font-size: 14px; margin-top: 10px;">Analyzing lead data, activities, and similar wins...</p>
+                    <p style="font-weight: 600; font-size: 16px;" id="loadingStatus">Initializing AI pipeline...</p>
+                    <div style="margin-top: 20px; text-align: left; font-size: 13px; color: #495057;">
+                        <div id="step1" style="opacity: 0.3; padding: 5px 0;">⏳ Step 1: Semantic search for relevant context...</div>
+                        <div id="step2" style="opacity: 0.3; padding: 5px 0;">⏳ Step 2: Analyzing lead profile and activities...</div>
+                        <div id="step3" style="opacity: 0.3; padding: 5px 0;">⏳ Step 3: Retrieving similar successful deals...</div>
+                        <div id="step4" style="opacity: 0.3; padding: 5px 0;">⏳ Step 4: Generating personalized content with LLM...</div>
+                        <div id="step5" style="opacity: 0.3; padding: 5px 0;">⏳ Step 5: Validating compliance and brand guidelines...</div>
+                    </div>
                 </div>
 
                 <div class="email-output" id="emailOutput">
@@ -1266,58 +1423,53 @@
                 </div>
             </div>
 
-            <h3 style="color: #1B3B6F; margin: 40px 0 25px; text-align: center; font-size: 28px;">Next Steps</h3>
+            <h3 style="color: #1B3B6F; margin: 40px 0 25px; text-align: center; font-size: 28px;">Key Learning Points</h3>
 
             <div style="background: linear-gradient(135deg, #e7f3ff 0%, #cfe2ff 100%); padding: 30px; border-radius: 8px; border-left: 4px solid #0066cc;">
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;">
                     <div>
-                        <h4 style="color: #0066cc; margin-bottom: 15px; font-size: 18px;">1️⃣ Pilot Program</h4>
+                        <h4 style="color: #0066cc; margin-bottom: 15px; font-size: 18px;">🎓 AI Architecture</h4>
                         <ul style="margin-left: 20px; color: #0066cc; line-height: 1.8;">
-                            <li>Select 2-3 sales reps</li>
-                            <li>Run for 30 days</li>
-                            <li>Generate 500+ emails</li>
-                            <li>Measure response rates</li>
-                            <li>Validate ROI assumptions</li>
+                            <li>RAG = Retrieval + Generation</li>
+                            <li>Context from CRM databases</li>
+                            <li>Semantic search for relevance</li>
+                            <li>LLM generates from context</li>
+                            <li>Validation before sending</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 style="color: #0066cc; margin-bottom: 15px; font-size: 18px;">2️⃣ Success Metrics</h4>
+                        <h4 style="color: #0066cc; margin-bottom: 15px; font-size: 18px;">🔐 Compliance Framework</h4>
                         <ul style="margin-left: 20px; color: #0066cc; line-height: 1.8;">
-                            <li>Time savings per email</li>
-                            <li>Emails sent per day</li>
-                            <li>Response rate improvement</li>
-                            <li>Compliance violations (target: 0)</li>
-                            <li>Cost per email</li>
+                            <li>GDPR consent verification</li>
+                            <li>Automated opt-out checking</li>
+                            <li>Brand guardrails enforcement</li>
+                            <li>Audit trail for every email</li>
+                            <li>Human-in-the-loop for edge cases</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 style="color: #0066cc; margin-bottom: 15px; font-size: 18px;">3️⃣ Phase 1 Rollout</h4>
+                        <h4 style="color: #0066cc; margin-bottom: 15px; font-size: 18px;">💡 Best Practices</h4>
                         <ul style="margin-left: 20px; color: #0066cc; line-height: 1.8;">
-                            <li>Expand to 5-10 reps</li>
-                            <li>Salesforce integration</li>
-                            <li>Custom brand templates</li>
-                            <li>Advanced analytics</li>
-                            <li>A/B testing framework</li>
+                            <li>Start with high-value leads</li>
+                            <li>Monitor quality metrics</li>
+                            <li>Iterate on templates</li>
+                            <li>Track response rates</li>
+                            <li>Balance automation & personalization</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
             <div style="background: linear-gradient(135deg, #1B3B6F 0%, #2563EB 100%); padding: 40px; border-radius: 8px; margin-top: 40px; text-align: center; color: white;">
-                <h3 style="font-size: 32px; margin-bottom: 20px;">Ready to Transform Your Sales Outreach?</h3>
-                <p style="font-size: 18px; margin-bottom: 30px; opacity: 0.95;">
-                    Join sales teams already scaling personalization with AI while maintaining compliance
+                <h3 style="font-size: 32px; margin-bottom: 20px;">AI-Enhanced Business Development</h3>
+                <p style="font-size: 18px; margin-bottom: 15px; opacity: 0.95;">
+                    This demo illustrates how AI can augment sales workflows while maintaining compliance and quality
                 </p>
-                <div style="display: flex; justify-content: center; gap: 20px;">
-                    <button style="background: white; color: #1B3B6F; border: none; padding: 15px 40px; border-radius: 4px; font-size: 18px; font-weight: 600; cursor: pointer;">
-                        Schedule Demo
-                    </button>
-                    <button style="background: transparent; color: white; border: 2px solid white; padding: 15px 40px; border-radius: 4px; font-size: 18px; font-weight: 600; cursor: pointer;">
-                        Start Pilot
-                    </button>
-                </div>
+                <p style="font-size: 16px; opacity: 0.85;">
+                    <strong>Key Takeaway:</strong> AI doesn't replace human judgment—it scales personalization, enforces compliance, and frees sales teams to focus on high-value relationship building
+                </p>
             </div>
         </div>
     </div>
@@ -1375,7 +1527,7 @@
             }
         });
 
-        // Email Generation Function
+        // Email Generation Function with Advanced AI Features
         function generateEmail() {
             const lead = document.getElementById('leadSelector').value;
             const emailType = document.getElementById('emailTypeSelector').value;
@@ -1386,12 +1538,42 @@
             loading.classList.add('visible');
             emailOutput.classList.remove('visible');
 
-            // Simulate API call delay
+            // Simulate step-by-step AI processing
+            const steps = ['step1', 'step2', 'step3', 'step4', 'step5'];
+            const stepMessages = [
+                'Semantic search for relevant context...',
+                'Analyzing lead profile and activities...',
+                'Retrieving similar successful deals...',
+                'Generating personalized content with LLM...',
+                'Validating compliance and brand guidelines...'
+            ];
+
+            let currentStep = 0;
+            const stepInterval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    const stepEl = document.getElementById(steps[currentStep]);
+                    stepEl.style.opacity = '1';
+                    stepEl.style.color = '#28a745';
+                    stepEl.innerHTML = `✅ Step ${currentStep + 1}: ${stepMessages[currentStep]}`;
+                    document.getElementById('loadingStatus').textContent = stepMessages[currentStep];
+                    currentStep++;
+                }
+            }, 500);
+
+            // Simulate full API call delay
             setTimeout(() => {
+                clearInterval(stepInterval);
                 loading.classList.remove('visible');
                 emailOutput.classList.add('visible');
 
-                // Pre-loaded email templates
+                // Reset loading steps
+                steps.forEach((step, idx) => {
+                    document.getElementById(step).style.opacity = '0.3';
+                    document.getElementById(step).style.color = '#495057';
+                    document.getElementById(step).innerHTML = `⏳ Step ${idx + 1}: ${stepMessages[idx]}`;
+                });
+
+                // Advanced email templates with AI features
                 const emails = {
                     'sarah-followup': {
                         to: 'sarah.chen@techcorp.com',
@@ -1402,6 +1584,32 @@
                             'Recent Activity: Downloaded whitepaper on AI integration (March 10, 2025)',
                             'Call Notes: Discussed infrastructure automation challenges (March 15, 2025)',
                             'Similar Win: DataTech Corp - VP Engineering - $85K ACV - Custom API integration'
+                        ],
+                        // Advanced AI features
+                        reasoning: [
+                            {icon: '🎯', text: 'Identified follow-up context from recent call notes (March 15)'},
+                            {icon: '🔍', text: 'Retrieved similar win (DataTech Corp) with 0.94 relevance score'},
+                            {icon: '💡', text: 'Personalized opening based on specific pain points mentioned in call'},
+                            {icon: '✅', text: 'Referenced recent whitepaper download to demonstrate engagement tracking'},
+                            {icon: '🎬', text: 'Soft CTA (20-min call) appropriate for warm follow-up stage'}
+                        ],
+                        confidence: {
+                            subject: {score: 0.92, label: 'Subject Line'},
+                            opening: {score: 0.96, label: 'Opening Paragraph'},
+                            body: {score: 0.94, label: 'Main Body'},
+                            cta: {score: 0.89, label: 'Call-to-Action'}
+                        },
+                        ragContext: [
+                            {source: 'Call Notes (March 15, 2025)', score: 0.97},
+                            {source: 'Whitepaper Download Activity', score: 0.94},
+                            {source: 'Similar Win: DataTech Corp', score: 0.91},
+                            {source: 'Lead Profile: Sarah Chen', score: 0.88}
+                        ],
+                        tokens: {input: 847, output: 203, total: 1050, cost: 0.0158},
+                        alternatives: [
+                            {approach: 'Direct product pitch', score: 67, reason: 'Too aggressive for follow-up stage'},
+                            {approach: 'Case study-only email', score: 72, reason: 'Missing personal connection from recent call'},
+                            {approach: 'Multi-option CTA', score: 78, reason: 'Could dilute focus, single CTA stronger here'}
                         ]
                     },
                     'sarah-initial': {
@@ -1413,6 +1621,31 @@
                             'Recent Activity: Downloaded whitepaper on AI integration (March 10, 2025)',
                             'Company Context: 500-1000 employees, Technology industry, $50M-$100M revenue',
                             'Interest Signal: Infrastructure automation focus'
+                        ],
+                        reasoning: [
+                            {icon: '📥', text: 'Triggered by whitepaper download (recent interest signal)'},
+                            {icon: '🏢', text: 'Identified company size (500-1000) as inflection point for custom solutions'},
+                            {icon: '🎯', text: 'Personalized to VP Engineering role and infrastructure challenges'},
+                            {icon: '🌐', text: 'Kept tone professional but approachable for cold outreach'},
+                            {icon: '🔗', text: 'Soft CTA (brief conversation) lowers barrier to engagement'}
+                        ],
+                        confidence: {
+                            subject: {score: 0.88, label: 'Subject Line'},
+                            opening: {score: 0.91, label: 'Opening Paragraph'},
+                            body: {score: 0.87, label: 'Main Body'},
+                            cta: {score: 0.90, label: 'Call-to-Action'}
+                        },
+                        ragContext: [
+                            {source: 'Whitepaper Download Activity', score: 0.96},
+                            {source: 'Company Profile: TechCorp', score: 0.89},
+                            {source: 'Lead Profile: Sarah Chen', score: 0.87},
+                            {source: 'Industry Insights: Technology', score: 0.82}
+                        ],
+                        tokens: {input: 723, output: 178, total: 901, cost: 0.0135},
+                        alternatives: [
+                            {approach: 'Technical deep-dive email', score: 63, reason: 'Too detailed for cold outreach, may overwhelm'},
+                            {approach: 'Generic template', score: 58, reason: 'Lacks personalization, low engagement expected'},
+                            {approach: 'Multi-touchpoint sequence', score: 75, reason: 'Better for follow-ups, selected approach wins for initial'}
                         ]
                     },
                     'michael-followup': {
@@ -1424,6 +1657,31 @@
                             'Recent Activity: Attended webinar on predictive forecasting (March 8, 2025)',
                             'Call Notes: Discussed real-time reporting challenges (March 14, 2025)',
                             'Similar Win: TriState Financial - CFO - $120K ACV - Automated dashboards'
+                        ],
+                        reasoning: [
+                            {icon: '☎️', text: 'Reference specific call (March 14) to establish continuity'},
+                            {icon: '💰', text: 'Retrieved high-value similar win (TriState, $120K) relevant to CFO'},
+                            {icon: '📊', text: 'Highlighted quantified results (10 days → 3 days) for credibility'},
+                            {icon: '🎯', text: 'Proposed concrete next step (custom analysis) with timeline'},
+                            {icon: '✅', text: 'Acknowledged specific pain points from call (Excel workflows, data consolidation)'}
+                        ],
+                        confidence: {
+                            subject: {score: 0.94, label: 'Subject Line'},
+                            opening: {score: 0.97, label: 'Opening Paragraph'},
+                            body: {score: 0.93, label: 'Main Body'},
+                            cta: {score: 0.91, label: 'Call-to-Action'}
+                        },
+                        ragContext: [
+                            {source: 'Call Notes (March 14, 2025)', score: 0.98},
+                            {source: 'Similar Win: TriState Financial', score: 0.93},
+                            {source: 'Webinar Attendance Activity', score: 0.90},
+                            {source: 'Lead Profile: Michael Rodriguez', score: 0.86}
+                        ],
+                        tokens: {input: 892, output: 219, total: 1111, cost: 0.0167},
+                        alternatives: [
+                            {approach: 'Generic check-in', score: 61, reason: 'Misses opportunity to reference specific call details'},
+                            {approach: 'Product-focused pitch', score: 69, reason: 'Too salesy for follow-up, lacks consultative tone'},
+                            {approach: 'Request another meeting', score: 74, reason: 'CTA with deliverable (analysis) provides more value'}
                         ]
                     },
                     'michael-initial': {
@@ -1435,6 +1693,31 @@
                             'Recent Activity: Attended predictive forecasting webinar (March 8, 2025)',
                             'Company Context: $10M-$50M revenue, Financial Services industry',
                             'Interest Signal: Focus on forecast accuracy and automation'
+                        ],
+                        reasoning: [
+                            {icon: '🎓', text: 'Webinar attendance = strong intent signal for predictive analytics'},
+                            {icon: '💼', text: 'Company revenue range ($10M-$50M) ideal for analytics ROI'},
+                            {icon: '📈', text: 'Emphasized ROI benefits (faster closes, better forecasts) for CFO persona'},
+                            {icon: '🌐', text: 'Balanced professional tone for financial services industry'},
+                            {icon: '🤝', text: 'Consultative CTA (share examples) vs. hard sell'}
+                        ],
+                        confidence: {
+                            subject: {score: 0.86, label: 'Subject Line'},
+                            opening: {score: 0.89, label: 'Opening Paragraph'},
+                            body: {score: 0.85, label: 'Main Body'},
+                            cta: {score: 0.88, label: 'Call-to-Action'}
+                        },
+                        ragContext: [
+                            {source: 'Webinar Attendance Activity', score: 0.95},
+                            {source: 'Company Profile: FinanceCo', score: 0.88},
+                            {source: 'Lead Profile: Michael Rodriguez', score: 0.85},
+                            {source: 'Industry Best Practices: Finance', score: 0.79}
+                        ],
+                        tokens: {input: 698, output: 165, total: 863, cost: 0.0129},
+                        alternatives: [
+                            {approach: 'ROI-heavy calculator pitch', score: 65, reason: 'Too aggressive for cold outreach, needs relationship first'},
+                            {approach: 'Industry report share', score: 71, reason: 'Provides value but less personalized'},
+                            {approach: 'Peer reference focus', score: 76, reason: 'Good but selected approach balances personalization + value better'}
                         ]
                     }
                 };
@@ -1442,7 +1725,7 @@
                 const emailKey = `${lead}-${emailType}`;
                 const email = emails[emailKey];
 
-                // Populate email output
+                // Populate email output with advanced AI features
                 emailOutput.innerHTML = `
                     <div class="email-header">
                         <div class="email-field"><strong>To:</strong> ${email.to}</div>
@@ -1451,6 +1734,92 @@
                         <div class="email-field"><strong>Model:</strong> GPT-4o-mini</div>
                     </div>
                     <div class="email-body">${email.body.replace(/\n/g, '<br>')}</div>
+
+                    <!-- AI Reasoning Section -->
+                    <div class="ai-reasoning">
+                        <h4 style="color: #856404; margin-bottom: 15px; font-size: 16px;">🧠 AI Reasoning Process</h4>
+                        ${email.reasoning.map(r => `
+                            <div class="reasoning-step">
+                                <span class="reasoning-icon">${r.icon}</span>
+                                <span style="color: #856404; font-size: 14px;">${r.text}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Confidence Scores -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h4 style="color: #1B3B6F; margin-bottom: 15px;">📊 AI Confidence Scores</h4>
+                        <div class="confidence-grid">
+                            ${Object.values(email.confidence).map(c => `
+                                <div class="confidence-item">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                        <span style="font-size: 14px; font-weight: 600; color: #495057;">${c.label}</span>
+                                        <span style="font-size: 16px; font-weight: 700; color: #28a745;">${(c.score * 100).toFixed(0)}%</span>
+                                    </div>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: ${c.score * 100}%"></div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- RAG Context Visualization -->
+                    <div class="rag-context-viz">
+                        <h4 style="color: #0066cc; margin-bottom: 15px;">🔍 RAG Context Retrieval (Semantic Matching)</h4>
+                        ${email.ragContext.map(ctx => `
+                            <div class="context-match">
+                                <div class="match-score">${(ctx.score * 100).toFixed(0)}%</div>
+                                <div class="match-bar">
+                                    <div class="match-fill" style="width: ${ctx.score * 100}%"></div>
+                                </div>
+                                <div style="flex: 2; font-size: 13px; color: #495057;">${ctx.source}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Token & Cost Breakdown -->
+                    <div class="cost-breakdown">
+                        <div class="cost-item">
+                            <div class="cost-value">${email.tokens.input.toLocaleString()}</div>
+                            <div class="cost-label">Input Tokens</div>
+                        </div>
+                        <div class="cost-item">
+                            <div class="cost-value">${email.tokens.output.toLocaleString()}</div>
+                            <div class="cost-label">Output Tokens</div>
+                        </div>
+                        <div class="cost-item">
+                            <div class="cost-value">${email.tokens.total.toLocaleString()}</div>
+                            <div class="cost-label">Total Tokens</div>
+                        </div>
+                        <div class="cost-item">
+                            <div class="cost-value">$${email.tokens.cost.toFixed(4)}</div>
+                            <div class="cost-label">Cost</div>
+                        </div>
+                    </div>
+
+                    <!-- Alternative Approaches Considered -->
+                    <div class="alternatives-section">
+                        <h4 style="color: #6c757d; margin-bottom: 15px;">🔀 Alternative Approaches Considered by AI</h4>
+                        ${email.alternatives.map((alt, idx) => `
+                            <div class="alternative-item">
+                                <div class="alternative-header">
+                                    <span style="font-weight: 600; color: #495057;">${idx + 1}. ${alt.approach}</span>
+                                    <span class="alternative-score">Score: ${alt.score}/100</span>
+                                </div>
+                                <div style="font-size: 13px; color: #6c757d; margin-top: 5px;">
+                                    <strong>Why not selected:</strong> ${alt.reason}
+                                </div>
+                            </div>
+                        `).join('')}
+                        <div style="margin-top: 15px; padding: 12px; background: #d4edda; border-radius: 6px; border-left: 3px solid #28a745;">
+                            <div style="font-size: 13px; color: #155724;">
+                                <strong>✅ Selected Approach:</strong> The generated email above achieved the highest overall score based on personalization, context relevance, and stage-appropriate messaging.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Citations -->
                     <div class="citations">
                         <h4>📚 Context Sources Used (RAG)</h4>
                         <ul>
