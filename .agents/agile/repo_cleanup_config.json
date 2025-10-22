@@ -1,0 +1,133 @@
+{
+  "cleanup_rules": {
+    "description": "Configuration for repository cleanup operations",
+    "version": "1.0.0"
+  },
+  "delete_patterns": {
+    "description": "Patterns to automatically delete",
+    "patterns": [
+      "**/*.pyc",
+      "**/__pycache__",
+      "**/.ipynb_checkpoints",
+      "**/.pytest_cache",
+      "**/.mypy_cache",
+      "**/.ruff_cache",
+      "**/*.egg-info",
+      "**/.coverage",
+      "**/.DS_Store",
+      "**/Thumbs.db",
+      "**/*.tmp",
+      "**/*.bak",
+      "**/*.swp",
+      "**/*.swo",
+      "**/*~",
+      "**/core",
+      "**/.vscode/.ropeproject"
+    ]
+  },
+  "review_patterns": {
+    "description": "Patterns to review before deleting",
+    "patterns": [
+      "**/*_backup.*",
+      "**/*_old.*",
+      "**/*_executed.ipynb",
+      "**/.venv",
+      "**/venv",
+      "**/node_modules",
+      "**/dist",
+      "**/build",
+      "**/*.log"
+    ],
+    "require_confirmation": true
+  },
+  "preserve_patterns": {
+    "description": "Patterns to never delete",
+    "patterns": [
+      ".git/**",
+      ".github/**",
+      ".gitignore",
+      ".gitattributes",
+      "LICENSE",
+      "LICENSE.txt",
+      "README.md",
+      "**/*.md",
+      "requirements.txt",
+      "package.json",
+      "package-lock.json",
+      "pyproject.toml",
+      "setup.py",
+      "Makefile",
+      ".env.example",
+      "docker-compose.yml",
+      "Dockerfile"
+    ]
+  },
+  "size_thresholds": {
+    "description": "File size thresholds for warnings",
+    "warn_file_size_mb": 10,
+    "warn_total_size_mb": 100,
+    "max_file_size_mb": 50
+  },
+  "git_operations": {
+    "description": "Git operation configurations",
+    "protected_branches": [
+      "main",
+      "master",
+      "production",
+      "release"
+    ],
+    "auto_pull_before_push": true,
+    "auto_cleanup_merged_branches": true,
+    "max_stale_branch_days": 30,
+    "commit_message_format": {
+      "types": [
+        "feat",
+        "fix",
+        "docs",
+        "style",
+        "refactor",
+        "test",
+        "chore"
+      ],
+      "template": "<type>(<scope>): <subject>"
+    }
+  },
+  "branch_naming": {
+    "description": "Branch naming conventions",
+    "patterns": {
+      "feature": "feature/{card_id}-{name}",
+      "bugfix": "bugfix/{issue_id}-{name}",
+      "hotfix": "hotfix/{issue_id}-{name}",
+      "refactor": "refactor/{component}-{name}",
+      "experiment": "experiment/{name}"
+    }
+  },
+  "cleanup_schedule": {
+    "description": "When to run automatic cleanup",
+    "triggers": [
+      "pre-pipeline",
+      "post-pipeline",
+      "manual"
+    ],
+    "pre_pipeline": {
+      "enabled": true,
+      "include_review_patterns": false
+    },
+    "post_pipeline": {
+      "enabled": true,
+      "include_review_patterns": false
+    },
+    "manual": {
+      "enabled": true,
+      "include_review_patterns": true
+    }
+  },
+  "safety_checks": {
+    "description": "Safety checks before operations",
+    "check_git_tracked": true,
+    "check_preserve_patterns": true,
+    "check_file_size": true,
+    "require_confirmation_for_large_deletes": true,
+    "large_delete_threshold": 50
+  }
+}
