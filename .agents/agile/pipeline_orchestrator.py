@@ -32,6 +32,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from kanban_manager import KanbanBoard
 from agent_messenger import AgentMessenger
+from rag_agent import RAGAgent
 
 
 class WorkflowPlanner:
@@ -217,7 +218,10 @@ class PipelineOrchestrator:
             status="active"
         )
 
-        self.log("Pipeline Orchestrator initialized with AgentMessenger", "INFO")
+        # Initialize RAG Agent for institutional memory
+        self.rag = RAGAgent(db_path="/tmp/rag_db", verbose=verbose)
+
+        self.log("Pipeline Orchestrator initialized with AgentMessenger and RAG Agent", "INFO")
 
     def log(self, message: str, level: str = "INFO"):
         """Log message if verbose"""
@@ -436,6 +440,22 @@ class PipelineOrchestrator:
         report_json_path = self.tmp_dir / f"research_report_{self.card_id}.json"
         with open(report_json_path, 'w') as f:
             json.dump(research_results, f, indent=2)
+
+        # Store research in RAG for future reference
+        self.log("Storing research in RAG database", "INFO")
+        self.rag.store_artifact(
+            artifact_type="research_report",
+            card_id=self.card_id,
+            task_title=card.get('title', 'Unknown'),
+            content=research_report,
+            metadata={
+                "priority": card.get('priority', 'medium'),
+                "story_points": card.get('points', 5),
+                "user_prompts_count": len(user_prompts),
+                "autonomous": len(user_prompts) == 0,
+                "research_mode": "user_prompted" if user_prompts else "autonomous"
+            }
+        )
 
         return research_results
 
@@ -676,6 +696,21 @@ The Architecture Agent should:
         report_path = self.tmp_dir / f"architecture_report_{self.card_id}.json"
         with open(report_path, 'w') as f:
             json.dump(architecture_results, f, indent=2)
+
+        # Store ADR in RAG for future reference
+        self.log("Storing ADR in RAG database", "INFO")
+        self.rag.store_artifact(
+            artifact_type="architecture_decision",
+            card_id=self.card_id,
+            task_title=card.get('title', 'Unknown'),
+            content=adr_content,
+            metadata={
+                "adr_number": adr_number,
+                "priority": card.get('priority', 'medium'),
+                "story_points": card.get('points', 5),
+                "decision": "TDD with parallel developers"
+            }
+        )
 
         return architecture_results
 
@@ -1322,6 +1357,25 @@ The Architecture Agent should:
         with open(report_path, 'w') as f:
             json.dump(arbitration_results, f, indent=2)
 
+        # Get card for RAG storage
+        card, _ = self.board._find_card(self.card_id)
+
+        # Store arbitration results in RAG
+        if winner:
+            self.log("Storing arbitration results in RAG database", "INFO")
+            self.rag.store_artifact(
+                artifact_type="arbitration_score",
+                card_id=self.card_id,
+                task_title=card.get('title', 'Unknown') if card else 'Unknown',
+                content=json.dumps(arbitration_results, indent=2),
+                metadata={
+                    "winner": winner,
+                    "developer_a_score": arbitration_results.get("developer_a_score", {}).get("total_score") if dev_a_approved else None,
+                    "developer_b_score": arbitration_results.get("developer_b_score", {}).get("total_score") if dev_b_approved else None,
+                    "decision": arbitration_results["decision"]
+                }
+            )
+
         self.log(f"Arbitration complete: Winner = {winner}", "SUCCESS")
 
         # Update Kanban board
@@ -1499,6 +1553,24 @@ The Architecture Agent should:
         with open(report_path, 'w') as f:
             json.dump(integration_results, f, indent=2)
 
+        # Get card for RAG storage
+        card, _ = self.board._find_card(self.card_id)
+
+        # Store integration results in RAG
+        self.log("Storing integration results in RAG database", "INFO")
+        self.rag.store_artifact(
+            artifact_type="integration_result",
+            card_id=self.card_id,
+            task_title=card.get('title', 'Unknown') if card else 'Unknown',
+            content=json.dumps(integration_results, indent=2),
+            metadata={
+                "status": integration_results["status"],
+                "winner": winner,
+                "deployment_verified": deployment_verified,
+                "tests_passed": test_results["failed"] == 0
+            }
+        )
+
         return integration_results
 
     def _verify_deployment(self, winner: str) -> bool:
@@ -1615,6 +1687,26 @@ The Architecture Agent should:
         with open(report_path, 'w') as f:
             json.dump(testing_results, f, indent=2)
 
+        # Get card for RAG storage
+        card, _ = self.board._find_card(self.card_id)
+
+        # Store testing results in RAG
+        self.log("Storing testing results in RAG database", "INFO")
+        self.rag.store_artifact(
+            artifact_type="testing_result",
+            card_id=self.card_id,
+            task_title=card.get('title', 'Unknown') if card else 'Unknown',
+            content=json.dumps(testing_results, indent=2),
+            metadata={
+                "status": testing_results["status"],
+                "winner": winner,
+                "quality_gates_passed": quality_gates_passed,
+                "uiux_score": uiux_score,
+                "performance_score": performance_score,
+                "production_ready": quality_gates_passed
+            }
+        )
+
         return testing_results
 
     def _evaluate_uiux(self) -> int:
@@ -1701,6 +1793,37 @@ The Architecture Agent should:
         self.log("\n📊 ANALYZING TASK AND CREATING WORKFLOW PLAN", "STAGE")
         planner = WorkflowPlanner(card, verbose=self.verbose)
         workflow_plan = planner.create_workflow_plan()
+
+        # Query RAG for similar past tasks
+        self.log("\n🧠 QUERYING RAG FOR HISTORICAL CONTEXT", "STAGE")
+        task_description = f"{card.get('title', '')} {card.get('description', '')}"
+        rag_recommendations = self.rag.get_recommendations(
+            task_description=task_description,
+            context={
+                "priority": card.get('priority', 'medium'),
+                "complexity": workflow_plan['complexity'],
+                "task_type": workflow_plan['task_type']
+            }
+        )
+
+        # Display RAG insights
+        if rag_recommendations['similar_tasks_count'] > 0:
+            self.log(f"\n📚 RAG Insights ({rag_recommendations['similar_tasks_count']} similar tasks found):", "INFO")
+            self.log(f"Confidence: {rag_recommendations['confidence']}", "INFO")
+            if rag_recommendations['based_on_history']:
+                self.log("Based on history:", "INFO")
+                for item in rag_recommendations['based_on_history'][:3]:
+                    self.log(f"  • {item}", "INFO")
+            if rag_recommendations['recommendations']:
+                self.log("Recommendations:", "INFO")
+                for item in rag_recommendations['recommendations'][:3]:
+                    self.log(f"  ✓ {item}", "SUCCESS")
+            if rag_recommendations['avoid']:
+                self.log("Things to avoid:", "WARNING")
+                for item in rag_recommendations['avoid'][:2]:
+                    self.log(f"  ⚠ {item}", "WARNING")
+        else:
+            self.log("No similar tasks found in RAG database (building new knowledge)", "INFO")
 
         # Display workflow plan
         self.log(f"\n{'='*60}", "INFO")
@@ -1841,9 +1964,21 @@ The Architecture Agent should:
                 }
             )
 
+            # Display RAG database stats
+            rag_stats = self.rag.get_stats()
+            self.log("\n📊 RAG Database Statistics:", "INFO")
+            self.log(f"  Total artifacts stored: {rag_stats['total_artifacts']}", "INFO")
+            self.log(f"  ChromaDB available: {rag_stats['chromadb_available']}", "INFO")
+            if rag_stats['total_artifacts'] > 0:
+                self.log("  Artifacts by type:", "INFO")
+                for artifact_type, count in rag_stats['by_type'].items():
+                    if count > 0:
+                        self.log(f"    - {artifact_type}: {count}", "INFO")
+
             self.log("\n" + "=" * 60, "INFO")
             self.log("🎉 DYNAMIC PIPELINE COMPLETED SUCCESSFULLY!", "SUCCESS")
             self.log(f"Executed {total_stages} stages with {workflow_plan['parallel_developers']} parallel developer(s)", "INFO")
+            self.log("  Pipeline institutional memory growing - RAG learning enabled", "INFO")
             self.log("=" * 60, "INFO")
 
         except Exception as e:

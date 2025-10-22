@@ -46,7 +46,203 @@ This guide demonstrates how all pipeline agents use the `AgentMessenger` communi
 
 ## Integration Approach
 
-### 0. Research Agent Integration (NEW!)
+### 0. RAG Agent Integration (Institutional Memory - ALWAYS ACTIVE)
+
+**Purpose:** Store all pipeline artifacts and provide historical context
+
+**When activated:** ALWAYS - runs throughout entire pipeline lifecycle
+
+```python
+from agent_messenger import AgentMessenger
+from rag_agent import RAGAgent
+
+class PipelineOrchestrator:
+    def __init__(self, card_id: str):
+        self.card_id = card_id
+        self.messenger = AgentMessenger("pipeline-orchestrator")
+
+        # Initialize RAG for institutional memory
+        self.rag = RAGAgent(db_path="/tmp/rag_db", verbose=True)
+
+    def run_full_pipeline(self):
+        # PHASE 1: Query RAG for similar past tasks
+        rag_recommendations = self.rag.get_recommendations(
+            task_description=f"{task['title']} {task['description']}",
+            context={
+                "priority": task['priority'],
+                "complexity": workflow_plan['complexity']
+            }
+        )
+
+        # Display RAG insights to inform pipeline
+        if rag_recommendations['similar_tasks_count'] > 0:
+            print(f"📚 Found {rag_recommendations['similar_tasks_count']} similar tasks")
+            print(f"Recommendations: {rag_recommendations['recommendations']}")
+            print(f"Things to avoid: {rag_recommendations['avoid']}")
+
+        # PHASE 2: Execute pipeline stages...
+
+        # After Research Stage - Store research report
+        self.rag.store_artifact(
+            artifact_type="research_report",
+            card_id=self.card_id,
+            task_title=task['title'],
+            content=research_report_text,
+            metadata={
+                "technologies": ["authlib", "OAuth2"],
+                "recommendation": "Use authlib",
+                "confidence": "HIGH"
+            }
+        )
+
+        # After Architecture Stage - Store ADR
+        self.rag.store_artifact(
+            artifact_type="architecture_decision",
+            card_id=self.card_id,
+            task_title=task['title'],
+            content=adr_text,
+            metadata={
+                "adr_number": "003",
+                "decision": "Use authlib for OAuth"
+            }
+        )
+
+        # After Arbitration - Store winning solution
+        self.rag.store_artifact(
+            artifact_type="arbitration_score",
+            card_id=self.card_id,
+            task_title=task['title'],
+            content=arbitration_report,
+            metadata={
+                "winner": "developer-b",
+                "developer_a_score": 87,
+                "developer_b_score": 95
+            }
+        )
+
+        # After Integration - Store integration results
+        self.rag.store_artifact(
+            artifact_type="integration_result",
+            card_id=self.card_id,
+            task_title=task['title'],
+            content=integration_report,
+            metadata={
+                "status": "PASS",
+                "tests_passed": True
+            }
+        )
+
+        # After Testing - Store testing results
+        self.rag.store_artifact(
+            artifact_type="testing_result",
+            card_id=self.card_id,
+            task_title=task['title'],
+            content=testing_report,
+            metadata={
+                "status": "PASS",
+                "production_ready": True
+            }
+        )
+```
+
+**RAG Agent Communication Flow:**
+
+```
+Pipeline Start
+    ↓
+┌─────────────────────────────────────┐
+│ RAG: Query for similar tasks        │
+│ Returns: Recommendations + Warnings │
+└─────────────────────────────────────┘
+    ↓
+Research Stage Completes
+    ↓
+┌─────────────────────────────────────┐
+│ RAG: Store research_report          │
+│ Indexed in vector DB for future     │
+└─────────────────────────────────────┘
+    ↓
+Architecture Stage Completes
+    ↓
+┌─────────────────────────────────────┐
+│ RAG: Store architecture_decision    │
+│ ADR available for similar tasks     │
+└─────────────────────────────────────┘
+    ↓
+Arbitration Completes
+    ↓
+┌─────────────────────────────────────┐
+│ RAG: Store arbitration_score        │
+│ Learn which approaches score high   │
+└─────────────────────────────────────┘
+    ↓
+Integration Completes
+    ↓
+┌─────────────────────────────────────┐
+│ RAG: Store integration_result       │
+│ Track deployment success rates      │
+└─────────────────────────────────────┘
+    ↓
+Testing Completes
+    ↓
+┌─────────────────────────────────────┐
+│ RAG: Store testing_result           │
+│ Complete task history preserved     │
+└─────────────────────────────────────┘
+    ↓
+Pipeline End - Institutional Knowledge Grown!
+```
+
+**RAG Message Types:**
+
+RAG Agent uses standard AgentMessenger but also has direct Python API:
+
+```python
+# Storing artifacts (direct API - no messaging needed)
+artifact_id = rag.store_artifact(
+    artifact_type="research_report",
+    card_id="card-123",
+    task_title="Add OAuth authentication",
+    content="<full research report>",
+    metadata={"technologies": ["authlib"], "confidence": "HIGH"}
+)
+
+# Querying similar artifacts (direct API)
+similar = rag.query_similar(
+    query_text="OAuth library comparison",
+    artifact_types=["research_report", "architecture_decision"],
+    top_k=5
+)
+
+# Getting recommendations (direct API)
+recommendations = rag.get_recommendations(
+    task_description="Add GitHub OAuth login",
+    context={"priority": "high", "complexity": "complex"}
+)
+
+# Extracting patterns (direct API)
+patterns = rag.extract_patterns(
+    pattern_type="technology_success_rates",
+    time_window_days=90
+)
+```
+
+**RAG Impact on Pipeline:**
+
+1. **Before Research:** Check if similar research exists (saves 2-3 min)
+2. **Before Architecture:** Reference past ADRs for similar problems
+3. **Before Development:** Show developers high-scoring past solutions
+4. **After Each Stage:** Store artifacts for future learning
+
+**Shared State Integration:**
+
+RAG doesn't use shared state directly but enhances it:
+- Orchestrator queries RAG → Updates shared state with recommendations
+- All agents can query RAG independently for historical context
+
+---
+
+### 1. Research Agent Integration (NEW!)
 
 **When activated:** Complex tasks, high-priority tasks, or when user provides research prompts
 
