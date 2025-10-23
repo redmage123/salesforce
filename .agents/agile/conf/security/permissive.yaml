@@ -1,0 +1,5 @@
+# Permissive Security Configuration (development/testing)
+enforce_gdpr: false
+enforce_wcag: false
+require_security_review: false
+min_code_review_score: 60

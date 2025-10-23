@@ -1,0 +1,10 @@
+# Fast Pipeline Configuration (for quick testing)
+max_parallel_developers: 1
+enable_code_review: false
+auto_approve_project_analysis: true
+enable_supervision: false
+max_retries: 0
+
+stages:
+  - development
+  - validation

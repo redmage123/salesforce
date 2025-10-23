@@ -1,0 +1,21 @@
+# @package _global_
+
+# Production Environment Configuration
+defaults:
+  - /llm: openai
+  - /storage: local
+  - /pipeline: standard
+  - /security: strict
+  - _self_
+
+# Card ID (must be provided via CLI: +card_id=XXX)
+card_id: ???
+
+# Production LLM settings
+llm:
+  cost_limit_usd: 100.0  # Daily limit
+
+# Production logging
+logging:
+  verbose: false
+  log_level: INFO

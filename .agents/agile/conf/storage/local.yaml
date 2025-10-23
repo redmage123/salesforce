@@ -1,0 +1,8 @@
+# Local Storage Configuration (SQLite-based)
+rag_db_type: sqlite
+rag_db_path: /tmp/rag_db
+chromadb_host: null
+chromadb_port: null
+temp_dir: /tmp
+checkpoint_dir: /tmp/artemis_checkpoints
+state_dir: /tmp/artemis_state

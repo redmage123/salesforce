@@ -1,0 +1,21 @@
+# @package _global_
+
+# Development Environment Configuration
+defaults:
+  - /llm: mock
+  - /storage: local
+  - /pipeline: fast
+  - /security: permissive
+  - _self_
+
+# Card ID (must be provided via CLI: +card_id=XXX)
+card_id: ???
+
+# Override LLM settings for dev
+llm:
+  cost_limit_usd: 1.0  # Limit spending in dev
+
+# Development logging
+logging:
+  verbose: true
+  log_level: DEBUG

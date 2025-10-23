@@ -1,0 +1,16 @@
+# Standard Pipeline Configuration
+max_parallel_developers: 3
+enable_code_review: true
+auto_approve_project_analysis: false
+enable_supervision: true
+max_retries: 2
+
+stages:
+  - project_analysis
+  - architecture
+  - dependencies
+  - development
+  - code_review
+  - validation
+  - integration
+  - testing

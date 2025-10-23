@@ -1,0 +1,8 @@
+# PostgreSQL Storage Configuration (for production/concurrent access)
+rag_db_type: postgres
+rag_db_path: null  # Not used for postgres
+chromadb_host: ${oc.env:CHROMADB_HOST,localhost}
+chromadb_port: ${oc.env:CHROMADB_PORT,8000}
+temp_dir: /tmp
+checkpoint_dir: /var/artemis/checkpoints
+state_dir: /var/artemis/state

@@ -1,0 +1,39 @@
+# Artemis Default Configuration
+# This is the base configuration that can be overridden via CLI or config groups
+
+defaults:
+  - llm: openai
+  - storage: local
+  - pipeline: standard
+  - security: strict
+  - _self_
+
+# Card ID (must be provided via CLI: card_id=XXX)
+card_id: ???
+
+# Hydra runtime configuration
+hydra:
+  run:
+    dir: /tmp/artemis_runs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${card_id}
+  sweep:
+    dir: /tmp/artemis_multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+  job:
+    name: artemis_${card_id}
+  job_logging:
+    version: 1
+    formatters:
+      simple:
+        format: '[%(asctime)s][%(name)s][%(levelname)s] - %(message)s'
+    handlers:
+      console:
+        class: logging.StreamHandler
+        formatter: simple
+        stream: ext://sys.stdout
+    root:
+      level: INFO
+      handlers: [console]
+
+# Logging configuration
+logging:
+  verbose: true
+  log_level: INFO  # DEBUG, INFO, WARNING, ERROR
