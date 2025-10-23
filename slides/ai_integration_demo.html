@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Integration Guide - Enterprise Patterns & Best Practices</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .slide-container {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            padding: 60px 40px 100px 40px;
+            overflow-y: auto;
+        }
+
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: #ffd700;
+        }
+
+        h3 {
+            font-size: 1.8rem;
+            margin: 20px 0;
+            color: #ffd700;
+        }
+
+        p, li {
+            font-size: 1.3rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 30px;
+        }
+
+        .box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .highlight {
+            background: rgba(255, 215, 0, 0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        ul li:before {
+            content: "→ ";
+            color: #ffd700;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .code-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .keyword { color: #569cd6; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; }
+        .function { color: #dcdcaa; }
+        .number { color: #b5cea8; }
+
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            font-size: 1.2rem;
+            opacity: 0.7;
+        }
+
+        .architecture-diagram {
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .component {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 10px;
+            font-weight: 600;
+        }
+
+        .arrow {
+            text-align: center;
+            font-size: 2rem;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .metric {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin: 10px;
+            font-weight: 600;
+        }
+
+        .warning {
+            background: rgba(255, 107, 107, 0.2);
+            border-left: 4px solid #ff6b6b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .success {
+            background: rgba(81, 207, 102, 0.2);
+            border-left: 4px solid #51cf66;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        /* Animated code comparison styles */
+        .code-comparison {
+            margin: 10px 0;
+        }
+
+        .code-box-animated {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            overflow-x: auto;
+            overflow-y: auto;
+            max-height: 250px;
+            margin: 10px 0;
+            opacity: 0;
+            transform: translateY(30px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .code-box-animated pre {
+            margin: 0;
+            padding: 0;
+            white-space: pre;
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+            background: transparent;
+        }
+
+        .code-box-animated.show {
+            animation: slideInUp 0.8s ease-out forwards;
+        }
+
+        .problem-text {
+            background: rgba(255, 107, 107, 0.3);
+            border-left: 5px solid #ff6b6b;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            opacity: 0;
+            transform: translateY(20px);
+            font-size: 0.9rem;
+        }
+
+        .problem-text.show {
+            animation: slideInUp 0.8s ease-out 0.4s forwards;
+        }
+
+        .solution-text {
+            background: rgba(81, 207, 102, 0.3);
+            border-left: 5px solid #51cf66;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            opacity: 0;
+            transform: translateY(20px);
+            font-size: 0.9rem;
+        }
+
+        .solution-text.show {
+            animation: slideInUp 0.8s ease-out 0.4s forwards;
+        }
+
+        .problem-text ul, .solution-text ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .problem-text li, .solution-text li {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 5px;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .code-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #ffd700;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .code-label.show {
+            animation: slideInUp 0.6s ease-out forwards;
+        }
+
+        /* Custom scrollbar styling */
+        .code-box-animated::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        .code-box-animated::-webkit-scrollbar-track {
+            background: #2d2d2d;
+            border-radius: 5px;
+        }
+
+        .code-box-animated::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 5px;
+        }
+
+        .code-box-animated::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+
+        .slide-container::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .slide-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .slide-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+        }
+
+        .slide-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <!-- Slide 1: Title Slide -->
+        <div class="slide active">
+            <div style="text-align: center;">
+                <h1 style="font-size: 4.5rem; margin-bottom: 40px;">🤖 AI Integration</h1>
+                <p class="subtitle" style="font-size: 2rem; margin-bottom: 60px;">
+                    Enterprise Patterns & Best Practices
+                </p>
+                <div style="margin-top: 80px;">
+                    <p style="font-size: 1.5rem; opacity: 0.9;">
+                        A Complete Guide to Building Production-Ready AI Applications
+                    </p>
+                    <p style="margin-top: 60px; font-size: 1.2rem; opacity: 0.8;">
+                        Press → or Space to begin
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: What You'll Learn -->
+        <div class="slide">
+            <h2>📚 What You'll Learn Today</h2>
+            <div style="margin-top: 40px;">
+                <div class="box" style="margin-bottom: 20px;">
+                    <h3>🏗️ Core Architecture</h3>
+                    <p>Multi-provider design, resilience patterns, and production-ready infrastructure</p>
+                </div>
+                <div class="box" style="margin-bottom: 20px;">
+                    <h3>🔒 Security & Safety</h3>
+                    <p>PII redaction, content filtering, and enterprise-grade security controls</p>
+                </div>
+                <div class="box" style="margin-bottom: 20px;">
+                    <h3>💰 Cost Management</h3>
+                    <p>Token tracking, budget controls, and optimization strategies</p>
+                </div>
+                <div class="box">
+                    <h3>🚀 Real-World Implementation</h3>
+                    <p>RAG integration, prompt engineering, and live code examples</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Overview -->
+        <div class="slide">
+            <h2>📋 What We'll Cover</h2>
+            <div class="two-column">
+                <div class="box">
+                    <h3>Core Patterns</h3>
+                    <ul>
+                        <li>Multi-Provider Architecture</li>
+                        <li>Resilience & Failover</li>
+                        <li>RAG Implementation</li>
+                        <li>Prompt Engineering</li>
+                    </ul>
+                </div>
+                <div class="box">
+                    <h3>Production Features</h3>
+                    <ul>
+                        <li>Security & PII Redaction</li>
+                        <li>Cost Tracking & Budgets</li>
+                        <li>Caching & Rate Limiting</li>
+                        <li>Monitoring & Analytics</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="success" style="margin-top: 30px;">
+                <strong>Live Demo:</strong> Customer Support Assistant with full AI pipeline
+            </div>
+        </div>
+
+        <!-- Slide 4: Code Comparison - Error Handling -->
+        <div class="slide">
+            <h2>⚠️ Problem #1: No Error Handling</h2>
+            <div class="code-comparison">
+                <div class="code-label">❌ Before: Basic API Call</div>
+                <div class="code-box-animated"><pre><span class="keyword">def</span> <span class="function">classify_ticket</span>(ticket_text):
+    <span class="comment"># Direct API call - no error handling!</span>
+    response = client.chat.completions.create(
+        model=<span class="string">"gpt-4o-mini"</span>,
+        messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: ticket_text}]
+    )
+    <span class="keyword">return</span> response.choices[<span class="number">0</span>].message.content</pre></div>
+
+                <div class="problem-text">
+                    <strong>⚠️ Problems:</strong>
+                    <ul>
+                        <li>Crashes on network timeouts or API errors</li>
+                        <li>No retry logic for transient failures</li>
+                        <li>Lost requests mean frustrated users</li>
+                        <li>No graceful degradation</li>
+                    </ul>
+                </div>
+
+                <div class="code-label">✅ After: Resilient API Call with Retry</div>
+                <div class="code-box-animated"><pre><span class="keyword">def</span> <span class="function">classify_ticket</span>(ticket_text):
+    <span class="comment"># Add retry logic with exponential backoff</span>
+    <span class="keyword">for</span> attempt <span class="keyword">in</span> range(<span class="number">3</span>):
+        <span class="keyword">try</span>:
+            response = client.chat.completions.create(
+                model=<span class="string">"gpt-4o-mini"</span>,
+                messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: ticket_text}],
+                timeout=<span class="number">30</span>  <span class="comment"># Set reasonable timeout</span>
+            )
+            <span class="keyword">return</span> response.choices[<span class="number">0</span>].message.content
+        <span class="keyword">except</span> (APIError, Timeout) <span class="keyword">as</span> e:
+            <span class="keyword">if</span> attempt == <span class="number">2</span>:
+                <span class="keyword">return</span> fallback_classification(ticket_text)
+            time.sleep(<span class="number">2</span> ** attempt)  <span class="comment"># Exponential backoff</span></pre></div>
+
+                <div class="solution-text">
+                    <strong>✅ Solutions:</strong>
+                    <ul>
+                        <li>Automatic retry on transient failures (3 attempts)</li>
+                        <li>Exponential backoff prevents API hammering</li>
+                        <li>Timeout prevents hanging requests</li>
+                        <li>Fallback to rule-based classifier if all retries fail</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3B: Code Comparison - Cost Tracking -->
+        <div class="slide">
+            <h2>💸 Problem #2: No Cost Visibility</h2>
+            <div class="code-comparison">
+                <div class="code-label">❌ Before: No Cost Tracking</div>
+                <div class="code-box-animated"><pre><span class="keyword">def</span> <span class="function">classify_ticket</span>(ticket_text):
+    response = client.chat.completions.create(
+        model=<span class="string">"gpt-4o-mini"</span>,
+        messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: ticket_text}]
+    )
+    <span class="keyword">return</span> response.choices[<span class="number">0</span>].message.content
+    <span class="comment"># How much did this cost? No idea! 🤷</span></pre></div>
+
+                <div class="problem-text">
+                    <strong>⚠️ Problems:</strong>
+                    <ul>
+                        <li>No visibility into API costs</li>
+                        <li>Risk of budget overruns</li>
+                        <li>Can't identify expensive operations</li>
+                        <li>No basis for cost optimization</li>
+                    </ul>
+                </div>
+
+                <div class="code-label">✅ After: Comprehensive Cost Tracking</div>
+                <div class="code-box-animated"><pre><span class="keyword">class</span> <span class="function">CostTracker</span>:
+    <span class="comment"># Track costs and token usage</span>
+    <span class="keyword">def</span> <span class="function">__init__</span>(self):
+        self.total_cost = <span class="number">0</span>
+        self.total_tokens = <span class="number">0</span>
+        self.request_count = <span class="number">0</span>
+
+<span class="keyword">def</span> <span class="function">classify_ticket</span>(ticket_text):
+    response = client.chat.completions.create(
+        model=<span class="string">"gpt-4o-mini"</span>,
+        messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: ticket_text}]
+    )
+
+    <span class="comment"># Calculate and track costs</span>
+    tokens = response.usage.total_tokens
+    cost = (response.usage.prompt_tokens / <span class="number">1_000_000</span>) * <span class="number">0.150</span> + \
+           (response.usage.completion_tokens / <span class="number">1_000_000</span>) * <span class="number">0.600</span>
+
+    tracker.total_cost += cost
+    tracker.total_tokens += tokens
+    tracker.request_count += <span class="number">1</span>
+
+    logger.info(<span class="string">f"Cost: ${cost:.4f} | Tokens: {tokens}"</span>)
+    <span class="keyword">return</span> response.choices[<span class="number">0</span>].message.content</pre></div>
+
+                <div class="solution-text">
+                    <strong>✅ Solutions:</strong>
+                    <ul>
+                        <li>Real-time cost calculation per request</li>
+                        <li>Cumulative cost and token tracking</li>
+                        <li>Logging for audit trails</li>
+                        <li>Data for optimization and budgeting</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3C: Code Comparison - Security/PII -->
+        <div class="slide">
+            <h2>🔒 Problem #3: Security & PII Risk</h2>
+            <div class="code-comparison">
+                <div class="code-label">❌ Before: Raw User Data Sent to API</div>
+                <div class="code-box-animated"><pre><span class="keyword">def</span> <span class="function">classify_ticket</span>(ticket_text):
+    <span class="comment"># Sending raw user input directly to external API!</span>
+    response = client.chat.completions.create(
+        model=<span class="string">"gpt-4o-mini"</span>,
+        messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: ticket_text}]
+    )
+    <span class="keyword">return</span> response.choices[<span class="number">0</span>].message.content
+
+<span class="comment"># Example input with PII:</span>
+<span class="comment"># "My email is john.doe@company.com and SSN is 123-45-6789"</span>
+<span class="comment"># ⚠️ This PII is sent to OpenAI! Compliance violation!</span></pre></div>
+
+                <div class="problem-text">
+                    <strong>⚠️ Problems:</strong>
+                    <ul>
+                        <li>PII (emails, SSN, phone) sent to external API</li>
+                        <li>GDPR/CCPA/HIPAA compliance violations</li>
+                        <li>Data breach exposure risk</li>
+                        <li>No audit trail of what data was shared</li>
+                    </ul>
+                </div>
+
+                <div class="code-label">✅ After: PII Redaction & Security</div>
+                <div class="code-box-animated"><pre><span class="keyword">import</span> re
+
+<span class="keyword">class</span> <span class="function">PIIRedactor</span>:
+    PATTERNS = {
+        <span class="string">'email'</span>: <span class="string">r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'</span>,
+        <span class="string">'ssn'</span>: <span class="string">r'\b\d{3}-\d{2}-\d{4}\b'</span>,
+        <span class="string">'phone'</span>: <span class="string">r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'</span>
+    }
+
+    <span class="keyword">def</span> <span class="function">redact</span>(self, text):
+        redacted = text
+        pii_found = []
+        <span class="keyword">for</span> pii_type, pattern <span class="keyword">in</span> self.PATTERNS.items():
+            matches = re.findall(pattern, text)
+            <span class="keyword">if</span> matches:
+                pii_found.append(pii_type)
+                redacted = re.sub(pattern, <span class="string">f'[{pii_type.upper()}_REDACTED]'</span>, redacted)
+        <span class="keyword">return</span> redacted, pii_found
+
+<span class="keyword">def</span> <span class="function">classify_ticket</span>(ticket_text):
+    <span class="comment"># Redact PII before sending to API</span>
+    redacted_text, pii_types = redactor.redact(ticket_text)
+
+    <span class="keyword">if</span> pii_types:
+        logger.warning(<span class="string">f"PII detected and redacted: {pii_types}"</span>)
+
+    response = client.chat.completions.create(
+        model=<span class="string">"gpt-4o-mini"</span>,
+        messages=[{<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: redacted_text}]
+    )
+    <span class="keyword">return</span> response.choices[<span class="number">0</span>].message.content</pre></div>
+
+                <div class="solution-text">
+                    <strong>✅ Solutions:</strong>
+                    <ul>
+                        <li>PII automatically detected and redacted before API calls</li>
+                        <li>GDPR/CCPA/HIPAA compliant data handling</li>
+                        <li>Audit logging of PII detection events</li>
+                        <li>Reduced data breach liability</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: Multi-Provider Architecture -->
+        <div class="slide">
+            <h2>🏗️ Multi-Provider Architecture</h2>
+            <p>Build flexible AI integrations that work across multiple providers</p>
+            <div class="architecture-diagram">
+                <div class="component">Your Application</div>
+                <div class="arrow">↓</div>
+                <div class="component">Unified AI Client Interface</div>
+                <div class="arrow">↓</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div class="component">OpenAI Provider</div>
+                    <div class="component">Anthropic Provider</div>
+                    <div class="component">Azure OpenAI</div>
+                </div>
+            </div>
+            <div class="box" style="margin-top: 20px;">
+                <strong>Benefits:</strong> Provider independence • Easy failover • Cost optimization • A/B testing
+            </div>
+        </div>
+
+        <!-- Slide 4: Resilience Patterns -->
+        <div class="slide">
+            <h2>🛡️ Resilience Patterns</h2>
+            <div class="two-column">
+                <div class="box">
+                    <h3>Circuit Breaker</h3>
+                    <p>Prevent cascading failures</p>
+                    <ul>
+                        <li>Track failure rate</li>
+                        <li>Open circuit after threshold</li>
+                        <li>Auto-recovery with timeout</li>
+                        <li>Half-open state for testing</li>
+                    </ul>
+                </div>
+                <div class="box">
+                    <h3>Retry with Backoff</h3>
+                    <p>Handle transient failures</p>
+                    <ul>
+                        <li>Exponential backoff</li>
+                        <li>Max retry attempts</li>
+                        <li>Jitter to prevent thundering herd</li>
+                        <li>Timeout configuration</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="code-box">
+                <span class="keyword">@with_retry</span>(max_retries=<span class="string">3</span>, backoff=<span class="string">1.0</span>)<br>
+                <span class="keyword">def</span> <span class="function">call_ai_api</span>(messages):<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> circuit_breaker.<span class="function">call</span>(provider.complete, messages)
+            </div>
+        </div>
+
+        <!-- Slide 5: RAG Architecture -->
+        <div class="slide">
+            <h2>📚 RAG: Retrieval-Augmented Generation</h2>
+            <p>Context-aware AI responses using your knowledge base</p>
+            <div class="architecture-diagram">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                    <div>
+                        <div class="component">1. Ingest Docs</div>
+                        <div style="color: #666; margin-top: 10px;">Chunk & Embed</div>
+                    </div>
+                    <div>
+                        <div class="component">2. Vector Search</div>
+                        <div style="color: #666; margin-top: 10px;">Find Relevant Context</div>
+                    </div>
+                    <div>
+                        <div class="component">3. LLM Generate</div>
+                        <div style="color: #666; margin-top: 10px;">Answer + Citations</div>
+                    </div>
+                </div>
+            </div>
+            <div class="box" style="margin-top: 30px;">
+                <h3>Best Practices</h3>
+                <ul>
+                    <li><strong>Chunk Size:</strong> 300-500 tokens for optimal retrieval</li>
+                    <li><strong>Overlap:</strong> 50-100 tokens between chunks</li>
+                    <li><strong>Metadata:</strong> Include source, date, category for filtering</li>
+                    <li><strong>Top-K:</strong> Retrieve 3-5 most relevant chunks</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 6: Security & Safety -->
+        <div class="slide">
+            <h2>🔒 Security & Safety</h2>
+            <div class="warning">
+                <strong>⚠️ Critical:</strong> Never send PII or sensitive data to external APIs without proper safeguards
+            </div>
+            <div class="two-column" style="margin-top: 30px;">
+                <div class="box">
+                    <h3>Input Security</h3>
+                    <ul>
+                        <li>PII Detection & Redaction</li>
+                        <li>Input Validation</li>
+                        <li>Length Limits</li>
+                        <li>Content Filtering</li>
+                    </ul>
+                </div>
+                <div class="box">
+                    <h3>Output Security</h3>
+                    <ul>
+                        <li>Response Sanitization</li>
+                        <li>Injection Prevention</li>
+                        <li>Audit Logging</li>
+                        <li>Access Controls</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="code-box">
+                <span class="comment"># Automatic PII redaction</span><br>
+                text, pii_found = SafetyFilter.<span class="function">redact_pii</span>(user_input)<br>
+                <span class="comment"># "john@example.com" → "[REDACTED_EMAIL]"</span>
+            </div>
+        </div>
+
+        <!-- Slide 7: Cost Management -->
+        <div class="slide">
+            <h2>💰 Cost Management</h2>
+            <p>Track and optimize AI API costs in real-time</p>
+            <div class="box">
+                <h3>Cost Tracking Metrics</h3>
+                <div style="margin-top: 20px;">
+                    <div class="metric">Token Usage</div>
+                    <div class="metric">Cost per Call</div>
+                    <div class="metric">Daily/Monthly Spend</div>
+                    <div class="metric">By Model/Provider</div>
+                </div>
+            </div>
+            <div class="two-column" style="margin-top: 30px;">
+                <div class="box">
+                    <h3>Cost Optimization</h3>
+                    <ul>
+                        <li>Cache frequent queries</li>
+                        <li>Use cheaper models when possible</li>
+                        <li>Implement token budgets</li>
+                        <li>Monitor usage patterns</li>
+                    </ul>
+                </div>
+                <div class="box">
+                    <h3>Budget Controls</h3>
+                    <ul>
+                        <li>Daily spending limits</li>
+                        <li>Monthly quotas</li>
+                        <li>Alert thresholds</li>
+                        <li>Auto-cutoff protection</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Prompt Engineering -->
+        <div class="slide">
+            <h2>✍️ Prompt Engineering Best Practices</h2>
+            <div class="box">
+                <h3>1. System Prompts</h3>
+                <p>Set context, role, and constraints upfront</p>
+                <div class="code-box">
+                    <span class="string">"You are a customer support specialist. Be concise and professional. Use the provided knowledge base to answer questions accurately."</span>
+                </div>
+            </div>
+            <div class="two-column" style="margin-top: 20px;">
+                <div class="box">
+                    <h3>2. Few-Shot Learning</h3>
+                    <p>Provide 2-5 examples</p>
+                    <ul>
+                        <li>Show desired format</li>
+                        <li>Demonstrate edge cases</li>
+                        <li>Set quality bar</li>
+                    </ul>
+                </div>
+                <div class="box">
+                    <h3>3. Structured Output</h3>
+                    <p>Request JSON format</p>
+                    <ul>
+                        <li>Define clear schema</li>
+                        <li>Specify required fields</li>
+                        <li>Validate responses</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Production Patterns -->
+        <div class="slide">
+            <h2>🚀 Production-Ready Patterns</h2>
+            <div class="two-column">
+                <div class="box">
+                    <h3>Caching Strategy</h3>
+                    <ul>
+                        <li><strong>LRU Cache:</strong> Most recent queries</li>
+                        <li><strong>TTL:</strong> Time-based expiration</li>
+                        <li><strong>Hit Rate:</strong> Monitor cache effectiveness</li>
+                        <li><strong>Invalidation:</strong> Clear on updates</li>
+                    </ul>
+                    <div class="metric">50-80% cache hit rate typical</div>
+                </div>
+                <div class="box">
+                    <h3>Rate Limiting</h3>
+                    <ul>
+                        <li><strong>Token Bucket:</strong> Smooth rate limiting</li>
+                        <li><strong>Per-User:</strong> Fair resource allocation</li>
+                        <li><strong>Burst Handling:</strong> Allow short spikes</li>
+                        <li><strong>429 Responses:</strong> Clear error messages</li>
+                    </ul>
+                    <div class="metric">60 req/min recommended</div>
+                </div>
+            </div>
+            <div class="success" style="margin-top: 30px;">
+                <strong>Result:</strong> 60% cost reduction + 3x faster responses with caching
+            </div>
+        </div>
+
+        <!-- Slide 10: Monitoring & Observability -->
+        <div class="slide">
+            <h2>📊 Monitoring & Observability</h2>
+            <div class="box">
+                <h3>Key Metrics to Track</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <div>
+                        <h4 style="color: #ffd700; margin-bottom: 15px;">Performance</h4>
+                        <ul>
+                            <li>Response latency (p50, p95, p99)</li>
+                            <li>Token generation speed</li>
+                            <li>Cache hit rate</li>
+                            <li>Error rate by type</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 style="color: #ffd700; margin-bottom: 15px;">Business</h4>
+                        <ul>
+                            <li>Cost per request</li>
+                            <li>Daily/monthly spend</li>
+                            <li>Usage by endpoint</li>
+                            <li>Model performance comparison</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="warning" style="margin-top: 30px;">
+                <strong>SLA Targets:</strong> Latency < 2s • Availability > 99.9% • Error rate < 0.1%
+            </div>
+        </div>
+
+        <!-- Slide 11: Demo Architecture -->
+        <div class="slide">
+            <h2>🎯 Live Demo: Customer Support Assistant</h2>
+            <div class="architecture-diagram">
+                <div style="font-weight: 600; margin-bottom: 20px; color: #333;">Complete AI Pipeline</div>
+                <div class="component">Customer Question</div>
+                <div class="arrow">↓</div>
+                <div class="component">Security Filter (PII Redaction)</div>
+                <div class="arrow">↓</div>
+                <div class="component">Vector Search (RAG)</div>
+                <div class="arrow">↓</div>
+                <div class="component">AI Provider (with Retry & Failover)</div>
+                <div class="arrow">↓</div>
+                <div class="component">Response + Cost Tracking</div>
+            </div>
+            <div class="box" style="margin-top: 20px;">
+                <strong>Features:</strong> Multi-provider • RAG knowledge base • PII protection • Cost tracking • Real-time analytics
+            </div>
+        </div>
+
+        <!-- Slide 12: Best Practices Summary -->
+        <div class="slide">
+            <h2>✅ Best Practices Summary</h2>
+            <div class="two-column">
+                <div class="box">
+                    <h3>Do's ✓</h3>
+                    <ul>
+                        <li>Abstract provider interfaces</li>
+                        <li>Implement retry & fallback</li>
+                        <li>Cache aggressively</li>
+                        <li>Track costs in real-time</li>
+                        <li>Redact PII automatically</li>
+                        <li>Set budget limits</li>
+                        <li>Monitor everything</li>
+                        <li>Test with production data</li>
+                    </ul>
+                </div>
+                <div class="box">
+                    <h3>Don'ts ✗</h3>
+                    <ul>
+                        <li>Hardcode provider details</li>
+                        <li>Ignore transient failures</li>
+                        <li>Skip input validation</li>
+                        <li>Send raw PII to APIs</li>
+                        <li>Ignore cost tracking</li>
+                        <li>Use production keys in dev</li>
+                        <li>Deploy without monitoring</li>
+                        <li>Assume 100% availability</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 13: Implementation Checklist -->
+        <div class="slide">
+            <h2>📝 Implementation Checklist</h2>
+            <div class="box">
+                <h3>Pre-Production</h3>
+                <ul>
+                    <li>✓ Multi-provider abstraction layer</li>
+                    <li>✓ Retry logic with exponential backoff</li>
+                    <li>✓ Circuit breaker implementation</li>
+                    <li>✓ PII detection and redaction</li>
+                    <li>✓ Input validation and sanitization</li>
+                    <li>✓ Response caching system</li>
+                    <li>✓ Rate limiting per user/endpoint</li>
+                    <li>✓ Cost tracking and budgets</li>
+                    <li>✓ Comprehensive logging</li>
+                    <li>✓ Error handling and fallbacks</li>
+                    <li>✓ Monitoring and alerting setup</li>
+                    <li>✓ Load testing at expected scale</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 14: Resources & Next Steps -->
+        <div class="slide">
+            <h2>🎓 Resources & Next Steps</h2>
+            <div class="box">
+                <h3>Interactive Jupyter Notebook</h3>
+                <p>Complete implementation with working code examples</p>
+                <div style="margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <code style="font-size: 1.1rem;">src/ai_integration_guide.ipynb</code>
+                </div>
+            </div>
+            <div class="two-column" style="margin-top: 30px;">
+                <div class="box">
+                    <h3>Learn More</h3>
+                    <ul>
+                        <li>OpenAI API Documentation</li>
+                        <li>Anthropic Claude Docs</li>
+                        <li>LangChain Framework</li>
+                        <li>Vector DB Comparisons</li>
+                    </ul>
+                </div>
+                <div class="box">
+                    <h3>Try It Out</h3>
+                    <ul>
+                        <li>Run the notebook demo</li>
+                        <li>Test with your data</li>
+                        <li>Customize prompts</li>
+                        <li>Deploy to production</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 16: Key Takeaways -->
+        <div class="slide">
+            <h2>🎯 Key Takeaways</h2>
+            <div class="two-column" style="margin-top: 30px;">
+                <div>
+                    <div class="box" style="margin-bottom: 20px;">
+                        <h3>1. Build Flexible Systems</h3>
+                        <ul>
+                            <li>Abstract provider interfaces</li>
+                            <li>Multi-provider support from day 1</li>
+                            <li>Easy to switch or add providers</li>
+                        </ul>
+                    </div>
+                    <div class="box" style="margin-bottom: 20px;">
+                        <h3>2. Security is Critical</h3>
+                        <ul>
+                            <li>Redact PII automatically</li>
+                            <li>Validate all inputs</li>
+                            <li>Filter harmful content</li>
+                        </ul>
+                    </div>
+                    <div class="box">
+                        <h3>3. Control Costs</h3>
+                        <ul>
+                            <li>Track every API call</li>
+                            <li>Set budget limits</li>
+                            <li>Cache aggressively</li>
+                        </ul>
+                    </div>
+                </div>
+                <div>
+                    <div class="box" style="margin-bottom: 20px;">
+                        <h3>4. Design for Resilience</h3>
+                        <ul>
+                            <li>Implement retry logic</li>
+                            <li>Circuit breakers for failures</li>
+                            <li>Fallback providers ready</li>
+                        </ul>
+                    </div>
+                    <div class="box" style="margin-bottom: 20px;">
+                        <h3>5. RAG When Needed</h3>
+                        <ul>
+                            <li>Context improves accuracy</li>
+                            <li>Cite your sources</li>
+                            <li>Keep chunks 300-500 tokens</li>
+                        </ul>
+                    </div>
+                    <div class="box">
+                        <h3>6. Monitor Everything</h3>
+                        <ul>
+                            <li>Latency, costs, errors</li>
+                            <li>Real-time dashboards</li>
+                            <li>Alert on anomalies</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 17: Thank You & Next Steps -->
+        <div class="slide">
+            <div style="text-align: center;">
+                <h1 style="font-size: 4rem; margin-bottom: 40px;">🚀 You're Ready!</h1>
+                <p class="subtitle" style="font-size: 1.8rem;">Start Building Production AI Apps Today</p>
+
+                <div class="box" style="margin-top: 60px; max-width: 800px; margin-left: auto; margin-right: auto;">
+                    <h3 style="margin-bottom: 30px;">📂 Resources Included</h3>
+                    <div style="text-align: left; font-size: 1.2rem;">
+                        <p>✓ <strong>Interactive Notebook:</strong> src/ai_integration_guide.ipynb</p>
+                        <p>✓ <strong>Before/After Demo:</strong> src/ai_integration_before_after_demo.html</p>
+                        <p>✓ <strong>Code Examples:</strong> src/ai_before_after_code_demo.py</p>
+                        <p>✓ <strong>This Presentation:</strong> slides/ai_integration_demo.html</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 60px; font-size: 1.4rem;">
+                    <p style="opacity: 0.9;">Questions? Start with the notebook and experiment!</p>
+                    <p style="margin-top: 30px; font-size: 1.8rem;">✨ Happy Building! ✨</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">20</span>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-btn" onclick="previousSlide()">← Previous</button>
+        <button class="nav-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('total-slides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            document.getElementById('current-slide').textContent = currentSlide + 1;
+
+            // Scroll to top of slide container
+            document.querySelector('.slide-container').scrollTop = 0;
+
+            // Trigger animations for code comparison slides
+            triggerCodeAnimations();
+        }
+
+        function triggerCodeAnimations() {
+            const currentSlideElement = slides[currentSlide];
+            const codeBoxes = currentSlideElement.querySelectorAll('.code-box-animated');
+            const problemTexts = currentSlideElement.querySelectorAll('.problem-text');
+            const solutionTexts = currentSlideElement.querySelectorAll('.solution-text');
+            const codeLabels = currentSlideElement.querySelectorAll('.code-label');
+
+            // Reset animations first
+            codeBoxes.forEach(box => box.classList.remove('show'));
+            problemTexts.forEach(text => text.classList.remove('show'));
+            solutionTexts.forEach(text => text.classList.remove('show'));
+            codeLabels.forEach(label => label.classList.remove('show'));
+
+            // Trigger animations in sequence
+            setTimeout(() => {
+                // First code label and box
+                if (codeLabels[0]) codeLabels[0].classList.add('show');
+                if (codeBoxes[0]) codeBoxes[0].classList.add('show');
+            }, 100);
+
+            setTimeout(() => {
+                // Problem text
+                if (problemTexts[0]) problemTexts[0].classList.add('show');
+            }, 1000);
+
+            setTimeout(() => {
+                // Second code label and box
+                if (codeLabels[1]) codeLabels[1].classList.add('show');
+                if (codeBoxes[1]) codeBoxes[1].classList.add('show');
+            }, 2000);
+
+            setTimeout(() => {
+                // Solution text
+                if (solutionTexts[0]) solutionTexts[0].classList.add('show');
+            }, 2900);
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function previousSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                previousSlide();
+            }
+        });
+    </script>
+</body>
+</html>

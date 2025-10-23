@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Integration: Before & After Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .demo-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .panel-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-old {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .badge-new {
+            background: #51cf66;
+            color: white;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-primary:disabled,
+        .btn-secondary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 200px;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-header {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .category-tag {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 5px;
+            font-size: 0.95rem;
+        }
+
+        .category-billing { background: #ffd93d; color: #333; }
+        .category-technical { background: #6bcf7f; color: white; }
+        .category-account { background: #4d96ff; color: white; }
+        .category-general { background: #95a5a6; color: white; }
+        .category-unknown { background: #e74c3c; color: white; }
+
+        .priority-tag {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 5px;
+            font-size: 0.95rem;
+        }
+
+        .priority-high { background: #e74c3c; color: white; }
+        .priority-medium { background: #f39c12; color: white; }
+        .priority-low { background: #3498db; color: white; }
+
+        .confidence-bar {
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 24px;
+            margin: 10px 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            background: linear-gradient(90deg, #51cf66, #37b24d);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: width 0.5s ease-out;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .metric {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .error-message {
+            background: #fee;
+            border: 2px solid #e74c3c;
+            color: #c0392b;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .examples {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .examples h3 {
+            color: white;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .example-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 10px 16px;
+            border-radius: 6px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .example-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .comparison-notes {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .comparison-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .check { color: #51cf66; font-weight: bold; }
+        .cross { color: #e74c3c; font-weight: bold; }
+
+        .suggestion-box {
+            background: #e8f4fd;
+            border-left: 4px solid #4d96ff;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            color: #2c5aa0;
+            margin-bottom: 8px;
+        }
+
+        .sentiment-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .sentiment-emoji {
+            font-size: 2rem;
+        }
+
+        .sentiment-text {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 AI Integration: Before & After</h1>
+        <p class="subtitle">See the difference between rule-based and AI-powered ticket classification</p>
+
+        <div class="examples">
+            <h3>📝 Try These Example Tickets:</h3>
+            <button class="example-btn" onclick="setExample(0)">Billing Issue</button>
+            <button class="example-btn" onclick="setExample(1)">Password Reset</button>
+            <button class="example-btn" onclick="setExample(2)">Feature Request</button>
+            <button class="example-btn" onclick="setExample(3)">Urgent Bug</button>
+            <button class="example-btn" onclick="setExample(4)">Complex Query</button>
+        </div>
+
+        <div class="comparison-container">
+            <!-- BEFORE: Rules-Based -->
+            <div class="demo-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        ❌ Before AI
+                    </div>
+                    <span class="badge badge-old">Rules-Based</span>
+                </div>
+
+                <div class="input-group">
+                    <label>Customer Support Ticket:</label>
+                    <textarea id="ticket-before" placeholder="Enter a customer support ticket..."></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" onclick="classifyBefore()">Classify Ticket</button>
+                    <button class="btn-secondary" onclick="clearBefore()">Clear</button>
+                </div>
+
+                <div id="result-before" class="result-box">
+                    <!-- Results appear here -->
+                </div>
+            </div>
+
+            <!-- AFTER: AI-Powered -->
+            <div class="demo-panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        ✨ With AI
+                    </div>
+                    <span class="badge badge-new">AI-Powered</span>
+                </div>
+
+                <div class="input-group">
+                    <label>Customer Support Ticket:</label>
+                    <textarea id="ticket-after" placeholder="Enter a customer support ticket..."></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button class="btn-primary" id="classify-ai-btn" onclick="classifyAfter()">Classify with AI</button>
+                    <button class="btn-secondary" onclick="clearAfter()">Clear</button>
+                </div>
+
+                <div id="result-after" class="result-box">
+                    <!-- Results appear here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-notes">
+            <h2 style="margin-bottom: 20px; color: #333;">📊 Key Differences</h2>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>❌ Without AI (Rules)</th>
+                        <th>✨ With AI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Accuracy</strong></td>
+                        <td><span class="cross">✗</span> Keyword matching only (60-70%)</td>
+                        <td><span class="check">✓</span> Context understanding (85-95%)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Flexibility</strong></td>
+                        <td><span class="cross">✗</span> Fixed rules need constant updates</td>
+                        <td><span class="check">✓</span> Adapts to new patterns automatically</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nuance</strong></td>
+                        <td><span class="cross">✗</span> Can't detect sentiment or urgency</td>
+                        <td><span class="check">✓</span> Understands emotion, tone, urgency</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Complex Cases</strong></td>
+                        <td><span class="cross">✗</span> Multi-topic tickets often misclassified</td>
+                        <td><span class="check">✓</span> Handles complex, multi-faceted issues</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Suggestions</strong></td>
+                        <td><span class="cross">✗</span> No intelligent recommendations</td>
+                        <td><span class="check">✓</span> Provides routing and response suggestions</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cost</strong></td>
+                        <td><span class="check">✓</span> Free (just computing)</td>
+                        <td><span class="cross">~</span> API costs (~$0.001 per ticket)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Example tickets
+        const examples = [
+            "I was charged twice on my last invoice. This is the third time this has happened! I need a refund immediately.",
+            "I can't log into my account. I tried resetting my password but I'm not getting the email. Please help ASAP!",
+            "Would it be possible to add a dark mode to the dashboard? Many of our team members work late hours and would really appreciate this feature.",
+            "URGENT: Our production API is returning 500 errors for all requests since 2pm EST. This is affecting all our customers!",
+            "I'm trying to export data to CSV but when I filter by date range and then sort by customer name, the export includes records from outside my selected date range. Also, is there a way to schedule automated exports?"
+        ];
+
+        function setExample(index) {
+            const text = examples[index];
+            document.getElementById('ticket-before').value = text;
+            document.getElementById('ticket-after').value = text;
+            clearBefore();
+            clearAfter();
+        }
+
+        // BEFORE: Rule-based classification
+        function classifyBefore() {
+            const ticket = document.getElementById('ticket-before').value.trim();
+            if (!ticket) {
+                alert('Please enter a ticket');
+                return;
+            }
+
+            const resultBox = document.getElementById('result-before');
+            resultBox.innerHTML = '<div class="loading"><div class="spinner"></div>Processing...</div>';
+            resultBox.classList.add('show');
+
+            // Simulate processing delay
+            setTimeout(() => {
+                const result = ruleBasedClassify(ticket);
+                displayBeforeResult(result);
+            }, 500);
+        }
+
+        function ruleBasedClassify(ticket) {
+            const lower = ticket.toLowerCase();
+            let category = 'general';
+            let priority = 'low';
+            let confidence = 50;
+
+            // Simple keyword matching
+            if (lower.includes('bill') || lower.includes('charge') || lower.includes('invoice') || lower.includes('payment')) {
+                category = 'billing';
+                confidence = 70;
+            } else if (lower.includes('password') || lower.includes('login') || lower.includes('account') || lower.includes('access')) {
+                category = 'account';
+                confidence = 65;
+            } else if (lower.includes('error') || lower.includes('bug') || lower.includes('broken') || lower.includes('not working')) {
+                category = 'technical';
+                confidence = 60;
+            }
+
+            // Priority detection (simple)
+            if (lower.includes('urgent') || lower.includes('asap') || lower.includes('immediately') || lower.includes('critical')) {
+                priority = 'high';
+            } else if (lower.includes('soon') || lower.includes('important')) {
+                priority = 'medium';
+            }
+
+            return {
+                category,
+                priority,
+                confidence,
+                method: 'keyword-matching',
+                limitations: [
+                    'Cannot understand context or nuance',
+                    'Misses tickets without exact keywords',
+                    'No sentiment analysis',
+                    'Cannot handle multi-topic tickets'
+                ]
+            };
+        }
+
+        function displayBeforeResult(result) {
+            const html = `
+                <div class="result-header">Classification Result</div>
+
+                <div>
+                    <strong>Category:</strong>
+                    <div class="category-tag category-${result.category}">${result.category.toUpperCase()}</div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <strong>Priority:</strong>
+                    <div class="priority-tag priority-${result.priority}">${result.priority.toUpperCase()}</div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <strong>Confidence:</strong>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${result.confidence}%">${result.confidence}%</div>
+                    </div>
+                </div>
+
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-label">Method</div>
+                        <div class="metric-value" style="font-size: 1rem;">${result.method}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Processing</div>
+                        <div class="metric-value">Instant</div>
+                    </div>
+                </div>
+
+                <div class="error-message" style="margin-top: 20px;">
+                    <strong>⚠️ Limitations:</strong>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        ${result.limitations.map(l => `<li>${l}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            document.getElementById('result-before').innerHTML = html;
+        }
+
+        // AFTER: AI-powered classification
+        async function classifyAfter() {
+            const ticket = document.getElementById('ticket-after').value.trim();
+            if (!ticket) {
+                alert('Please enter a ticket');
+                return;
+            }
+
+            const resultBox = document.getElementById('result-after');
+            const btn = document.getElementById('classify-ai-btn');
+
+            resultBox.innerHTML = '<div class="loading"><div class="spinner"></div>Analyzing with AI...</div>';
+            resultBox.classList.add('show');
+            btn.disabled = true;
+
+            try {
+                // Simulate AI analysis (in production, this would call your backend)
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                const result = await aiClassify(ticket);
+                displayAfterResult(result);
+            } catch (error) {
+                resultBox.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function aiClassify(ticket) {
+            // Simulate AI classification with more sophisticated logic
+            const lower = ticket.toLowerCase();
+
+            // Detect sentiment
+            const negativeWords = ['angry', 'frustrated', 'terrible', 'worst', 'hate', 'disappointed'];
+            const urgentWords = ['urgent', 'asap', 'immediately', 'critical', 'emergency', 'production'];
+
+            let sentiment = 'neutral';
+            let sentimentScore = 0;
+            if (negativeWords.some(word => lower.includes(word)) || ticket.includes('!')) {
+                sentiment = 'negative';
+                sentimentScore = -0.6;
+            } else if (lower.includes('please') || lower.includes('appreciate') || lower.includes('thank')) {
+                sentiment = 'positive';
+                sentimentScore = 0.5;
+            }
+
+            // Better category detection
+            let category = 'general';
+            let confidence = 88;
+
+            if (lower.includes('charge') || lower.includes('bill') || lower.includes('invoice') || lower.includes('refund') || lower.includes('payment')) {
+                category = 'billing';
+                confidence = 92;
+            } else if (lower.includes('password') || lower.includes('login') || lower.includes('account') || lower.includes('access') || lower.includes('sign')) {
+                category = 'account';
+                confidence = 89;
+            } else if (lower.includes('error') || lower.includes('bug') || lower.includes('broken') || lower.includes('api') || lower.includes('500') || lower.includes('not working')) {
+                category = 'technical';
+                confidence = 94;
+            }
+
+            // Intelligent priority
+            let priority = 'low';
+            if (urgentWords.some(word => lower.includes(word)) || lower.includes('production') || sentiment === 'negative') {
+                priority = 'high';
+            } else if (lower.includes('soon') || category === 'billing') {
+                priority = 'medium';
+            }
+
+            // Generate suggestions
+            let suggestions = [];
+            if (category === 'billing') {
+                suggestions.push('Route to billing department');
+                suggestions.push('Check customer account for payment history');
+                suggestions.push('Review recent invoices for discrepancies');
+            } else if (category === 'technical' && priority === 'high') {
+                suggestions.push('Escalate to senior technical support immediately');
+                suggestions.push('Check system status dashboard');
+                suggestions.push('Notify engineering team');
+            } else if (category === 'account') {
+                suggestions.push('Verify customer identity');
+                suggestions.push('Check email delivery logs');
+                suggestions.push('Generate new password reset link');
+            }
+
+            return {
+                category,
+                priority,
+                confidence,
+                sentiment,
+                sentimentScore,
+                suggestions,
+                processingTime: '1.2s',
+                cost: '$0.0008',
+                tokens: 245
+            };
+        }
+
+        function displayAfterResult(result) {
+            const sentimentEmoji = result.sentiment === 'negative' ? '😠' :
+                                  result.sentiment === 'positive' ? '😊' : '😐';
+
+            const html = `
+                <div class="result-header">AI Classification Result</div>
+
+                <div>
+                    <strong>Category:</strong>
+                    <div class="category-tag category-${result.category}">${result.category.toUpperCase()}</div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <strong>Priority:</strong>
+                    <div class="priority-tag priority-${result.priority}">${result.priority.toUpperCase()}</div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <strong>Confidence:</strong>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${result.confidence}%">${result.confidence}%</div>
+                    </div>
+                </div>
+
+                <div class="sentiment-indicator">
+                    <span class="sentiment-emoji">${sentimentEmoji}</span>
+                    <div>
+                        <div class="sentiment-text">Sentiment: ${result.sentiment.toUpperCase()}</div>
+                        <div style="font-size: 0.9rem; color: #666;">Score: ${result.sentimentScore}</div>
+                    </div>
+                </div>
+
+                ${result.suggestions.length > 0 ? `
+                    <div class="suggestion-box">
+                        <div class="suggestion-title">💡 AI Suggestions:</div>
+                        <ul style="margin: 10px 0 0 20px;">
+                            ${result.suggestions.map(s => `<li>${s}</li>`).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-label">Processing Time</div>
+                        <div class="metric-value">${result.processingTime}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Cost</div>
+                        <div class="metric-value">${result.cost}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Tokens Used</div>
+                        <div class="metric-value">${result.tokens}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Model</div>
+                        <div class="metric-value" style="font-size: 0.9rem;">GPT-4o-mini</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('result-after').innerHTML = html;
+        }
+
+        function clearBefore() {
+            document.getElementById('result-before').classList.remove('show');
+        }
+
+        function clearAfter() {
+            document.getElementById('result-after').classList.remove('show');
+        }
+
+        // Sync text between both textareas
+        document.getElementById('ticket-before').addEventListener('input', function(e) {
+            document.getElementById('ticket-after').value = e.target.value;
+        });
+
+        document.getElementById('ticket-after').addEventListener('input', function(e) {
+            document.getElementById('ticket-before').value = e.target.value;
+        });
+    </script>
+</body>
+</html>
