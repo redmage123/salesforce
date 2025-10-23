@@ -1,0 +1,306 @@
+# GraphQL Schema for Artemis Knowledge Graph
+# Provides type-safe queries and mutations for code relationships
+
+# ==================== TYPES ====================
+
+type File {
+  path: String!
+  language: String!
+  lines: Int!
+  module: String
+  lastModified: String
+
+  # Relationships
+  contains: [CodeEntity!]!
+  imports: [File!]!
+  importedBy: [File!]!
+  impactedBy: [ADR!]!
+}
+
+interface CodeEntity {
+  name: String!
+  filePath: String!
+  public: Boolean!
+}
+
+type Class implements CodeEntity {
+  name: String!
+  filePath: String!
+  public: Boolean!
+  abstract: Boolean!
+  lines: Int!
+
+  # Relationships
+  methods: [Function!]!
+  dependsOn: [Class!]!
+}
+
+type Function implements CodeEntity {
+  name: String!
+  filePath: String!
+  public: Boolean!
+  className: String
+  params: [String!]!
+  returns: String
+  complexity: Int!
+
+  # Relationships
+  calls: [Function!]!
+  calledBy: [Function!]!
+  coveredBy: [Test!]!
+}
+
+type Test {
+  name: String!
+  filePath: String!
+  testType: String!
+
+  # Relationships
+  covers: [Function!]!
+}
+
+type ADR {
+  adrId: String!
+  title: String!
+  date: String!
+  status: ADRStatus!
+  rationale: String
+
+  # Relationships
+  impacts: [File!]!
+  supersedes: [ADR!]!
+  supersededBy: [ADR!]!
+  influencedBy: [ADR!]!
+}
+
+enum ADRStatus {
+  PROPOSED
+  ACCEPTED
+  REJECTED
+  DEPRECATED
+  SUPERSEDED
+}
+
+type ImpactAnalysisResult {
+  dependentPath: String!
+  language: String!
+  module: String
+  distance: Int!
+}
+
+type CircularDependency {
+  cycle: [String!]!
+  cycleLength: Int!
+}
+
+type UntestedFunction {
+  functionName: String!
+  filePath: String!
+  complexity: Int!
+}
+
+type ArchitecturalViolation {
+  violator: String!
+  forbiddenImport: String!
+  fromModule: String!
+  toModule: String!
+}
+
+type DecisionNode {
+  adrId: String!
+  title: String!
+  status: ADRStatus!
+}
+
+type GraphStats {
+  files: Int!
+  classes: Int!
+  functions: Int!
+  relationships: Int!
+}
+
+# ==================== QUERIES ====================
+
+type Query {
+  # File queries
+  file(path: String!): File
+  files(language: String, module: String): [File!]!
+
+  # Impact analysis
+  impactAnalysis(filePath: String!, depth: Int = 3): [ImpactAnalysisResult!]!
+
+  # Dependency queries
+  circularDependencies: [CircularDependency!]!
+  fileDependencies(filePath: String!): FileDependencies!
+
+  # Quality queries
+  untestedFunctions: [UntestedFunction!]!
+  highComplexityFunctions(threshold: Int = 10): [Function!]!
+
+  # Architecture queries
+  architecturalViolations(forbiddenPatterns: [ForbiddenPattern!]!): [ArchitecturalViolation!]!
+  decisionLineage(adrId: String!): [DecisionNode!]!
+
+  # Statistics
+  graphStats: GraphStats!
+}
+
+input ForbiddenPattern {
+  fromModule: String!
+  toModule: String!
+}
+
+type FileDependencies {
+  imports: [String!]!
+  importedBy: [String!]!
+}
+
+# ==================== MUTATIONS ====================
+
+type Mutation {
+  # File operations
+  addFile(
+    path: String!
+    language: String!
+    lines: Int
+    module: String
+  ): File!
+
+  updateFileMetrics(
+    filePath: String!
+    lines: Int!
+    complexity: Int
+  ): Boolean!
+
+  deleteFile(path: String!): Boolean!
+
+  # Class operations
+  addClass(
+    name: String!
+    filePath: String!
+    public: Boolean = true
+    abstract: Boolean = false
+    lines: Int = 0
+  ): Class!
+
+  # Function operations
+  addFunction(
+    name: String!
+    filePath: String!
+    className: String
+    params: [String!]
+    returns: String
+    public: Boolean = true
+    complexity: Int = 1
+  ): Function!
+
+  # Dependency operations
+  addDependency(
+    fromFile: String!
+    toFile: String!
+    relationship: DependencyType = IMPORTS
+  ): Boolean!
+
+  addFunctionCall(
+    caller: String!
+    callee: String!
+    callerFile: String!
+    calleeFile: String!
+  ): Boolean!
+
+  # ADR operations
+  addADR(
+    adrId: String!
+    title: String!
+    status: ADRStatus!
+    rationale: String
+    impacts: [String!]
+  ): ADR!
+
+  # Utility
+  clearGraph: Boolean!
+}
+
+enum DependencyType {
+  IMPORTS
+  CALLS
+  DEPENDS_ON
+}
+
+# ==================== SUBSCRIPTIONS ====================
+
+type Subscription {
+  # Real-time updates
+  fileChanged(path: String): File!
+  dependencyAdded: DependencyEvent!
+  architecturalViolationDetected: ArchitecturalViolation!
+}
+
+type DependencyEvent {
+  fromFile: String!
+  toFile: String!
+  relationship: DependencyType!
+  timestamp: String!
+}
+
+# ==================== EXAMPLE QUERIES ====================
+
+# Query 1: Get impact analysis
+# query {
+#   impactAnalysis(filePath: "auth.py", depth: 3) {
+#     dependentPath
+#     distance
+#     language
+#   }
+# }
+
+# Query 2: Find circular dependencies
+# query {
+#   circularDependencies {
+#     cycle
+#     cycleLength
+#   }
+# }
+
+# Query 3: Find untested functions
+# query {
+#   untestedFunctions {
+#     functionName
+#     filePath
+#     complexity
+#   }
+# }
+
+# Query 4: Check architectural violations
+# query {
+#   architecturalViolations(
+#     forbiddenPatterns: [
+#       { fromModule: "presentation", toModule: "data" }
+#     ]
+#   ) {
+#     violator
+#     forbiddenImport
+#   }
+# }
+
+# Mutation 1: Add a file
+# mutation {
+#   addFile(
+#     path: "auth.py"
+#     language: "python"
+#     lines: 250
+#     module: "api"
+#   ) {
+#     path
+#     language
+#   }
+# }
+
+# Mutation 2: Add dependency
+# mutation {
+#   addDependency(
+#     fromFile: "api.py"
+#     toFile: "auth.py"
+#     relationship: IMPORTS
+#   )
+# }

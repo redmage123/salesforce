@@ -90,7 +90,7 @@ Popular coding datasets used to train models like GPT-4, Claude, CodeLlama:
 
 ### ❌ Problem 3: You Already Have Access
 
-**GPT-4o and Claude 3.7 Sonnet were trained on these datasets!**
+**GPT-5, GPT-4o, and Claude 3.7 Sonnet were trained on these datasets!**
 
 When you call the LLM API:
 ```python
@@ -99,6 +99,7 @@ response = llm.generate("Write a FastAPI endpoint for user auth")
 
 **What happens:**
 - LLM already "knows" patterns from The Stack
+- GPT-5 has the most up-to-date knowledge (August 2025)
 - No need to re-download and search yourself
 - You get distilled, high-quality output
 
