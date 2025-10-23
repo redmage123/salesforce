@@ -8,7 +8,7 @@ Tests various card scenarios to verify workflow planning logic
 import sys
 sys.path.insert(0, '/home/bbrelin/src/repos/salesforce/.agents/agile')
 
-from pipeline_orchestrator import WorkflowPlanner
+from artemis_orchestrator_solid import WorkflowPlanner
 
 
 def test_simple_bugfix():

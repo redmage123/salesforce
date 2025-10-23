@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artemis Demo</title>
+    <style>
+        body {
+            font-family: 'Salesforce Sans', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #3b5998, #192f6a);
+        }
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 30px;
+            width: 80%;
+            max-width: 800px;
+            color: white;
+        }
+        h1 {
+            color: #F4B942;
+            font-size: 3.5em;
+        }
+        h2 {
+            color: #F4B942;
+            font-size: 2.5em;
+        }
+        .navigation {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+        }
+        .nav-button {
+            background-color: #F4B942;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            color: #000;
+            transition: background-color 0.3s ease;
+        }
+        .nav-button:hover {
+            background-color: #ffcc70;
+        }
+    </style>
+</head>
+<body>
+    <div id="slide-1" class="slide" style="opacity: 1;">
+        <div class="card">
+            <h1>Artemis: Autonomous AI Development System</h1>
+            <p>Multi-agent pipeline that builds production-ready code through Test-Driven Development</p>
+            <ul>
+                <li>Autonomous</li>
+                <li>Multi-agent</li>
+                <li>TDD-driven</li>
+                <li>SOLID principles</li>
+            </ul>
+        </div>
+    </div>
+    <!-- More slides will be added here following the same structure -->
+    <div class="navigation">
+        <button class="nav-button" onclick="prevSlide()">Previous</button>
+        <button class="nav-button" onclick="nextSlide()">Next</button>
+    </div>
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 7;
+
+        function showSlide(slide) {
+            for (let i = 1; i <= totalSlides; i++) {
+                document.getElementById('slide-' + i).style.opacity = i === slide ? '1' : '0';
+            }
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide % totalSlides) + 1;
+            showSlide(currentSlide);
+        }
+
+        function prevSlide() {
+            currentSlide = (currentSlide - 2 + totalSlides) % totalSlides + 1;
+            showSlide(currentSlide);
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowRight' || event.key === ' ') {
+                nextSlide();
+            } else if (event.key === 'ArrowLeft') {
+                prevSlide();
+            }
+        });
+
+        setInterval(nextSlide, 8000);
+    </script>
+</body>
+</html>

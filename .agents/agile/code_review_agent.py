@@ -23,6 +23,14 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from llm_client import create_llm_client, LLMMessage
+from artemis_exceptions import (
+    CodeReviewExecutionError,
+    FileReadError,
+    LLMAPIError,
+    LLMResponseParsingError,
+    FileWriteError,
+    wrap_exception
+)
 
 
 class CodeReviewAgent:
@@ -54,14 +62,15 @@ class CodeReviewAgent:
 
         # Initialize LLM client
         self.llm_client = create_llm_client(
-            provider=self.llm_provider,
-            model=self.llm_model,
-            logger=self.logger
+            provider=self.llm_provider
         )
 
         self.logger.info(f"🔍 Code Review Agent initialized for {developer_name}")
         self.logger.info(f"   LLM Provider: {self.llm_provider}")
-        self.logger.info(f"   Model: {self.llm_client.model}")
+        if self.llm_model:
+            self.logger.info(f"   Model: {self.llm_model}")
+        else:
+            self.logger.info(f"   Model: default for {self.llm_provider}")
 
     def _setup_logger(self) -> logging.Logger:
         """Setup default logger."""
@@ -131,7 +140,7 @@ class CodeReviewAgent:
                 'task_title': task_title,
                 'reviewed_at': datetime.now().isoformat(),
                 'llm_provider': self.llm_provider,
-                'llm_model': self.llm_client.model,
+                'llm_model': review_response.model,  # Use model from response
                 'tokens_used': review_response.usage
             }
 
@@ -152,8 +161,16 @@ class CodeReviewAgent:
             }
 
         except Exception as e:
-            self.logger.error(f"❌ Code review failed: {str(e)}", exc_info=True)
-            return self._create_error_result(str(e))
+            raise wrap_exception(
+                e,
+                CodeReviewExecutionError,
+                f"Code review execution failed for {self.developer_name}",
+                {
+                    "developer_name": self.developer_name,
+                    "implementation_dir": implementation_dir,
+                    "task_title": task_title
+                }
+            )
 
     def _read_implementation_files(self, implementation_dir: str) -> List[Dict[str, str]]:
         """Read all implementation files from directory."""
@@ -181,7 +198,16 @@ class CodeReviewAgent:
                         })
                         self.logger.debug(f"  Read {relative_path} ({line_count} lines)")
                 except Exception as e:
-                    self.logger.warning(f"Could not read {file_path}: {e}")
+                    raise wrap_exception(
+                        e,
+                        FileReadError,
+                        "Failed to read implementation file",
+                        {
+                            "file_path": str(file_path),
+                            "implementation_dir": implementation_dir,
+                            "developer_name": self.developer_name
+                        }
+                    )
 
         return files
 
@@ -190,10 +216,21 @@ class CodeReviewAgent:
         prompt_file = Path(__file__).parent / "prompts" / "code_review_agent_prompt.md"
 
         if not prompt_file.exists():
-            raise FileNotFoundError(f"Code review prompt not found: {prompt_file}")
+            raise FileReadError(
+                f"Code review prompt not found: {prompt_file}",
+                context={"prompt_file": str(prompt_file)}
+            )
 
-        with open(prompt_file, 'r', encoding='utf-8') as f:
-            return f.read()
+        try:
+            with open(prompt_file, 'r', encoding='utf-8') as f:
+                return f.read()
+        except Exception as e:
+            raise wrap_exception(
+                e,
+                FileReadError,
+                f"Failed to read code review prompt",
+                context={"prompt_file": str(prompt_file)}
+            )
 
     def _build_review_request(
         self,
@@ -249,11 +286,18 @@ Focus on being thorough, specific, and actionable. Include file paths, line numb
     def _call_llm_for_review(self, messages: List[LLMMessage]):
         """Call LLM API to perform code review."""
         try:
-            response = self.llm_client.complete(
-                messages=messages,
-                temperature=0.3,  # Lower temperature for more consistent analysis
-                max_tokens=4000  # Large enough for detailed review
-            )
+            # Prepare kwargs for LLM call
+            kwargs = {
+                "messages": messages,
+                "temperature": 0.3,  # Lower temperature for more consistent analysis
+                "max_tokens": 4000  # Large enough for detailed review
+            }
+
+            # Only pass model if explicitly specified
+            if self.llm_model:
+                kwargs["model"] = self.llm_model
+
+            response = self.llm_client.complete(**kwargs)
 
             self.logger.info(f"✅ LLM review completed")
             self.logger.info(f"   Tokens used: {response.usage.get('total_tokens', 'unknown')}")
@@ -261,8 +305,16 @@ Focus on being thorough, specific, and actionable. Include file paths, line numb
             return response
 
         except Exception as e:
-            self.logger.error(f"❌ LLM API call failed: {str(e)}")
-            raise
+            raise wrap_exception(
+                e,
+                LLMAPIError,
+                "LLM API call failed during code review",
+                {
+                    "developer_name": self.developer_name,
+                    "llm_provider": self.llm_provider,
+                    "llm_model": self.llm_model
+                }
+            )
 
     def _parse_review_response(self, response_content: str) -> Dict[str, Any]:
         """Parse the LLM's review response (JSON format)."""
@@ -288,7 +340,10 @@ Focus on being thorough, specific, and actionable. Include file paths, line numb
             required_fields = ['review_summary', 'issues']
             for field in required_fields:
                 if field not in review_data:
-                    raise ValueError(f"Missing required field: {field}")
+                    raise LLMResponseParsingError(
+                        f"Missing required field in code review response: {field}",
+                        context={"missing_field": field, "available_fields": list(review_data.keys())}
+                    )
 
             self.logger.info("✅ Review response parsed successfully")
             self.logger.info(f"   Total issues: {review_data['review_summary']['total_issues']}")
@@ -298,12 +353,24 @@ Focus on being thorough, specific, and actionable. Include file paths, line numb
             return review_data
 
         except json.JSONDecodeError as e:
-            self.logger.error(f"❌ Failed to parse review JSON: {str(e)}")
-            self.logger.error(f"Response content:\n{response_content[:500]}")
-            raise ValueError(f"Invalid JSON response from LLM: {str(e)}")
+            raise wrap_exception(
+                e,
+                LLMResponseParsingError,
+                "Failed to parse LLM review response as JSON",
+                {
+                    "developer_name": self.developer_name,
+                    "response_preview": response_content[:200]
+                }
+            )
         except Exception as e:
-            self.logger.error(f"❌ Failed to process review response: {str(e)}")
-            raise
+            raise wrap_exception(
+                e,
+                LLMResponseParsingError,
+                "Failed to process LLM review response",
+                {
+                    "developer_name": self.developer_name
+                }
+            )
 
     def _write_review_report(self, review_data: Dict[str, Any], output_dir: str) -> str:
         """Write the review report to a JSON file."""

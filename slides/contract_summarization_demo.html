@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract AI Summarization - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Salesforce Sans', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1B3B6F 0%, #2E5C8A 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .slide {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            padding: 60px 60px 180px 60px;
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        h2 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #F4B942;
+        }
+
+        .subtitle {
+            font-size: 1.5em;
+            opacity: 0.9;
+            margin-bottom: 40px;
+        }
+
+        .description {
+            font-size: 1.3em;
+            line-height: 1.8;
+            opacity: 0.95;
+            margin-bottom: 20px;
+        }
+
+        /* Demo Container */
+        .demo-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .demo-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .demo-section h3 {
+            font-size: 1.8em;
+            color: #F4B942;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            resize: none;
+        }
+
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        select {
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-family: 'Salesforce Sans', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            cursor: pointer;
+        }
+
+        select option {
+            background: #1B3B6F;
+            color: white;
+            padding: 10px;
+        }
+
+        button {
+            background: #F4B942;
+            color: #1B3B6F;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: #FFC857;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 185, 66, 0.4);
+        }
+
+        .extracted-data {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+        }
+
+        .data-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #F4B942;
+        }
+
+        .data-label {
+            color: #F4B942;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .data-value {
+            color: #6ECE7A;
+            font-size: 1.1em;
+        }
+
+        /* Metric Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .metric-value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #F4B942;
+            margin: 10px 0;
+        }
+
+        .metric-label {
+            font-size: 1.2em;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .metric-description {
+            font-size: 0.95em;
+            opacity: 0.7;
+            line-height: 1.5;
+            margin-top: 10px;
+        }
+
+        .metric-change {
+            font-size: 0.9em;
+            color: #6ECE7A;
+            margin-top: 10px;
+        }
+
+        /* ROI Section */
+        .roi-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .roi-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .roi-number {
+            font-size: 4em;
+            font-weight: bold;
+            color: #6ECE7A;
+            margin-bottom: 10px;
+        }
+
+        .roi-label {
+            font-size: 1.5em;
+            color: #F4B942;
+            margin-bottom: 20px;
+        }
+
+        .roi-details {
+            font-size: 1.1em;
+            opacity: 0.9;
+            line-height: 1.7;
+        }
+
+        /* Key Takeaways */
+        .takeaways-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .takeaway-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 30px;
+            border-left: 5px solid #F4B942;
+        }
+
+        .takeaway-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+
+        .takeaway-title {
+            font-size: 1.5em;
+            color: #F4B942;
+            margin-bottom: 15px;
+        }
+
+        .takeaway-text {
+            font-size: 1.1em;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(244, 185, 66, 0.2);
+            border-radius: 12px;
+            border: 2px solid #F4B942;
+        }
+
+        .cta-section h3 {
+            font-size: 2em;
+            color: #F4B942;
+            margin-bottom: 15px;
+        }
+
+        .cta-section p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        /* Navigation */
+        .nav {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            display: flex;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .nav button {
+            background: rgba(244, 185, 66, 0.9);
+            padding: 15px 30px;
+        }
+
+        .nav button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            font-size: 1.2em;
+            opacity: 0.7;
+        }
+
+        /* Feature Lists */
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            font-size: 1.2em;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .feature-icon {
+            font-size: 1.8em;
+            color: #F4B942;
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #F4B942;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Slide 1: Title & Overview -->
+    <div class="slide active">
+        <h1>📄 AI-Powered Contract Summarization</h1>
+        <p class="subtitle">Automated Legal Document Analysis with GPT-5</p>
+
+        <div class="description">
+            <p style="margin-bottom: 20px;">
+                This demonstration showcases our AI-powered contract summarization platform that automatically
+                extracts key information from legal documents in seconds.
+            </p>
+        </div>
+
+        <div class="feature-list">
+            <div class="feature-item">
+                <span class="feature-icon">⚡</span>
+                <div>
+                    <strong>Instant Extraction</strong><br>
+                    Process contracts in under 10 seconds, reducing manual review time by 95%
+                </div>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🎯</span>
+                <div>
+                    <strong>96.8% Accuracy</strong><br>
+                    State-of-the-art GPT-5 model ensures reliable field extraction across all contract types
+                </div>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">💰</span>
+                <div>
+                    <strong>$71K+ Savings</strong><br>
+                    Eliminate manual data entry costs and accelerate deal velocity by 40%
+                </div>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📊</span>
+                <div>
+                    <strong>Real-Time Analytics</strong><br>
+                    Track extraction metrics, costs, and performance across your entire contract portfolio
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 50px; text-align: center; font-size: 1.3em; opacity: 0.9;">
+            <p>✨ Join 500+ companies already using AI to transform their contract workflows</p>
+        </div>
+    </div>
+
+    <!-- Slide 2: Interactive Demo -->
+    <div class="slide">
+        <h2>🚀 See It In Action</h2>
+        <p class="subtitle">Watch AI extract key contract data in real-time</p>
+
+        <div class="demo-container">
+            <div class="demo-section">
+                <h3>📝 Contract Input</h3>
+                <select id="contractSelector" onchange="loadContractSample()">
+                    <option value="msa">Master Service Agreement (MSA)</option>
+                    <option value="saas">SaaS Subscription Agreement</option>
+                    <option value="nda">Non-Disclosure Agreement (NDA)</option>
+                    <option value="employment">Employment Contract</option>
+                    <option value="vendor">Vendor Agreement</option>
+                </select>
+                <textarea id="contractInput" placeholder="Paste your contract text here or use the sample...">MASTER SERVICE AGREEMENT
+
+This Master Service Agreement ("Agreement") is entered into on January 15, 2024 ("Effective Date") between:
+
+ACME Corporation, a Delaware corporation with offices at 123 Tech Drive, San Francisco, CA 94105 ("Client")
+
+AND
+
+CloudTech Services LLC, a California limited liability company with offices at 456 Innovation Way, Palo Alto, CA 94301 ("Service Provider")
+
+1. SERVICES
+Service Provider agrees to provide cloud infrastructure management and consulting services as described in attached Statement of Work documents.
+
+2. TERM
+This Agreement shall commence on the Effective Date and continue for an initial term of three (3) years, automatically renewing for successive one-year periods unless terminated by either party with 90 days written notice.
+
+3. FEES AND PAYMENT
+Client agrees to pay Service Provider a monthly fee of $25,000 USD. Payment is due within 30 days of invoice date.
+
+4. CONFIDENTIALITY
+Both parties agree to maintain confidential information for a period of 5 years following termination.
+
+5. TERMINATION
+Either party may terminate this Agreement with 90 days written notice or immediately for material breach.</textarea>
+                <button onclick="extractContract()">🔍 Extract Contract Data</button>
+            </div>
+
+            <div class="demo-section">
+                <h3>✅ Extracted Data</h3>
+                <div id="extractedData" class="extracted-data">
+                    <p style="opacity: 0.6; text-align: center; padding-top: 100px;">
+                        Click "Extract Contract Data" to see AI analysis...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- This will be inserted after Slide 2 -->
+
+    <!-- Slide 3: Natural Language Q&A -->
+    <div class="slide">
+        <h2>💬 Ask AI Anything</h2>
+        <p class="subtitle">Natural language contract analysis powered by GPT-5</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; flex: 1;">
+            <div class="demo-section">
+                <h3>Your Question</h3>
+                <input type="text" id="aiQuestion" placeholder="Ask anything about this contract..." 
+                    style="width: 100%; padding: 15px; border-radius: 8px; border: 2px solid rgba(255,255,255,0.3); 
+                    background: rgba(0,0,0,0.3); color: white; font-size: 1.1em; margin-bottom: 20px;">
+                
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                    <button onclick="askQuestion('What are the termination conditions?')" style="padding: 10px 20px; font-size: 0.95em;">
+                        What are termination conditions?
+                    </button>
+                    <button onclick="askQuestion('Who is liable for delays?')" style="padding: 10px 20px; font-size: 0.95em;">
+                        Who is liable for delays?
+                    </button>
+                    <button onclick="askQuestion('What are the payment terms?')" style="padding: 10px 20px; font-size: 0.95em;">
+                        What are payment terms?
+                    </button>
+                </div>
+                
+                <button onclick="askAI()" style="width: 100%;">🤖 Ask AI</button>
+            </div>
+
+            <div class="demo-section">
+                <h3>AI Response</h3>
+                <div id="aiResponse" class="extracted-data" style="height: 400px;">
+                    <p style="opacity: 0.6; text-align: center; padding-top: 150px;">
+                        Ask a question to see AI analysis...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: AI Risk Analysis -->
+    <div class="slide">
+        <h2>⚠️ AI Risk Analysis</h2>
+        <p class="subtitle">Automated identification of contract risks and red flags</p>
+
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 30px; flex: 1;">
+            <div class="demo-section" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                <div style="font-size: 6em; font-weight: bold; color: #F4B942; margin-bottom: 20px;">6.5</div>
+                <div style="font-size: 1.5em; margin-bottom: 10px;">Overall Risk Score</div>
+                <div style="font-size: 1em; opacity: 0.7;">Out of 10 (Lower is better)</div>
+                <div style="margin-top: 30px; padding: 20px; background: rgba(255,165,0,0.2); border-radius: 8px; border-left: 4px solid orange;">
+                    <strong style="color: orange;">⚠️ MODERATE RISK</strong><br>
+                    <span style="opacity: 0.9;">Several issues require attention</span>
+                </div>
+            </div>
+
+            <div class="demo-section">
+                <h3>Identified Risks</h3>
+                <div style="display: flex; flex-direction: column; gap: 15px; max-height: 500px; overflow-y: auto;">
+                    <div style="padding: 20px; background: rgba(255,0,0,0.1); border-left: 4px solid #FF6B6B; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 1.2em;">Unfavorable Payment Terms</strong>
+                            <span style="background: #FF6B6B; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">HIGH</span>
+                        </div>
+                        <p style="opacity: 0.9;">Net 30 payment terms increase cash flow risk. Industry standard is Net 15.</p>
+                    </div>
+
+                    <div style="padding: 20px; background: rgba(255,165,0,0.1); border-left: 4px solid orange; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 1.2em;">Missing Force Majeure Clause</strong>
+                            <span style="background: orange; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">MEDIUM</span>
+                        </div>
+                        <p style="opacity: 0.9;">No protection against unforeseeable circumstances like pandemics or natural disasters.</p>
+                    </div>
+
+                    <div style="padding: 20px; background: rgba(255,165,0,0.1); border-left: 4px solid orange; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 1.2em;">Auto-Renewal with Short Notice</strong>
+                            <span style="background: orange; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">MEDIUM</span>
+                        </div>
+                        <p style="opacity: 0.9;">90-day termination notice for 3-year contract is relatively short. Consider 180 days.</p>
+                    </div>
+
+                    <div style="padding: 20px; background: rgba(255,0,0,0.1); border-left: 4px solid #FF6B6B; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 1.2em;">No Liability Caps Specified</strong>
+                            <span style="background: #FF6B6B; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">HIGH</span>
+                        </div>
+                        <p style="opacity: 0.9;">Unlimited liability exposure. Recommend capping at 12 months of fees ($300K).</p>
+                    </div>
+
+                    <div style="padding: 20px; background: rgba(110,206,122,0.1); border-left: 4px solid #6ECE7A; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 1.2em;">Missing IP Ownership Clause</strong>
+                            <span style="background: #6ECE7A; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">LOW</span>
+                        </div>
+                        <p style="opacity: 0.9;">No explicit IP ownership terms. Recommended but not critical for services agreement.</p>
+                    </div>
+
+                    <div style="padding: 20px; background: rgba(255,165,0,0.1); border-left: 4px solid orange; border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <strong style="font-size: 1.2em;">No Data Privacy Terms</strong>
+                            <span style="background: orange; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">MEDIUM</span>
+                        </div>
+                        <p style="opacity: 0.9;">Missing GDPR/CCPA compliance requirements for cloud services handling data.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Smart Recommendations -->
+    <div class="slide">
+        <h2>💡 Smart Recommendations</h2>
+        <p class="subtitle">AI-generated contract improvements to reduce risk and optimize terms</p>
+
+        <div style="display: flex; flex-direction: column; gap: 20px; flex: 1; overflow-y: auto;">
+            <div style="padding: 25px; background: rgba(255,0,0,0.1); border-left: 6px solid #FF6B6B; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <span style="background: #FF6B6B; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">HIGH PRIORITY</span>
+                            <span style="background: rgba(255,107,107,0.3); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9em;">Risk Impact: -0.8 points</span>
+                        </div>
+                        <strong style="font-size: 1.3em; display: block; margin-bottom: 10px;">Add Liability Cap at 12 Months of Fees</strong>
+                        <p style="opacity: 0.9; margin-bottom: 15px;">Current contract has unlimited liability exposure. Industry standard caps liability at 12 months of fees ($300K). This protects both parties from catastrophic losses.</p>
+                        <div style="opacity: 0.7; font-size: 0.95em;">
+                            📍 <strong>Suggested Section:</strong> Add new Section 6.3 "Limitation of Liability"<br>
+                            🎯 <strong>Expected Outcome:</strong> Reduces overall contract risk from 6.5 to 5.7
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="handleRecommendation(this, 'accept')" style="background: #6ECE7A; padding: 10px 20px; font-size: 0.95em;">✓ Accept</button>
+                        <button onclick="handleRecommendation(this, 'reject')" style="background: #FF6B6B; padding: 10px 20px; font-size: 0.95em;">✗ Reject</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 25px; background: rgba(255,0,0,0.1); border-left: 6px solid #FF6B6B; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <span style="background: #FF6B6B; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">HIGH PRIORITY</span>
+                            <span style="background: rgba(255,107,107,0.3); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9em;">Risk Impact: -0.6 points</span>
+                        </div>
+                        <strong style="font-size: 1.3em; display: block; margin-bottom: 10px;">Reduce Payment Terms to Net 15</strong>
+                        <p style="opacity: 0.9; margin-bottom: 15px;">Net 30 payment terms increase cash flow risk. Negotiate to Net 15 (industry standard) to improve working capital and reduce accounts receivable risk.</p>
+                        <div style="opacity: 0.7; font-size: 0.95em;">
+                            📍 <strong>Suggested Section:</strong> Modify Section 3.2 "Payment Schedule"<br>
+                            🎯 <strong>Expected Outcome:</strong> Reduces payment default risk, improves cash flow by ~50%
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="handleRecommendation(this, 'accept')" style="background: #6ECE7A; padding: 10px 20px; font-size: 0.95em;">✓ Accept</button>
+                        <button onclick="handleRecommendation(this, 'reject')" style="background: #FF6B6B; padding: 10px 20px; font-size: 0.95em;">✗ Reject</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 25px; background: rgba(255,165,0,0.1); border-left: 6px solid orange; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <span style="background: orange; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">MEDIUM PRIORITY</span>
+                            <span style="background: rgba(255,165,0,0.3); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9em;">Risk Impact: -0.4 points</span>
+                        </div>
+                        <strong style="font-size: 1.3em; display: block; margin-bottom: 10px;">Add Force Majeure Clause</strong>
+                        <p style="opacity: 0.9; margin-bottom: 15px;">Include standard force majeure protection against unforeseeable events (pandemics, natural disasters, war). Protects both parties from performance obligations during extraordinary circumstances.</p>
+                        <div style="opacity: 0.7; font-size: 0.95em;">
+                            📍 <strong>Suggested Section:</strong> Add new Section 8 "Force Majeure"<br>
+                            🎯 <strong>Expected Outcome:</strong> Provides legal protection against unforeseen events
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="handleRecommendation(this, 'accept')" style="background: #6ECE7A; padding: 10px 20px; font-size: 0.95em;">✓ Accept</button>
+                        <button onclick="handleRecommendation(this, 'reject')" style="background: #FF6B6B; padding: 10px 20px; font-size: 0.95em;">✗ Reject</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 25px; background: rgba(255,165,0,0.1); border-left: 6px solid orange; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <span style="background: orange; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">MEDIUM PRIORITY</span>
+                            <span style="background: rgba(255,165,0,0.3); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9em;">Risk Impact: -0.3 points</span>
+                        </div>
+                        <strong style="font-size: 1.3em; display: block; margin-bottom: 10px;">Add GDPR/CCPA Compliance Section</strong>
+                        <p style="opacity: 0.9; margin-bottom: 15px;">Cloud services handling customer data require explicit data privacy terms. Include GDPR (EU) and CCPA (California) compliance requirements to avoid regulatory penalties.</p>
+                        <div style="opacity: 0.7; font-size: 0.95em;">
+                            📍 <strong>Suggested Section:</strong> Add new Section 9 "Data Privacy and Security"<br>
+                            🎯 <strong>Expected Outcome:</strong> Ensures compliance, avoids potential $250K-$2M fines
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="handleRecommendation(this, 'accept')" style="background: #6ECE7A; padding: 10px 20px; font-size: 0.95em;">✓ Accept</button>
+                        <button onclick="handleRecommendation(this, 'reject')" style="background: #FF6B6B; padding: 10px 20px; font-size: 0.95em;">✗ Reject</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 25px; background: rgba(110,206,122,0.1); border-left: 6px solid #6ECE7A; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <span style="background: #6ECE7A; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">LOW PRIORITY</span>
+                            <span style="background: rgba(110,206,122,0.3); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9em;">Risk Impact: -0.2 points</span>
+                        </div>
+                        <strong style="font-size: 1.3em; display: block; margin-bottom: 10px;">Clarify IP Ownership Terms</strong>
+                        <p style="opacity: 0.9; margin-bottom: 15px;">Add explicit intellectual property ownership clause. Specify that work product created under this agreement belongs to the client (standard practice for service agreements).</p>
+                        <div style="opacity: 0.7; font-size: 0.95em;">
+                            📍 <strong>Suggested Section:</strong> Add new Section 7 "Intellectual Property"<br>
+                            🎯 <strong>Expected Outcome:</strong> Clarifies ownership, avoids disputes
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="handleRecommendation(this, 'accept')" style="background: #6ECE7A; padding: 10px 20px; font-size: 0.95em;">✓ Accept</button>
+                        <button onclick="handleRecommendation(this, 'reject')" style="background: #FF6B6B; padding: 10px 20px; font-size: 0.95em;">✗ Reject</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 25px; background: rgba(110,206,122,0.1); border-left: 6px solid #6ECE7A; border-radius: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+                            <span style="background: #6ECE7A; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">LOW PRIORITY</span>
+                            <span style="background: rgba(110,206,122,0.3); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.9em;">Risk Impact: -0.1 points</span>
+                        </div>
+                        <strong style="font-size: 1.3em; display: block; margin-bottom: 10px;">Extend Termination Notice Period</strong>
+                        <p style="opacity: 0.9; margin-bottom: 15px;">Consider increasing termination notice from 90 to 180 days for a 3-year contract. Provides more stability and allows adequate transition planning for both parties.</p>
+                        <div style="opacity: 0.7; font-size: 0.95em;">
+                            📍 <strong>Suggested Section:</strong> Modify Section 5 "Term and Termination"<br>
+                            🎯 <strong>Expected Outcome:</strong> Reduces sudden termination risk
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="handleRecommendation(this, 'accept')" style="background: #6ECE7A; padding: 10px 20px; font-size: 0.95em;">✓ Accept</button>
+                        <button onclick="handleRecommendation(this, 'reject')" style="background: #FF6B6B; padding: 10px 20px; font-size: 0.95em;">✗ Reject</button>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding: 30px; background: rgba(110,206,122,0.15); border-radius: 10px; margin-top: 20px;">
+                <h3 style="margin-top: 0;">📈 Projected Impact</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 20px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5em; font-weight: bold; color: #6ECE7A;">-2.4</div>
+                        <div style="opacity: 0.8;">Total Risk Reduction</div>
+                        <div style="font-size: 0.9em; opacity: 0.6; margin-top: 5px;">If all recommendations accepted</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5em; font-weight: bold; color: #F4B942;">4.1</div>
+                        <div style="opacity: 0.8;">New Risk Score</div>
+                        <div style="font-size: 0.9em; opacity: 0.6; margin-top: 5px;">Down from 6.5 (GOOD)</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2.5em; font-weight: bold; color: #6ECE7A;">$850K</div>
+                        <div style="opacity: 0.8;">Potential Savings</div>
+                        <div style="font-size: 0.9em; opacity: 0.6; margin-top: 5px;">Avoided penalties & liabilities</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Slide 3: Analytics Dashboard -->
+    <div class="slide">
+        <h2>📊 Performance Analytics</h2>
+        <p class="subtitle">Track key metrics across your entire contract portfolio</p>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total Extractions</div>
+                <div class="metric-value">1,087</div>
+                <div class="metric-change">↑ 8% vs last month</div>
+                <div class="metric-description">
+                    Contracts processed through the AI system over past 12 months. Includes MSAs, NDAs, and vendor agreements.
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Avg Processing Time</div>
+                <div class="metric-value">12.5s</div>
+                <div class="metric-change">↓ 8% improvement</div>
+                <div class="metric-description">
+                    Average time from upload to extracted data. 65% reduction vs manual review (45 min average).
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Extraction Accuracy</div>
+                <div class="metric-value">97.2%</div>
+                <div class="metric-change">Stable performance</div>
+                <div class="metric-description">
+                    Field-level accuracy compared to human validation. Measured across 12 key contract fields.
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Cost per Contract</div>
+                <div class="metric-value">$0.03</div>
+                <div class="metric-change">Predictable pricing</div>
+                <div class="metric-description">
+                    Average AI model API costs per extraction. Varies by contract length and complexity ($0.01-$0.06 range).
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Monthly Operating Cost</div>
+                <div class="metric-value">$285</div>
+                <div class="metric-change">$250 subscription + $35 API</div>
+                <div class="metric-description">
+                    Total monthly spend including platform subscription and usage-based API costs.
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Time Saved (Monthly)</div>
+                <div class="metric-value">52h</div>
+                <div class="metric-change">30 min/contract saved</div>
+                <div class="metric-description">
+                    Legal team hours reclaimed per month for higher-value work vs manual extraction.
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; text-align: center; font-size: 1.3em;">
+            <p style="color: #6ECE7A;">✅ Consistent accuracy • Predictable costs • Measurable time savings</p>
+        </div>
+    </div>
+
+    <!-- Slide 7: ROI -->
+    <div class="slide">
+        <h2>💰 Return on Investment</h2>
+        <p class="subtitle">Conservative estimates based on 100 contracts/month processing volume</p>
+
+        <div class="roi-grid">
+            <div class="roi-card">
+                <div class="roi-number">$42K</div>
+                <div class="roi-label">Annual Cost Savings</div>
+                <div class="roi-details">
+                    ✓ $35K in reduced manual review time<br>
+                    ✓ $7K in minimized data entry errors<br>
+                    ✓ Equivalent to 0.5 FTE annually
+                </div>
+            </div>
+
+            <div class="roi-card">
+                <div class="roi-number">285%</div>
+                <div class="roi-label">First-Year ROI</div>
+                <div class="roi-details">
+                    ✓ Implementation: $8K one-time<br>
+                    ✓ Annual subscription: $3K/year<br>
+                    ✓ Payback period: 3.1 months
+                </div>
+            </div>
+
+            <div class="roi-card">
+                <div class="roi-number">65%</div>
+                <div class="roi-label">Time Reduction</div>
+                <div class="roi-details">
+                    ✓ Contract review: 45 min → 15 min<br>
+                    ✓ Faster legal team approvals<br>
+                    ✓ Reduced bottlenecks in deal flow
+                </div>
+            </div>
+
+            <div class="roi-card">
+                <div class="roi-number">1,200</div>
+                <div class="roi-label">Annual Contract Volume</div>
+                <div class="roi-details">
+                    ✓ 520 Service agreements<br>
+                    ✓ 380 NDAs and amendments<br>
+                    ✓ 300 Vendor contracts<br>
+                    ✓ Average value: $85K per contract
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section">
+            <h3>📈 Projected 3-Year Impact</h3>
+            <p>$126K cumulative savings | 780 hours reclaimed | 98.5% accuracy maintained</p>
+        </div>
+    </div>
+
+    <!-- Slide 5: Key Takeaways -->
+    <div class="slide">
+        <h2>🎯 Key Takeaways</h2>
+        <p class="subtitle">Why AI-powered contract summarization is a game-changer</p>
+
+        <div class="takeaways-grid">
+            <div class="takeaway-card">
+                <div class="takeaway-icon">⚡</div>
+                <div class="takeaway-title">65% Time Reduction</div>
+                <div class="takeaway-text">
+                    Reduce contract review from 45 minutes to 15 minutes per contract.
+                    Free your legal team to focus on negotiation and risk assessment instead of data extraction.
+                </div>
+            </div>
+
+            <div class="takeaway-card">
+                <div class="takeaway-icon">🎯</div>
+                <div class="takeaway-title">98.5% Accuracy</div>
+                <div class="takeaway-text">
+                    Enterprise-grade extraction powered by GPT-5 with field-level validation.
+                    Consistent performance across contract types with continuous model improvements.
+                </div>
+            </div>
+
+            <div class="takeaway-card">
+                <div class="takeaway-icon">💰</div>
+                <div class="takeaway-title">285% First-Year ROI</div>
+                <div class="takeaway-text">
+                    $42K annual cost savings from reduced manual review time and minimized errors.
+                    Payback in 3.1 months with low implementation costs and predictable subscription pricing.
+                </div>
+            </div>
+
+            <div class="takeaway-card">
+                <div class="takeaway-icon">📊</div>
+                <div class="takeaway-title">Full Visibility & Control</div>
+                <div class="takeaway-text">
+                    Real-time analytics dashboard tracks every extraction, cost, and performance metric.
+                    Complete audit trail ensures compliance and enables continuous optimization.
+                </div>
+            </div>
+        </div>
+
+        <div class="cta-section" style="margin-top: 50px;">
+            <h3>🚀 Ready to Transform Your Contract Workflow?</h3>
+            <p>Start with a 2-week pilot processing your actual contracts</p>
+            <p style="margin-top: 20px; font-size: 1.1em; opacity: 0.9;">
+                ✓ 2-week pilot program available<br>
+                ✓ Full Salesforce integration<br>
+                ✓ White-glove implementation support
+            </p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="slide-counter"></div>
+    <div class="nav">
+        <button onclick="previousSlide()">← Previous</button>
+        <button onclick="nextSlide()">Next →</button>
+        <button onclick="restartDemo()" style="background: #FF6B6B;">↻ Restart</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+            updateCounter();
+            updateNavButtons();
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function previousSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        function updateCounter() {
+            document.querySelector('.slide-counter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+        }
+
+        function updateNavButtons() {
+            const prevBtn = document.querySelector('.nav button:first-child');
+            const nextBtn = document.querySelector('.nav button:last-child');
+            prevBtn.disabled = currentSlide === 0;
+            nextBtn.disabled = currentSlide === totalSlides - 1;
+        }
+
+        // Contract sample loader
+        function loadContractSample() {
+            const selector = document.getElementById('contractSelector');
+            const textarea = document.getElementById('contractInput');
+            const contractType = selector.value;
+
+            const contracts = {
+                'msa': `MASTER SERVICE AGREEMENT
+
+This Master Service Agreement ("Agreement") is entered into on January 15, 2024 ("Effective Date") between:
+
+ACME Corporation, a Delaware corporation with offices at 123 Tech Drive, San Francisco, CA 94105 ("Client")
+
+AND
+
+CloudTech Services LLC, a California limited liability company with offices at 456 Innovation Way, Palo Alto, CA 94301 ("Service Provider")
+
+1. SERVICES
+Service Provider agrees to provide cloud infrastructure management and consulting services as described in attached Statement of Work documents.
+
+2. TERM
+This Agreement shall commence on the Effective Date and continue for an initial term of three (3) years, automatically renewing for successive one-year periods unless terminated by either party with 90 days written notice.
+
+3. FEES AND PAYMENT
+Client agrees to pay Service Provider a monthly fee of $25,000 USD. Payment is due within 30 days of invoice date.
+
+4. CONFIDENTIALITY
+Both parties agree to maintain confidential information for a period of 5 years following termination.
+
+5. TERMINATION
+Either party may terminate this Agreement with 90 days written notice or immediately for material breach.`,
+
+                'saas': `SOFTWARE AS A SERVICE SUBSCRIPTION AGREEMENT
+
+This SaaS Subscription Agreement ("Agreement") is effective as of March 1, 2024 ("Effective Date") by and between:
+
+DataFlow Analytics Inc., a California corporation ("Provider")
+AND
+Global Retail Corp, a New York corporation ("Customer")
+
+1. SERVICE DESCRIPTION
+Provider grants Customer access to the DataFlow Analytics Platform, a cloud-based data analytics solution.
+
+2. SUBSCRIPTION TERM
+Initial subscription period: 12 months beginning March 1, 2024. Auto-renews annually unless terminated with 60 days notice.
+
+3. FEES
+Annual subscription fee: $84,000 USD ($7,000/month)
+Payment terms: Annually in advance
+Setup fee: $5,000 (one-time)
+
+4. SERVICE LEVEL AGREEMENT (SLA)
+99.9% uptime guarantee
+Maximum planned downtime: 4 hours/month
+Credit for downtime exceeding SLA: 10% monthly fee per 1% below target
+
+5. DATA SECURITY
+Provider maintains SOC 2 Type II certification
+All data encrypted at rest (AES-256) and in transit (TLS 1.3)
+Daily backups retained for 30 days
+
+6. TERMINATION
+Either party may terminate with 60 days written notice
+Immediate termination allowed for material breach with 15 days cure period`,
+
+                'nda': `NON-DISCLOSURE AGREEMENT
+
+This Non-Disclosure Agreement ("Agreement") is entered into as of April 10, 2024 ("Effective Date") between:
+
+TechInnovate LLC, a Delaware limited liability company ("Disclosing Party")
+AND
+Venture Capital Partners, a Delaware limited partnership ("Receiving Party")
+
+WHEREAS, the parties wish to explore a potential business relationship and exchange confidential information.
+
+1. DEFINITION OF CONFIDENTIAL INFORMATION
+All information disclosed by Disclosing Party, whether oral, written, or electronic, including but not limited to:
+- Business plans and financial projections
+- Customer lists and supplier information
+- Technical data, trade secrets, and know-how
+- Product roadmaps and marketing strategies
+
+2. OBLIGATIONS
+Receiving Party shall:
+- Maintain strict confidentiality
+- Use information solely for evaluation purposes
+- Not disclose to third parties without prior written consent
+- Return or destroy all confidential materials upon request
+
+3. EXCLUSIONS
+Information that is:
+- Publicly available through no fault of Receiving Party
+- Independently developed without use of confidential information
+- Rightfully obtained from third parties
+- Required to be disclosed by law or court order
+
+4. TERM
+This Agreement shall remain in effect for 3 years from the Effective Date.
+
+5. REMEDIES
+Unauthorized disclosure may cause irreparable harm. Disclosing Party entitled to injunctive relief in addition to monetary damages.`,
+
+                'employment': `EMPLOYMENT CONTRACT
+
+This Employment Agreement ("Agreement") is entered into on May 15, 2024 ("Start Date") between:
+
+Quantum Software Solutions Inc., a California corporation ("Employer")
+AND
+Sarah Johnson, residing at 789 Oak Street, Austin, TX 78701 ("Employee")
+
+1. POSITION
+Title: Senior Software Engineer
+Department: Cloud Infrastructure
+Reporting to: VP of Engineering
+
+2. COMPENSATION
+Base Salary: $165,000 per year (paid bi-weekly)
+Sign-on Bonus: $20,000 (paid with first paycheck)
+Annual Bonus: Up to 20% of base salary based on performance
+Equity: 10,000 stock options vesting over 4 years (25% cliff after year 1, monthly thereafter)
+
+3. BENEFITS
+- Health insurance (medical, dental, vision) - 90% employer paid
+- 401(k) with 4% employer match
+- Unlimited PTO policy
+- $3,000 annual professional development budget
+- Remote work flexibility (3 days office, 2 days remote)
+
+4. WORK SCHEDULE
+Full-time position: 40 hours per week
+Core hours: 10am - 4pm Pacific Time
+Flexible arrival/departure times
+
+5. CONFIDENTIALITY AND IP
+Employee agrees to:
+- Maintain confidentiality of proprietary information
+- Assign all work-related IP to Employer
+- Not compete for 12 months post-termination within 50-mile radius
+
+6. TERMINATION
+Employment is at-will. Either party may terminate with 2 weeks notice.
+Severance: 3 months salary if terminated without cause`,
+
+                'vendor': `VENDOR SERVICES AGREEMENT
+
+This Vendor Services Agreement ("Agreement") is entered into on June 1, 2024 ("Effective Date") between:
+
+MegaMart Retail Corporation, a Delaware corporation ("Client")
+AND
+Logistics Pro Services LLC, a Texas limited liability company ("Vendor")
+
+1. SERVICES
+Vendor shall provide warehousing, inventory management, and fulfillment services for Client's e-commerce operations.
+
+2. TERM
+Initial term: 24 months commencing June 1, 2024
+Renewal: Automatically renews for 12-month periods unless terminated with 90 days notice
+
+3. PRICING
+- Warehousing: $4.50 per pallet per month
+- Pick & pack: $2.75 per order
+- Shipping integration: $0.50 per label
+- Returns processing: $3.25 per return
+- Monthly minimum: $15,000
+
+4. PERFORMANCE METRICS
+- Order accuracy: 99.5% or higher
+- Same-day shipping cutoff: 2pm Central Time
+- Inventory accuracy: 99% or higher
+- Maximum processing time: 24 hours
+
+5. LIABILITY
+Vendor's liability limited to 12 months of fees paid
+Insurance requirements: $2M general liability, $1M errors & omissions
+
+6. QUALITY ASSURANCE
+- Monthly performance reports due within 5 business days
+- Quarterly business reviews
+- Annual facility inspections
+
+7. TERMINATION
+90 days written notice required
+Transition assistance period: 60 days`
+            };
+
+            textarea.value = contracts[contractType];
+
+            // Reset the extracted data display
+            const extractedData = document.getElementById('extractedData');
+            if (extractedData) {
+                extractedData.innerHTML = '<p style="opacity: 0.6; text-align: center; padding-top: 100px;">Click "Extract Contract Data" to see AI analysis...</p>';
+            }
+        }
+
+        // Contract extraction simulation
+        function extractContract() {
+            const outputDiv = document.getElementById('extractedData');
+            const btn = event.target;
+            const contractSelector = document.getElementById('contractSelector');
+            const contractType = contractSelector.value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Analyzing...';
+
+            outputDiv.innerHTML = '<p style="opacity: 0.6; text-align: center; padding-top: 100px;"><span class="loading"></span> AI is processing your contract...</p>';
+
+            // Define extraction results for each contract type
+            const extractionResults = {
+                'msa': `
+                    <div class="data-item">
+                        <div class="data-label">Contract Type</div>
+                        <div class="data-value">Master Service Agreement (MSA)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Parties</div>
+                        <div class="data-value">ACME Corporation ↔ CloudTech Services LLC</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Effective Date</div>
+                        <div class="data-value">January 15, 2024</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Contract Term</div>
+                        <div class="data-value">3 years (auto-renewing annually)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Monthly Fee</div>
+                        <div class="data-value">$25,000 USD</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Payment Terms</div>
+                        <div class="data-value">Net 30 days</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Termination Notice</div>
+                        <div class="data-value">90 days written notice</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Annual Contract Value</div>
+                        <div class="data-value">$300,000 USD</div>
+                    </div>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(110, 206, 122, 0.2); border-radius: 8px; border-left: 3px solid #6ECE7A;">
+                        <strong style="color: #6ECE7A;">✓ Extraction completed in 2.3 seconds</strong><br>
+                        <span style="opacity: 0.8;">Confidence: 98.5% | Cost: $0.01</span>
+                    </div>
+                `,
+                'saas': `
+                    <div class="data-item">
+                        <div class="data-label">Contract Type</div>
+                        <div class="data-value">SaaS Subscription Agreement</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Parties</div>
+                        <div class="data-value">DataFlow Analytics Inc. (Provider) ↔ Global Retail Corp (Customer)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Effective Date</div>
+                        <div class="data-value">March 1, 2024</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Subscription Term</div>
+                        <div class="data-value">12 months (auto-renews annually)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Annual Subscription Fee</div>
+                        <div class="data-value">$84,000 USD ($7,000/month)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Setup Fee</div>
+                        <div class="data-value">$5,000 (one-time)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">SLA Uptime Guarantee</div>
+                        <div class="data-value">99.9% (4 hours max downtime/month)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Data Security</div>
+                        <div class="data-value">SOC 2 Type II, AES-256 encryption, TLS 1.3</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Termination Notice</div>
+                        <div class="data-value">60 days written notice</div>
+                    </div>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(110, 206, 122, 0.2); border-radius: 8px; border-left: 3px solid #6ECE7A;">
+                        <strong style="color: #6ECE7A;">✓ Extraction completed in 2.1 seconds</strong><br>
+                        <span style="opacity: 0.8;">Confidence: 97.8% | Cost: $0.01</span>
+                    </div>
+                `,
+                'nda': `
+                    <div class="data-item">
+                        <div class="data-label">Contract Type</div>
+                        <div class="data-value">Non-Disclosure Agreement (NDA)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Parties</div>
+                        <div class="data-value">TechInnovate LLC (Disclosing) ↔ Venture Capital Partners (Receiving)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Effective Date</div>
+                        <div class="data-value">April 10, 2024</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Confidentiality Period</div>
+                        <div class="data-value">3 years from Effective Date</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Covered Information</div>
+                        <div class="data-value">Business plans, financial data, customer lists, technical data, trade secrets</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Purpose</div>
+                        <div class="data-value">Evaluation of potential business relationship</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Permitted Use</div>
+                        <div class="data-value">Evaluation purposes only</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Remedies</div>
+                        <div class="data-value">Injunctive relief + monetary damages</div>
+                    </div>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(110, 206, 122, 0.2); border-radius: 8px; border-left: 3px solid #6ECE7A;">
+                        <strong style="color: #6ECE7A;">✓ Extraction completed in 1.8 seconds</strong><br>
+                        <span style="opacity: 0.8;">Confidence: 99.2% | Cost: $0.008</span>
+                    </div>
+                `,
+                'employment': `
+                    <div class="data-item">
+                        <div class="data-label">Contract Type</div>
+                        <div class="data-value">Employment Contract</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Parties</div>
+                        <div class="data-value">Quantum Software Solutions Inc. (Employer) ↔ Sarah Johnson (Employee)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Start Date</div>
+                        <div class="data-value">May 15, 2024</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Position</div>
+                        <div class="data-value">Senior Software Engineer, Cloud Infrastructure</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Base Salary</div>
+                        <div class="data-value">$165,000/year (bi-weekly payments)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Additional Compensation</div>
+                        <div class="data-value">$20K sign-on bonus, 20% annual bonus, 10K stock options</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Benefits</div>
+                        <div class="data-value">Health insurance (90% paid), 401(k) 4% match, unlimited PTO, $3K/year education</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Work Schedule</div>
+                        <div class="data-value">40 hrs/week, hybrid (3 days office, 2 remote)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Employment Type</div>
+                        <div class="data-value">At-will (2 weeks notice, 3 months severance if terminated without cause)</div>
+                    </div>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(110, 206, 122, 0.2); border-radius: 8px; border-left: 3px solid #6ECE7A;">
+                        <strong style="color: #6ECE7A;">✓ Extraction completed in 2.5 seconds</strong><br>
+                        <span style="opacity: 0.8;">Confidence: 98.1% | Cost: $0.012</span>
+                    </div>
+                `,
+                'vendor': `
+                    <div class="data-item">
+                        <div class="data-label">Contract Type</div>
+                        <div class="data-value">Vendor Services Agreement</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Parties</div>
+                        <div class="data-value">MegaMart Retail Corp (Client) ↔ Logistics Pro Services LLC (Vendor)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Effective Date</div>
+                        <div class="data-value">June 1, 2024</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Services Provided</div>
+                        <div class="data-value">Warehousing, inventory management, order fulfillment</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Initial Term</div>
+                        <div class="data-value">24 months (auto-renews for 12-month periods)</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Pricing Model</div>
+                        <div class="data-value">$4.50/pallet/month, $2.75/order, $0.50/label, $3.25/return</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Monthly Minimum</div>
+                        <div class="data-value">$15,000 USD</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Performance SLA</div>
+                        <div class="data-value">99.5% order accuracy, 24-hour processing, same-day shipping by 2pm CT</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Liability Cap</div>
+                        <div class="data-value">12 months of fees paid</div>
+                    </div>
+                    <div class="data-item">
+                        <div class="data-label">Termination Notice</div>
+                        <div class="data-value">90 days written notice (60-day transition period)</div>
+                    </div>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(110, 206, 122, 0.2); border-radius: 8px; border-left: 3px solid #6ECE7A;">
+                        <strong style="color: #6ECE7A;">✓ Extraction completed in 2.7 seconds</strong><br>
+                        <span style="opacity: 0.8;">Confidence: 97.3% | Cost: $0.013</span>
+                    </div>
+                `
+            };
+
+            // Simulate API call
+            setTimeout(() => {
+                outputDiv.innerHTML = extractionResults[contractType];
+                btn.disabled = false;
+                btn.innerHTML = '🔍 Extract Contract Data';
+            }, 2500);
+        }
+
+
+        // Q&A Functions
+        function askQuestion(question) {
+            document.getElementById('aiQuestion').value = question;
+        }
+
+        function askAI() {
+            const question = document.getElementById('aiQuestion').value.trim();
+            const outputDiv = document.getElementById('aiResponse');
+            
+            if (!question) {
+                outputDiv.innerHTML = '<p style="opacity: 0.6; text-align: center; padding-top: 150px;">Please enter a question first...</p>';
+                return;
+            }
+
+            outputDiv.innerHTML = '<p style="opacity: 0.6; text-align: center; padding-top: 150px;"><span class="loading"></span> AI is analyzing the contract...</p>';
+
+            // Simulate AI processing
+            setTimeout(() => {
+                let answer = '';
+                let confidence = 0;
+                let section = '';
+                
+                // Match questions to answers
+                if (question.toLowerCase().includes('termination') || question.toLowerCase().includes('terminate')) {
+                    answer = 'Either party may terminate this Agreement with <strong>90 days written notice</strong>. Alternatively, immediate termination is allowed for material breach of contract terms.';
+                    confidence = 97.2;
+                    section = 'Section 5: TERMINATION';
+                } else if (question.toLowerCase().includes('liable') || question.toLowerCase().includes('liability') || question.toLowerCase().includes('delay')) {
+                    answer = 'The contract does not explicitly specify liability for service delays. <strong>This is a potential risk</strong> - liability terms should be clearly defined, including caps and exclusions.';
+                    confidence = 94.5;
+                    section = 'Analysis: Missing clause';
+                } else if (question.toLowerCase().includes('payment') || question.toLowerCase().includes('pay')) {
+                    answer = 'Client agrees to pay Service Provider a monthly fee of <strong>$25,000 USD</strong>. Payment is due within <strong>30 days of invoice date</strong> (Net 30 terms).';
+                    confidence = 98.8;
+                    section = 'Section 3: FEES AND PAYMENT';
+                } else {
+                    answer = 'Based on my analysis of the contract, I found relevant information. The contract is a <strong>Master Service Agreement</strong> with a 3-year initial term, automatically renewing annually. Key parties are ACME Corporation (Client) and CloudTech Services LLC (Service Provider).';
+                    confidence = 92.0;
+                    section = 'General contract analysis';
+                }
+
+                outputDiv.innerHTML = `
+                    <div style="padding: 20px; background: rgba(110, 206, 122, 0.1); border-left: 4px solid #6ECE7A; border-radius: 8px; margin-bottom: 20px;">
+                        <div style="font-size: 0.9em; color: #F4B942; margin-bottom: 10px;">
+                            <strong>📍 Source:</strong> ${section}
+                        </div>
+                        <div style="font-size: 1.1em; line-height: 1.7;">
+                            ${answer}
+                        </div>
+                    </div>
+                    <div style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <strong>Confidence Score:</strong>
+                            <span style="color: #6ECE7A;">${confidence}%</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${confidence}%; height: 100%; background: linear-gradient(90deg, #6ECE7A, #F4B942); border-radius: 4px;"></div>
+                        </div>
+                        <div style="margin-top: 15px; font-size: 0.95em; opacity: 0.8;">
+                            <strong>💡 AI Analysis:</strong> Response generated using GPT-5 semantic understanding and legal document parsing
+                        </div>
+                    </div>
+                `;
+            }, 2000);
+        }
+
+        // Smart Recommendations function
+        function handleRecommendation(button, action) {
+            const recommendationCard = button.closest('div[style*="padding: 25px"]');
+
+            if (action === 'accept') {
+                // Visual feedback for acceptance
+                recommendationCard.style.background = 'rgba(110, 206, 122, 0.2)';
+                recommendationCard.style.borderLeft = '6px solid #6ECE7A';
+
+                // Update buttons
+                const buttonContainer = button.parentElement;
+                buttonContainer.innerHTML = '<div style="color: #6ECE7A; font-weight: bold; font-size: 1.1em;">✓ ACCEPTED</div>';
+
+                // Show success message
+                setTimeout(() => {
+                    const message = document.createElement('div');
+                    message.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(110, 206, 122, 0.95); color: white; padding: 30px 50px; border-radius: 12px; font-size: 1.3em; font-weight: bold; z-index: 10000; box-shadow: 0 8px 32px rgba(0,0,0,0.3);';
+                    message.textContent = '✓ Recommendation Accepted - Contract will be updated';
+                    document.body.appendChild(message);
+
+                    setTimeout(() => {
+                        message.remove();
+                    }, 2000);
+                }, 300);
+
+            } else if (action === 'reject') {
+                // Visual feedback for rejection
+                recommendationCard.style.opacity = '0.4';
+                recommendationCard.style.filter = 'grayscale(100%)';
+
+                // Update buttons
+                const buttonContainer = button.parentElement;
+                buttonContainer.innerHTML = '<div style="color: #FF6B6B; font-weight: bold; font-size: 1.1em;">✗ REJECTED</div>';
+            }
+        }
+
+        // Restart demo from beginning
+        function restartDemo() {
+            // Reset to first slide
+            currentSlide = 0;
+            showSlide(0);
+
+            // Reset any interactive elements
+            const aiResponse = document.getElementById('aiResponse');
+            if (aiResponse) {
+                aiResponse.innerHTML = '<p style="opacity: 0.6; text-align: center; padding-top: 150px;">Ask a question to see AI analysis...</p>';
+            }
+
+            const contractInput = document.getElementById('contractInput');
+            if (contractInput) {
+                contractInput.value = `MASTER SERVICE AGREEMENT
+
+This Master Service Agreement ("Agreement") is entered into as of January 15, 2024 ("Effective Date") by and between:
+
+ACME Corporation, a Delaware corporation ("Client")
+CloudTech Services LLC, a California limited liability company ("Service Provider")
+
+1. SERVICES
+Service Provider agrees to provide cloud infrastructure management and DevOps consulting services.
+
+2. TERM
+Initial term of three (3) years, automatically renewing for successive one-year periods.
+
+3. FEES AND PAYMENT
+Client agrees to pay Service Provider a monthly fee of $25,000 USD.
+Payment due within thirty (30) days of invoice date.
+
+4. CONFIDENTIALITY
+Both parties agree to maintain confidentiality of proprietary information.
+
+5. TERMINATION
+Either party may terminate this Agreement with ninety (90) days written notice.`;
+            }
+
+            const extractedData = document.getElementById('extractedData');
+            if (extractedData) {
+                extractedData.innerHTML = '<p style="opacity: 0.6; text-align: center; padding-top: 60px;">Click "Extract Contract Data" to see results...</p>';
+            }
+
+            // Visual feedback
+            const message = document.createElement('div');
+            message.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255, 107, 107, 0.95); color: white; padding: 30px 50px; border-radius: 12px; font-size: 1.3em; font-weight: bold; z-index: 10000; box-shadow: 0 8px 32px rgba(0,0,0,0.3);';
+            message.textContent = '↻ Demo Restarted';
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                message.remove();
+            }, 1500);
+        }
+
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            }
+            if (e.key === 'ArrowLeft') {
+                previousSlide();
+            }
+        });
+
+        // Initialize
+        updateCounter();
+        updateNavButtons();
+    </script>
+</body>
+</html>

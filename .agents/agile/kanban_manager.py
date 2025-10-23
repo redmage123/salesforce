@@ -6,12 +6,186 @@ Provides functions for creating, moving, and updating cards on the Agile pipelin
 
 import json
 import os
+import warnings
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 import sys
 
+from artemis_exceptions import (
+    KanbanBoardError,
+    KanbanCardNotFoundError,
+    FileReadError,
+    FileWriteError,
+    wrap_exception
+)
+
 # Board file path
 BOARD_PATH = "/home/bbrelin/src/repos/salesforce/.agents/agile/kanban_board.json"
+
+
+class CardBuilder:
+    """
+    Builder pattern for creating Kanban cards (Design Pattern: Builder)
+
+    Reduces complexity from 9 parameters to 2 required parameters.
+    Provides fluent API for optional parameters with validation.
+
+    Usage:
+        card = (CardBuilder("TASK-001", "Add feature")
+            .with_description("Implement new API endpoint")
+            .with_priority("high")
+            .with_labels(["feature", "backend"])
+            .with_story_points(8)
+            .with_assigned_agents(["developer-a"])
+            .build())
+    """
+
+    def __init__(self, task_id: str, title: str):
+        """
+        Initialize builder with required fields only
+
+        Args:
+            task_id: Unique task identifier
+            title: Card title
+        """
+        self._card = {
+            'task_id': task_id,
+            'title': title,
+            'description': '',
+            # Sensible defaults
+            'priority': 'medium',
+            'labels': [],
+            'size': 'medium',
+            'story_points': 3,
+            'assigned_agents': [],
+            'acceptance_criteria': [],
+            'blocked': False,
+            'blocked_reason': None,
+        }
+
+    def with_description(self, description: str) -> 'CardBuilder':
+        """Set card description"""
+        self._card['description'] = description
+        return self
+
+    def with_priority(self, priority: str) -> 'CardBuilder':
+        """
+        Set priority level
+
+        Args:
+            priority: Must be 'high', 'medium', or 'low'
+
+        Raises:
+            ValueError: If priority is invalid
+        """
+        valid_priorities = ['high', 'medium', 'low']
+        if priority not in valid_priorities:
+            raise ValueError(
+                f"Invalid priority: {priority}. Must be one of {valid_priorities}"
+            )
+        self._card['priority'] = priority
+        return self
+
+    def with_labels(self, labels: List[str]) -> 'CardBuilder':
+        """Set card labels/tags"""
+        self._card['labels'] = labels
+        return self
+
+    def with_size(self, size: str) -> 'CardBuilder':
+        """
+        Set card size
+
+        Args:
+            size: Must be 'small', 'medium', or 'large'
+
+        Raises:
+            ValueError: If size is invalid
+        """
+        valid_sizes = ['small', 'medium', 'large']
+        if size not in valid_sizes:
+            raise ValueError(
+                f"Invalid size: {size}. Must be one of {valid_sizes}"
+            )
+        self._card['size'] = size
+        return self
+
+    def with_story_points(self, points: int) -> 'CardBuilder':
+        """
+        Set story points (Fibonacci scale)
+
+        Args:
+            points: Must be 1, 2, 3, 5, 8, or 13
+
+        Raises:
+            ValueError: If points not in Fibonacci scale
+        """
+        valid_points = [1, 2, 3, 5, 8, 13]
+        if points not in valid_points:
+            raise ValueError(
+                f"Invalid story points: {points}. Must be Fibonacci: {valid_points}"
+            )
+        self._card['story_points'] = points
+        return self
+
+    def with_assigned_agents(self, agents: List[str]) -> 'CardBuilder':
+        """Set assigned agents"""
+        self._card['assigned_agents'] = agents
+        return self
+
+    def with_acceptance_criteria(self, criteria: List[Dict]) -> 'CardBuilder':
+        """Set acceptance criteria"""
+        self._card['acceptance_criteria'] = criteria
+        return self
+
+    def blocked(self, reason: str) -> 'CardBuilder':
+        """Mark card as blocked with reason"""
+        self._card['blocked'] = True
+        self._card['blocked_reason'] = reason
+        return self
+
+    def build(self) -> Dict:
+        """
+        Build and return the complete card dictionary
+
+        Returns:
+            Complete card dictionary with all metadata
+        """
+        # Generate unique card ID
+        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        card_id = f"card-{timestamp}"
+
+        # Add system-generated fields
+        self._card.update({
+            'card_id': card_id,
+            'created_at': datetime.utcnow().isoformat() + 'Z',
+            'moved_to_current_column_at': datetime.utcnow().isoformat() + 'Z',
+            'current_column': 'backlog',
+            'test_status': {
+                'unit_tests_written': False,
+                'unit_tests_passing': False,
+                'integration_tests_written': False,
+                'integration_tests_passing': False,
+                'test_coverage_percent': 0
+            },
+            'definition_of_done': {
+                'code_complete': False,
+                'tests_passing': False,
+                'code_reviewed': False,
+                'documentation_updated': False,
+                'deployed_to_production': False
+            },
+            'history': [
+                {
+                    'timestamp': datetime.utcnow().isoformat() + 'Z',
+                    'action': 'created',
+                    'column': 'backlog',
+                    'agent': 'system',
+                    'comment': 'Card created via CardBuilder'
+                }
+            ]
+        })
+
+        return self._card
 
 
 class KanbanBoard:
@@ -24,10 +198,21 @@ class KanbanBoard:
     def _load_board(self) -> Dict:
         """Load board from JSON file"""
         if not os.path.exists(self.board_path):
-            raise FileNotFoundError(f"Kanban board not found at {self.board_path}")
+            raise KanbanBoardError(
+                f"Kanban board not found at {self.board_path}",
+                context={"board_path": self.board_path}
+            )
 
-        with open(self.board_path, 'r') as f:
-            return json.load(f)
+        try:
+            with open(self.board_path, 'r') as f:
+                return json.load(f)
+        except Exception as e:
+            raise wrap_exception(
+                e,
+                FileReadError,
+                f"Failed to read Kanban board",
+                context={"board_path": self.board_path}
+            )
 
     def _save_board(self) -> None:
         """Save board to JSON file"""
@@ -51,6 +236,52 @@ class KanbanBoard:
                 return column
         return None
 
+    def new_card(self, task_id: str, title: str) -> CardBuilder:
+        """
+        Create a new card using Builder pattern (RECOMMENDED)
+
+        Usage:
+            card_dict = (board.new_card("TASK-001", "Add feature")
+                .with_description("Implement API")
+                .with_priority("high")
+                .with_story_points(8)
+                .build())
+
+            board.add_card(card_dict)
+
+        Args:
+            task_id: Unique task identifier
+            title: Card title
+
+        Returns:
+            CardBuilder instance for fluent API
+        """
+        return CardBuilder(task_id, title)
+
+    def add_card(self, card: Dict) -> Dict:
+        """
+        Add a pre-built card to the backlog
+
+        Args:
+            card: Card dictionary (from CardBuilder.build())
+
+        Returns:
+            Added card dictionary
+
+        Raises:
+            KanbanBoardError: If backlog column not found
+        """
+        backlog = self._get_column("backlog")
+        if not backlog:
+            raise KanbanBoardError(
+                "Backlog column not found",
+                context={"board_path": self.board_path}
+            )
+
+        backlog['cards'].append(card)
+        self._save_board()
+        return card
+
     def create_card(
         self,
         task_id: str,
@@ -66,6 +297,21 @@ class KanbanBoard:
         """
         Create a new card in the Backlog column
 
+        ⚠️  DEPRECATED: Use new_card() with Builder pattern instead
+            This method will be removed in Artemis 3.0
+
+            Old way:
+                card = board.create_card("TASK-001", "Title", "Description",
+                                        priority="high", story_points=8)
+
+            New way (RECOMMENDED):
+                card = (board.new_card("TASK-001", "Title")
+                    .with_description("Description")
+                    .with_priority("high")
+                    .with_story_points(8)
+                    .build())
+                board.add_card(card)
+
         Args:
             task_id: Unique task identifier
             title: Card title
@@ -80,6 +326,13 @@ class KanbanBoard:
         Returns:
             Created card dictionary
         """
+        warnings.warn(
+            "create_card() with 9 parameters is deprecated. "
+            "Use new_card() with Builder pattern instead. "
+            "See method docstring for migration example.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         # Generate card ID
         timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
         card_id = f"card-{timestamp}"
@@ -134,7 +387,10 @@ class KanbanBoard:
             print(f"✅ Created card {card_id}: {title}")
             return card
         else:
-            raise ValueError("Backlog column not found")
+            raise KanbanBoardError(
+                "Backlog column not found in Kanban board",
+                context={"available_columns": [c['column_id'] for c in self.board['columns']]}
+            )
 
     def move_card(
         self,

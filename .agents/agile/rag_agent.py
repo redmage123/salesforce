@@ -45,13 +45,16 @@ class RAGAgent:
 
     ARTIFACT_TYPES = [
         "research_report",
+        "project_analysis",
         "architecture_decision",
         "developer_solution",
         "validation_result",
         "arbitration_score",
         "integration_result",
         "testing_result",
-        "issue_and_fix"
+        "issue_and_fix",
+        "issue_resolution",      # Supervisor issue resolution tracking
+        "supervisor_recovery"    # Supervisor recovery workflow outcomes
     ]
 
     def __init__(self, db_path: str = "/tmp/rag_db", verbose: bool = True):
@@ -283,7 +286,8 @@ class RAGAgent:
                 "based_on_history": [],
                 "recommendations": ["No similar tasks found in history"],
                 "avoid": [],
-                "confidence": "LOW"
+                "confidence": "LOW",
+                "similar_tasks_count": 0
             }
 
         # Extract patterns from similar tasks
