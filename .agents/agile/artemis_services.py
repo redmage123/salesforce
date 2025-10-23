@@ -17,6 +17,7 @@ from typing import Dict
 from bs4 import BeautifulSoup
 
 from artemis_stage_interface import TestRunnerInterface, ValidatorInterface, LoggerInterface
+from artemis_constants import PYTEST_PATH as DEFAULT_PYTEST_PATH
 
 
 class TestRunner(TestRunnerInterface):
@@ -26,8 +27,8 @@ class TestRunner(TestRunnerInterface):
     This class does ONLY test execution - nothing else.
     """
 
-    def __init__(self, pytest_path: str = "/home/bbrelin/.local/bin/pytest"):
-        self.pytest_path = pytest_path
+    def __init__(self, pytest_path: str = None):
+        self.pytest_path = pytest_path or DEFAULT_PYTEST_PATH
 
     def run_tests(self, test_path: str, timeout: int = 60) -> Dict:
         """

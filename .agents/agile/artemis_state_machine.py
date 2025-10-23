@@ -28,6 +28,8 @@ from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from collections import defaultdict
 
+from artemis_constants import RETRY_BACKOFF_FACTOR
+
 
 # ============================================================================
 # STATE DEFINITIONS
@@ -645,7 +647,7 @@ class ArtemisStateMachine:
                 elif action.retry_on_failure and attempt < action.max_retries - 1:
                     if self.verbose:
                         print(f"[StateMachine]       Retry {attempt + 1}/{action.max_retries}")
-                    time.sleep(2 ** attempt)  # Exponential backoff
+                    time.sleep(RETRY_BACKOFF_FACTOR ** attempt)  # Exponential backoff
                     continue
                 else:
                     return False
@@ -655,7 +657,7 @@ class ArtemisStateMachine:
                     print(f"[StateMachine]       Error: {e}")
 
                 if action.retry_on_failure and attempt < action.max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(RETRY_BACKOFF_FACTOR ** attempt)
                     continue
                 else:
                     return False

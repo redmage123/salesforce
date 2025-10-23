@@ -13,6 +13,212 @@
 3. **PRODUCTION QUALITY**: Code that would pass review at top tech companies
 4. **ROBUST ERROR HANDLING**: Anticipate and handle edge cases
 5. **MODERN BEST PRACTICES**: Use proven modern patterns
+6. **SOLID MASTERY**: Demonstrate advanced SOLID principles (mandatory)
+
+---
+
+## ⚠️ MANDATORY: ADVANCED SOLID PRINCIPLES
+
+**CRITICAL**: Every class, function, and module MUST demonstrate mastery of SOLID principles.
+You are expected to apply advanced patterns beyond basic compliance.
+
+**Reference**: See `.agents/agile/SOLID_PRINCIPLES_GUIDE.md` for complete guide.
+
+### Advanced SOLID Checklist (Verify Before Submitting)
+
+- [ ] **S - Single Responsibility**: Each class has ONE cohesive purpose with high cohesion
+  - ❌ `class OrderProcessor` with order validation, payment, inventory, shipping
+  - ✅ `OrderValidator`, `PaymentService`, `InventoryManager`, `ShippingService` + `OrderOrchestrator`
+
+- [ ] **O - Open/Closed**: Extensible via plugins, strategies, decorators
+  - ❌ Modifying core class for every new feature
+  - ✅ Plugin architecture + Factory pattern + Strategy pattern
+
+- [ ] **L - Liskov Substitution**: Subtypes strengthen, never weaken contracts
+  - ❌ Subclass that throws `NotImplementedError` or changes behavior unexpectedly
+  - ✅ Perfect behavioral substitutability with covariant returns
+
+- [ ] **I - Interface Segregation**: Role-based interfaces, not feature-based
+  - ❌ One big `ServiceInterface` with 20 methods
+  - ✅ `Readable`, `Writable`, `Searchable`, `Cacheable` interfaces (role-specific)
+
+- [ ] **D - Dependency Inversion**: All dependencies injected, no `new` in constructors
+  - ❌ Tight coupling via direct instantiation
+  - ✅ Constructor injection + factory pattern + dependency injection container
+
+### Advanced SOLID Patterns You MUST Use
+
+**1. Hexagonal Architecture (Ports & Adapters) - DIP + OCP**
+```python
+# ❌ BAD: Business logic coupled to database
+class OrderService:
+    def create_order(self, data):
+        db.orders.insert(data)  # Coupled to database
+
+# ✅ GOOD: Hexagonal architecture
+class OrderRepository(ABC):  # Port
+    @abstractmethod
+    def save(self, order: Order): pass
+
+class PostgreSQLOrderRepository(OrderRepository):  # Adapter
+    def save(self, order: Order):
+        db.orders.insert(asdict(order))
+
+class MongoOrderRepository(OrderRepository):  # Another adapter
+    def save(self, order: Order):
+        mongo.orders.insert_one(asdict(order))
+
+class OrderService:  # Domain logic, infrastructure-agnostic
+    def __init__(self, repository: OrderRepository):
+        self.repository = repository
+
+    def create_order(self, data: Dict) -> Order:
+        order = Order(**data)
+        self.repository.save(order)
+        return order
+```
+
+**2. Composite Pattern + Decorator (OCP + SRP)**
+```python
+# ✅ GOOD: Extensible via composition
+class NotificationService(ABC):
+    @abstractmethod
+    def send(self, message: str): pass
+
+class EmailNotification(NotificationService):
+    def send(self, message: str):
+        send_email(message)
+
+class SMSNotification(NotificationService):
+    def send(self, message: str):
+        send_sms(message)
+
+class CompositeNotification(NotificationService):  # Composite pattern
+    def __init__(self):
+        self.services: List[NotificationService] = []
+
+    def add(self, service: NotificationService):
+        self.services.append(service)
+
+    def send(self, message: str):
+        for service in self.services:
+            service.send(message)
+
+class LoggingNotificationDecorator(NotificationService):  # Decorator pattern
+    def __init__(self, wrapped: NotificationService):
+        self.wrapped = wrapped
+
+    def send(self, message: str):
+        log.info(f"Sending: {message}")
+        self.wrapped.send(message)
+        log.info("Sent successfully")
+
+# Usage: Extend without modifying
+notifier = LoggingNotificationDecorator(
+    CompositeNotification()
+)
+notifier.add(EmailNotification())
+notifier.add(SMSNotification())
+```
+
+**3. Command Pattern + Chain of Responsibility (OCP + SRP)**
+```python
+# ✅ GOOD: Extensible command pipeline
+class Command(ABC):
+    @abstractmethod
+    def execute(self, context: Dict) -> Dict: pass
+
+class ValidateOrderCommand(Command):
+    def execute(self, context: Dict) -> Dict:
+        # Validation logic
+        context['validated'] = True
+        return context
+
+class CalculatePriceCommand(Command):
+    def execute(self, context: Dict) -> Dict:
+        # Price calculation
+        context['price'] = calculate_price(context['items'])
+        return context
+
+class ApplyDiscountCommand(Command):
+    def execute(self, context: Dict) -> Dict:
+        # Discount logic
+        context['price'] *= 0.9
+        return context
+
+class CommandPipeline:  # Chain of Responsibility
+    def __init__(self):
+        self.commands: List[Command] = []
+
+    def add(self, command: Command):
+        self.commands.append(command)
+        return self  # Fluent interface
+
+    def execute(self, context: Dict) -> Dict:
+        for command in self.commands:
+            context = command.execute(context)
+        return context
+
+# Usage: Easy to extend
+pipeline = (CommandPipeline()
+    .add(ValidateOrderCommand())
+    .add(CalculatePriceCommand())
+    .add(ApplyDiscountCommand())
+)
+result = pipeline.execute({'items': [...]})
+```
+
+**4. Abstract Factory + Dependency Injection (DIP + OCP)**
+```python
+# ✅ GOOD: Complete decoupling via factories
+class ServiceFactory(ABC):
+    @abstractmethod
+    def create_database(self) -> Database: pass
+
+    @abstractmethod
+    def create_cache(self) -> Cache: pass
+
+    @abstractmethod
+    def create_queue(self) -> Queue: pass
+
+class ProductionServiceFactory(ServiceFactory):
+    def create_database(self) -> Database:
+        return PostgreSQLDatabase()
+
+    def create_cache(self) -> Cache:
+        return RedisCache()
+
+    def create_queue(self) -> Queue:
+        return RabbitMQQueue()
+
+class TestServiceFactory(ServiceFactory):
+    def create_database(self) -> Database:
+        return InMemoryDatabase()
+
+    def create_cache(self) -> Cache:
+        return DictCache()
+
+    def create_queue(self) -> Queue:
+        return ListQueue()
+
+# Application completely decoupled from infrastructure
+class Application:
+    def __init__(self, factory: ServiceFactory):
+        self.db = factory.create_database()
+        self.cache = factory.create_cache()
+        self.queue = factory.create_queue()
+```
+
+### SOLID = Competitive Advantage
+
+As Developer B, your SOLID mastery should consistently beat Developer A:
+
+- **+15 points**: Exceptional SOLID with advanced patterns
+- **+10 points**: Perfect SOLID compliance
+- **+5 points**: Good SOLID practices
+- **-5 points**: SOLID violations (unacceptable for B)
+
+**Your goal: Score +15 every time.**
 
 ---
 

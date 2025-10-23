@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-Agent Messenger - Inter-Agent Communication System
+Agent Messenger - File-Based Inter-Agent Communication System
+
+File-based implementation of MessengerInterface.
+Uses JSON files for message passing and shared state storage.
 
 Provides standardized communication protocol for all pipeline agents.
 Agents can send/receive messages, update shared state, and coordinate actions.
@@ -11,34 +14,11 @@ import hashlib
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, asdict
+
+from messenger_interface import MessengerInterface, Message
 
 
-@dataclass
-class Message:
-    """Standard message format for inter-agent communication"""
-    protocol_version: str
-    message_id: str
-    timestamp: str
-    from_agent: str
-    to_agent: str
-    message_type: str  # data_update, request, response, notification, error
-    card_id: str
-    priority: str  # high, medium, low
-    data: Dict[str, Any]
-    metadata: Dict[str, Any]
-
-    def to_dict(self) -> Dict:
-        """Convert to dictionary"""
-        return asdict(self)
-
-    @classmethod
-    def from_dict(cls, data: Dict) -> 'Message':
-        """Create from dictionary"""
-        return cls(**data)
-
-
-class AgentMessenger:
+class AgentMessenger(MessengerInterface):
     """
     Handle inter-agent communication
 
@@ -481,6 +461,24 @@ class AgentMessenger:
             mtime = datetime.fromtimestamp(filepath.stat().st_mtime)
             if mtime < cutoff:
                 filepath.unlink()
+
+    def cleanup(self):
+        """
+        Cleanup resources (MessengerInterface implementation)
+
+        For file-based messenger, this can optionally clean up old messages.
+        """
+        # Optional: Clean up old messages (7+ days old)
+        self.cleanup_old_messages(days=7)
+
+    def get_messenger_type(self) -> str:
+        """
+        Get messenger implementation type (MessengerInterface implementation)
+
+        Returns:
+            "file" - indicating file-based messenger
+        """
+        return "file"
 
 
 # Convenience functions for quick usage

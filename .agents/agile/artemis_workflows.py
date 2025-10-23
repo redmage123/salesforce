@@ -30,21 +30,44 @@ from artemis_state_machine import (
     WorkflowAction,
     PipelineState
 )
+from artemis_constants import (
+    MAX_RETRY_ATTEMPTS,
+    DEFAULT_RETRY_INTERVAL_SECONDS,
+    RETRY_BACKOFF_FACTOR
+)
+
+# Import refactored handlers (with backward compatibility)
+from workflow_handlers import WorkflowHandlers
 
 
 # ============================================================================
-# WORKFLOW ACTION HANDLERS
+# LEGACY HANDLER CLASS (Deprecated - use workflow_handlers.py)
+# ============================================================================
+# This class is preserved for backward compatibility only
+# All handler logic has been moved to workflow_handlers.py
+#
+# The WorkflowHandlers class in workflow_handlers.py provides the same API
+# but with better SOLID compliance (30+ classes instead of 1 god class)
+#
+# To migrate:
+# 1. Replace: from artemis_workflows import WorkflowHandlers
+# 2. With: from workflow_handlers import WorkflowHandlers
+#
+# No code changes needed - API is identical
 # ============================================================================
 
-class WorkflowHandlers:
+class _LegacyWorkflowHandlers:
     """
-    Collection of workflow action handlers
+    DEPRECATED: Legacy workflow handlers
 
-    Each handler is a function that takes context and returns success/failure
+    This class is no longer used. All functionality has been moved to
+    workflow_handlers.py with proper SOLID design.
+
+    Import WorkflowHandlers from workflow_handlers.py instead.
     """
 
     # ========================================================================
-    # INFRASTRUCTURE ISSUE HANDLERS
+    # ALL METHODS BELOW ARE DEPRECATED - DO NOT USE
     # ========================================================================
 
     @staticmethod
@@ -57,7 +80,7 @@ class WorkflowHandlers:
         try:
             process = psutil.Process(pid)
             process.terminate()
-            time.sleep(2)
+            time.sleep(DEFAULT_RETRY_INTERVAL_SECONDS - 3)  # 2 seconds
 
             if process.is_running():
                 process.kill()
@@ -132,15 +155,14 @@ class WorkflowHandlers:
     @staticmethod
     def retry_network_request(context: Dict[str, Any]) -> bool:
         """Retry network request with exponential backoff"""
-        max_retries = 3
-        for attempt in range(max_retries):
+        for attempt in range(MAX_RETRY_ATTEMPTS):
             try:
                 # TODO: Implement actual network retry
-                time.sleep(2 ** attempt)
-                print(f"[Workflow] Network retry {attempt + 1}/{max_retries}")
+                time.sleep(RETRY_BACKOFF_FACTOR ** attempt)
+                print(f"[Workflow] Network retry {attempt + 1}/{MAX_RETRY_ATTEMPTS}")
                 return True
             except Exception:
-                if attempt == max_retries - 1:
+                if attempt == MAX_RETRY_ATTEMPTS - 1:
                     return False
                 continue
         return False
@@ -317,16 +339,14 @@ class WorkflowHandlers:
     @staticmethod
     def retry_llm_request(context: Dict[str, Any]) -> bool:
         """Retry LLM request with backoff"""
-        max_retries = 3
-
-        for attempt in range(max_retries):
+        for attempt in range(MAX_RETRY_ATTEMPTS):
             try:
                 # TODO: Implement actual LLM retry
-                time.sleep(2 ** attempt)
-                print(f"[Workflow] LLM retry {attempt + 1}/{max_retries}")
+                time.sleep(RETRY_BACKOFF_FACTOR ** attempt)
+                print(f"[Workflow] LLM retry {attempt + 1}/{MAX_RETRY_ATTEMPTS}")
                 return True
             except Exception:
-                if attempt == max_retries - 1:
+                if attempt == MAX_RETRY_ATTEMPTS - 1:
                     return False
                 continue
 

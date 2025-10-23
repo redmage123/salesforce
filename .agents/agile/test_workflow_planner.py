@@ -6,7 +6,10 @@ Tests various card scenarios to verify workflow planning logic
 """
 
 import sys
-sys.path.insert(0, '/home/bbrelin/src/repos/salesforce/.agents/agile')
+from pathlib import Path
+
+# Add agile directory to path (relative to this file)
+sys.path.insert(0, str(Path(__file__).parent.absolute()))
 
 from artemis_orchestrator_solid import WorkflowPlanner
 

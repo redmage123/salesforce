@@ -8,7 +8,10 @@ with the Artemis orchestrator for resilience and failover.
 
 import sys
 import time
-sys.path.insert(0, '/home/bbrelin/src/repos/salesforce/.agents/agile')
+from pathlib import Path
+
+# Add agile directory to path (relative to this file)
+sys.path.insert(0, str(Path(__file__).parent.absolute()))
 
 from supervisor_agent import SupervisorAgent, RecoveryStrategy
 from artemis_stage_interface import PipelineStage

@@ -40,12 +40,23 @@ from artemis_stages import (
 )
 from code_review_stage import CodeReviewStage
 from kanban_manager import KanbanBoard
-from agent_messenger import AgentMessenger
+from messenger_interface import MessengerInterface
+from messenger_factory import MessengerFactory
 from rag_agent import RAGAgent
 from config_agent import ConfigurationAgent, get_config
 from hydra_config import ArtemisConfig
 from workflow_status_tracker import WorkflowStatusTracker
 from supervisor_agent import SupervisorAgent, RecoveryStrategy
+from pipeline_strategies import PipelineStrategy, StandardPipelineStrategy
+from artemis_constants import (
+    MAX_RETRY_ATTEMPTS,
+    DEFAULT_RETRY_INTERVAL_SECONDS,
+    RETRY_BACKOFF_FACTOR,
+    STAGE_TIMEOUT_SECONDS,
+    DEVELOPER_AGENT_TIMEOUT_SECONDS,
+    CODE_REVIEW_TIMEOUT_SECONDS,
+    CODE_REVIEW_PASSING_SCORE
+)
 from artemis_exceptions import (
     PipelineStageError,
     PipelineConfigurationError,
@@ -53,6 +64,12 @@ from artemis_exceptions import (
     FileReadError,
     FileWriteError,
     wrap_exception
+)
+from pipeline_observer import (
+    PipelineObservable,
+    ObserverFactory,
+    EventBuilder,
+    EventType
 )
 
 
@@ -178,7 +195,7 @@ class ArtemisOrchestrator:
         self,
         card_id: str,
         board: KanbanBoard,
-        messenger: AgentMessenger,
+        messenger: MessengerInterface,
         rag: RAGAgent,
         config: Optional[ConfigurationAgent] = None,
         hydra_config: Optional[DictConfig] = None,
@@ -186,7 +203,9 @@ class ArtemisOrchestrator:
         test_runner: Optional[TestRunner] = None,
         stages: Optional[List[PipelineStage]] = None,
         supervisor: Optional[SupervisorAgent] = None,
-        enable_supervision: bool = True
+        enable_supervision: bool = True,
+        strategy: Optional[PipelineStrategy] = None,
+        enable_observers: bool = True
     ):
         """
         Initialize orchestrator with dependency injection
@@ -203,11 +222,28 @@ class ArtemisOrchestrator:
             stages: List of pipeline stages (default: create standard stages)
             supervisor: Supervisor agent (default: create new SupervisorAgent)
             enable_supervision: Enable pipeline supervision (default: True)
+            strategy: Pipeline execution strategy (default: StandardPipelineStrategy)
         """
         self.card_id = card_id
         self.board = board
         self.messenger = messenger
         self.rag = rag
+
+        # Observer Pattern - Event broadcasting for pipeline events
+        # (Create observable first, then pass to strategy)
+        self.enable_observers = enable_observers
+        self.observable = PipelineObservable(verbose=True) if enable_observers else None
+        if self.enable_observers:
+            # Attach default observers (Logging, Metrics, State Tracking)
+            for observer in ObserverFactory.create_default_observers(verbose=True):
+                self.observable.attach(observer)
+
+        # Pipeline execution strategy (Strategy Pattern)
+        # Pass observable to strategy so it can notify stage events
+        self.strategy = strategy or StandardPipelineStrategy(
+            verbose=True,
+            observable=self.observable if enable_observers else None
+        )
 
         # Support both old ConfigurationAgent and new Hydra config
         if hydra_config is not None:
@@ -233,8 +269,24 @@ class ArtemisOrchestrator:
             messenger=self.messenger,
             card_id=self.card_id,
             rag=self.rag,  # Share RAG instance - enables learning without lock contention
-            verbose=verbose
+            verbose=verbose,
+            enable_cost_tracking=True,  # Track LLM costs
+            enable_config_validation=True,  # Validate config at startup
+            enable_sandboxing=True,  # Execute code safely
+            daily_budget=10.00,  # $10/day budget
+            monthly_budget=200.00  # $200/month budget
         ) if self.enable_supervision else None)
+
+        # Enable learning capability (requires LLM client)
+        if self.supervisor:
+            from llm_client import get_llm_client
+            try:
+                llm = get_llm_client()  # Use default provider from env
+                self.supervisor.enable_learning(llm)
+                self.logger.log("✅ Supervisor learning enabled", "INFO")
+            except Exception as e:
+                self.logger.log(f"⚠️  Could not enable supervisor learning: {e}", "WARNING")
+                # Continue without learning - supervisor still provides cost tracking and sandboxing
 
         # Validate configuration (only for old config_agent)
         if self.config is not None:
@@ -274,10 +326,10 @@ class ArtemisOrchestrator:
         self.supervisor.register_stage(
             "project_analysis",
             RecoveryStrategy(
-                max_retries=2,
-                retry_delay_seconds=2.0,
-                timeout_seconds=120.0,
-                circuit_breaker_threshold=3
+                max_retries=MAX_RETRY_ATTEMPTS - 1,  # 2 retries
+                retry_delay_seconds=DEFAULT_RETRY_INTERVAL_SECONDS - 3.0,  # 2s
+                timeout_seconds=STAGE_TIMEOUT_SECONDS / 30,  # 120s
+                circuit_breaker_threshold=MAX_RETRY_ATTEMPTS
             )
         )
 
@@ -285,10 +337,10 @@ class ArtemisOrchestrator:
         self.supervisor.register_stage(
             "architecture",
             RecoveryStrategy(
-                max_retries=2,
-                retry_delay_seconds=5.0,
-                timeout_seconds=180.0,
-                circuit_breaker_threshold=3
+                max_retries=MAX_RETRY_ATTEMPTS - 1,  # 2 retries
+                retry_delay_seconds=DEFAULT_RETRY_INTERVAL_SECONDS,  # 5s
+                timeout_seconds=STAGE_TIMEOUT_SECONDS / 20,  # 180s
+                circuit_breaker_threshold=MAX_RETRY_ATTEMPTS
             )
         )
 
@@ -296,10 +348,10 @@ class ArtemisOrchestrator:
         self.supervisor.register_stage(
             "dependencies",
             RecoveryStrategy(
-                max_retries=2,
-                retry_delay_seconds=2.0,
-                timeout_seconds=60.0,
-                circuit_breaker_threshold=3
+                max_retries=MAX_RETRY_ATTEMPTS - 1,  # 2 retries
+                retry_delay_seconds=DEFAULT_RETRY_INTERVAL_SECONDS - 3.0,  # 2s
+                timeout_seconds=STAGE_TIMEOUT_SECONDS / 60,  # 60s
+                circuit_breaker_threshold=MAX_RETRY_ATTEMPTS
             )
         )
 
@@ -307,11 +359,11 @@ class ArtemisOrchestrator:
         self.supervisor.register_stage(
             "development",
             RecoveryStrategy(
-                max_retries=3,
-                retry_delay_seconds=10.0,
-                backoff_multiplier=2.0,
-                timeout_seconds=600.0,  # 10 minutes
-                circuit_breaker_threshold=5
+                max_retries=MAX_RETRY_ATTEMPTS,  # 3 retries
+                retry_delay_seconds=DEFAULT_RETRY_INTERVAL_SECONDS * 2,  # 10s
+                backoff_multiplier=RETRY_BACKOFF_FACTOR,  # 2.0
+                timeout_seconds=DEVELOPER_AGENT_TIMEOUT_SECONDS / 6,  # 600s (10 min)
+                circuit_breaker_threshold=MAX_RETRY_ATTEMPTS + 2  # 5
             )
         )
 
@@ -319,10 +371,10 @@ class ArtemisOrchestrator:
         self.supervisor.register_stage(
             "code_review",
             RecoveryStrategy(
-                max_retries=2,
-                retry_delay_seconds=5.0,
-                timeout_seconds=180.0,
-                circuit_breaker_threshold=4
+                max_retries=MAX_RETRY_ATTEMPTS - 1,  # 2 retries
+                retry_delay_seconds=DEFAULT_RETRY_INTERVAL_SECONDS,  # 5s
+                timeout_seconds=CODE_REVIEW_TIMEOUT_SECONDS / 10,  # 180s
+                circuit_breaker_threshold=MAX_RETRY_ATTEMPTS + 1  # 4
             )
         )
 
@@ -330,10 +382,10 @@ class ArtemisOrchestrator:
         self.supervisor.register_stage(
             "validation",
             RecoveryStrategy(
-                max_retries=2,
-                retry_delay_seconds=3.0,
-                timeout_seconds=120.0,
-                circuit_breaker_threshold=3
+                max_retries=MAX_RETRY_ATTEMPTS - 1,  # 2 retries
+                retry_delay_seconds=DEFAULT_RETRY_INTERVAL_SECONDS - 2.0,  # 3s
+                timeout_seconds=STAGE_TIMEOUT_SECONDS / 30,  # 120s
+                circuit_breaker_threshold=MAX_RETRY_ATTEMPTS
             )
         )
 
@@ -341,10 +393,10 @@ class ArtemisOrchestrator:
         self.supervisor.register_stage(
             "integration",
             RecoveryStrategy(
-                max_retries=2,
-                retry_delay_seconds=5.0,
-                timeout_seconds=180.0,
-                circuit_breaker_threshold=3
+                max_retries=MAX_RETRY_ATTEMPTS - 1,  # 2 retries
+                retry_delay_seconds=DEFAULT_RETRY_INTERVAL_SECONDS,  # 5s
+                timeout_seconds=STAGE_TIMEOUT_SECONDS / 20,  # 180s
+                circuit_breaker_threshold=MAX_RETRY_ATTEMPTS
             )
         )
 
@@ -352,43 +404,95 @@ class ArtemisOrchestrator:
         self.supervisor.register_stage(
             "testing",
             RecoveryStrategy(
-                max_retries=2,
-                retry_delay_seconds=5.0,
-                timeout_seconds=300.0,
-                circuit_breaker_threshold=3
+                max_retries=MAX_RETRY_ATTEMPTS - 1,  # 2 retries
+                retry_delay_seconds=DEFAULT_RETRY_INTERVAL_SECONDS,  # 5s
+                timeout_seconds=STAGE_TIMEOUT_SECONDS / 12,  # 300s (5 min)
+                circuit_breaker_threshold=MAX_RETRY_ATTEMPTS
             )
         )
 
     def _create_default_stages(self) -> List[PipelineStage]:
         """
-        Create default pipeline stages
+        Create default pipeline stages with supervisor integration
 
         This method demonstrates Open/Closed Principle:
         - Open for extension: Can add new stages by extending this list
         - Closed for modification: Core orchestrator doesn't change
+
+        All stages now receive supervisor for:
+        - LLM cost tracking
+        - Code execution sandboxing
+        - Unexpected state handling and recovery
         """
+        # Pass observable AND supervisor to stages that support it
         return [
-            ProjectAnalysisStage(self.board, self.messenger, self.rag, self.logger),  # Pre-implementation analysis
-            ArchitectureStage(self.board, self.messenger, self.rag, self.logger),
+            ProjectAnalysisStage(
+                self.board,
+                self.messenger,
+                self.rag,
+                self.logger,
+                supervisor=self.supervisor
+            ),  # Pre-implementation analysis
+            ArchitectureStage(
+                self.board,
+                self.messenger,
+                self.rag,
+                self.logger,
+                supervisor=self.supervisor
+            ),
             DependencyValidationStage(self.board, self.messenger, self.logger),
-            DevelopmentStage(self.board, self.rag, self.logger),  # Invokes Developer A/B
-            CodeReviewStage(self.messenger, self.rag, self.logger),  # NEW: Security, GDPR, Accessibility review
-            ValidationStage(self.board, self.test_runner, self.logger),
-            IntegrationStage(self.board, self.messenger, self.rag, self.test_runner, self.logger),
+            DevelopmentStage(
+                self.board,
+                self.rag,
+                self.logger,
+                observable=self.observable,
+                supervisor=self.supervisor
+            ),  # Invokes Developer A/B
+            CodeReviewStage(
+                self.messenger,
+                self.rag,
+                self.logger,
+                observable=self.observable,
+                supervisor=self.supervisor
+            ),  # Security, GDPR, Accessibility review
+            ValidationStage(
+                self.board,
+                self.test_runner,
+                self.logger,
+                observable=self.observable,
+                supervisor=self.supervisor
+            ),  # Validate developer solutions
+            IntegrationStage(
+                self.board,
+                self.messenger,
+                self.rag,
+                self.test_runner,
+                self.logger,
+                observable=self.observable,
+                supervisor=self.supervisor
+            ),  # Integrate winning solution
             TestingStage(self.board, self.messenger, self.rag, self.test_runner, self.logger)
         ]
 
-    def run_full_pipeline(self, max_retries: int = 2) -> Dict:
+    def run_full_pipeline(self, max_retries: int = None) -> Dict:
         """
-        Run complete Artemis pipeline with retry loop for failed code reviews
+        Run complete Artemis pipeline using configured strategy.
 
-        This method is simple because it delegates to stages (Single Responsibility)
+        This method delegates execution to the strategy (Strategy Pattern)
+        while handling pipeline-level concerns like card validation and reporting.
 
         Args:
-            max_retries: Maximum number of retries for failed code reviews (default: 2)
+            max_retries: Maximum number of retries for failed code reviews (default: MAX_RETRY_ATTEMPTS - 1)
+
+        Returns:
+            Dict with pipeline execution results
         """
+        if max_retries is None:
+            max_retries = MAX_RETRY_ATTEMPTS - 1  # Default: 2 retries
+
         self.logger.log("=" * 60, "INFO")
         self.logger.log("🏹 ARTEMIS - STARTING AUTONOMOUS HUNT FOR OPTIMAL SOLUTION", "STAGE")
+        self.logger.log(f"   Execution Strategy: {self.strategy.__class__.__name__}", "INFO")
         self.logger.log("=" * 60, "INFO")
 
         # Get card
@@ -415,7 +519,104 @@ class ArtemisOrchestrator:
         # Notify pipeline start
         self._notify_pipeline_start(card, workflow_plan)
 
-        # Execute pipeline stages with retry loop
+        # Build execution context
+        context = {
+            'card_id': self.card_id,
+            'card': card,
+            'workflow_plan': workflow_plan,
+            'rag_recommendations': rag_recommendations,
+            'parallel_developers': workflow_plan['parallel_developers']
+        }
+
+        # Filter stages based on workflow plan
+        stages_to_run = self._filter_stages_by_plan(workflow_plan)
+
+        # Execute pipeline using strategy (Strategy Pattern - delegates complexity)
+        self.logger.log(f"▶️  Executing {len(stages_to_run)} stages...", "INFO")
+
+        execution_result = self.strategy.execute(stages_to_run, context)
+
+        # Extract results
+        stage_results = execution_result.get("results", {})
+        final_status = execution_result.get("status")
+
+        # Notify pipeline completion
+        self._notify_pipeline_completion(card, stage_results)
+
+        # Determine completion status
+        if final_status == "success":
+            self.logger.log("=" * 60, "INFO")
+            self.logger.log("🎉 ARTEMIS HUNT SUCCESSFUL - OPTIMAL SOLUTION DELIVERED!", "SUCCESS")
+            self.logger.log("=" * 60, "INFO")
+            pipeline_status = "COMPLETED_SUCCESSFULLY"
+        else:
+            self.logger.log("=" * 60, "ERROR")
+            self.logger.log(f"❌ ARTEMIS PIPELINE FAILED - {execution_result.get('error', 'Unknown error')}", "ERROR")
+            self.logger.log("=" * 60, "ERROR")
+            pipeline_status = "FAILED"
+            # Notify pipeline failure
+            error = Exception(execution_result.get('error', 'Unknown error'))
+            self._notify_pipeline_failure(card, error, stage_results)
+
+        # Print supervisor health report if supervision enabled
+        if self.enable_supervision and self.supervisor:
+            self.supervisor.print_health_report()
+
+            # Cleanup any zombie processes
+            cleaned = self.supervisor.cleanup_zombie_processes()
+            if cleaned > 0:
+                self.logger.log(f"🧹 Cleaned up {cleaned} zombie processes", "INFO")
+
+        # Build final report
+        supervisor_stats = self.supervisor.get_statistics() if self.enable_supervision and self.supervisor else None
+
+        report = {
+            "card_id": self.card_id,
+            "workflow_plan": workflow_plan,
+            "stages": stage_results,
+            "status": pipeline_status,
+            "execution_result": execution_result,
+            "supervisor_statistics": supervisor_stats
+        }
+
+        # Save report
+        report_path = Path("/tmp") / f"pipeline_full_report_{self.card_id}.json"
+        with open(report_path, 'w') as f:
+            json.dump(report, f, indent=2)
+
+        self.logger.log(f"📄 Full report saved: {report_path}", "INFO")
+
+        return report
+
+    def _old_run_full_pipeline_with_retry_logic(self, max_retries: int = None) -> Dict:
+        """
+        DEPRECATED: Old implementation with manual retry logic.
+
+        This method is preserved for reference but should not be used.
+        The new run_full_pipeline() uses Strategy Pattern instead.
+
+        Kept here temporarily for backward compatibility testing.
+        """
+        if max_retries is None:
+            max_retries = MAX_RETRY_ATTEMPTS - 1
+
+        # Get card
+        card, _ = self.board._find_card(self.card_id)
+        if not card:
+            return {"status": "ERROR", "reason": "Card not found"}
+
+        # Create workflow plan
+        planner = WorkflowPlanner(card)
+        workflow_plan = planner.create_workflow_plan()
+
+        # Query RAG
+        rag_recommendations = self.rag.get_recommendations(
+            task_description=card.get('description', card.get('title', '')),
+            context={'priority': card.get('priority'), 'complexity': workflow_plan['complexity']}
+        )
+
+        self._notify_pipeline_start(card, workflow_plan)
+
         context = {
             'workflow_plan': workflow_plan,
             'rag_recommendations': rag_recommendations,
@@ -427,7 +628,7 @@ class ArtemisOrchestrator:
         retry_count = 0
         all_retry_history = []
 
-        # Main pipeline loop with retry support
+        # OLD IMPLEMENTATION: Manual retry loop
         while retry_count <= max_retries:
             # Track if this is a retry
             if retry_count > 0:
@@ -628,7 +829,19 @@ class ArtemisOrchestrator:
         return filtered
 
     def _notify_pipeline_start(self, card: Dict, workflow_plan: Dict):
-        """Notify agents that pipeline has started"""
+        """Notify agents and observers that pipeline has started"""
+        # Notify observers (Observer Pattern)
+        if self.enable_observers:
+            event = EventBuilder.pipeline_started(
+                self.card_id,
+                card_title=card.get('title'),
+                workflow_plan=workflow_plan,
+                complexity=workflow_plan.get('complexity'),
+                parallel_developers=workflow_plan.get('parallel_developers')
+            )
+            self.observable.notify(event)
+
+        # Legacy messenger notification (keep for backward compatibility)
         self.messenger.send_notification(
             to_agent="all",
             card_id=self.card_id,
@@ -649,7 +862,18 @@ class ArtemisOrchestrator:
         )
 
     def _notify_pipeline_completion(self, card: Dict, stage_results: Dict):
-        """Notify agents that pipeline completed"""
+        """Notify agents and observers that pipeline completed"""
+        # Notify observers (Observer Pattern)
+        if self.enable_observers:
+            event = EventBuilder.pipeline_completed(
+                self.card_id,
+                card_title=card.get('title'),
+                stages_executed=len(stage_results),
+                stage_results=stage_results
+            )
+            self.observable.notify(event)
+
+        # Legacy messenger notification (keep for backward compatibility)
         self.messenger.send_notification(
             to_agent="all",
             card_id=self.card_id,
@@ -668,6 +892,75 @@ class ArtemisOrchestrator:
                 "current_stage": "done"
             }
         )
+
+    def _notify_pipeline_failure(self, card: Dict, error: Exception, stage_results: Dict = None):
+        """Notify agents and observers that pipeline failed"""
+        # Notify observers (Observer Pattern)
+        if self.enable_observers:
+            event = EventBuilder.pipeline_failed(
+                self.card_id,
+                error=error,
+                card_title=card.get('title'),
+                stages_executed=len(stage_results) if stage_results else 0
+            )
+            self.observable.notify(event)
+
+        # Legacy messenger notification (keep for backward compatibility)
+        self.messenger.send_notification(
+            to_agent="all",
+            card_id=self.card_id,
+            notification_type="pipeline_failed",
+            data={
+                "error": str(error),
+                "stages_executed": len(stage_results) if stage_results else 0
+            },
+            priority="high"
+        )
+
+        self.messenger.update_shared_state(
+            card_id=self.card_id,
+            updates={
+                "pipeline_status": "failed",
+                "current_stage": "failed",
+                "error": str(error)
+            }
+        )
+
+    def get_pipeline_metrics(self) -> Optional[Dict]:
+        """
+        Get pipeline metrics from MetricsObserver
+
+        Returns:
+            Dict with pipeline metrics, or None if observers not enabled
+        """
+        if not self.enable_observers:
+            return None
+
+        # Find MetricsObserver in attached observers
+        from pipeline_observer import MetricsObserver
+        for observer in self.observable._observers:
+            if isinstance(observer, MetricsObserver):
+                return observer.get_summary()
+
+        return None
+
+    def get_pipeline_state(self) -> Optional[Dict]:
+        """
+        Get current pipeline state from StateTrackingObserver
+
+        Returns:
+            Dict with pipeline state, or None if observers not enabled
+        """
+        if not self.enable_observers:
+            return None
+
+        # Find StateTrackingObserver in attached observers
+        from pipeline_observer import StateTrackingObserver
+        for observer in self.observable._observers:
+            if isinstance(observer, StateTrackingObserver):
+                return observer.get_state()
+
+        return None
 
     def _extract_code_review_feedback(self, code_review_result: Dict) -> Dict:
         """
@@ -949,7 +1242,12 @@ def main_hydra(cfg: DictConfig) -> None:
 
     # Initialize dependencies (Dependency Injection)
     board = KanbanBoard()
-    messenger = AgentMessenger("artemis-orchestrator")
+
+    # Create messenger using factory (pluggable implementation)
+    messenger = MessengerFactory.create_from_env(
+        agent_name="artemis-orchestrator"
+    )
+
     rag = RAGAgent(db_path=cfg.storage.rag_db_path, verbose=cfg.logging.verbose)
 
     # Register orchestrator
@@ -1059,7 +1357,12 @@ def main_legacy():
 
     # Initialize dependencies (Dependency Injection)
     board = KanbanBoard()
-    messenger = AgentMessenger("artemis-orchestrator")
+
+    # Create messenger using factory (pluggable implementation)
+    messenger = MessengerFactory.create_from_env(
+        agent_name="artemis-orchestrator"
+    )
+
     rag_db_path = config.get('ARTEMIS_RAG_DB_PATH', '/tmp/rag_db')
     rag = RAGAgent(db_path=rag_db_path, verbose=True)
 

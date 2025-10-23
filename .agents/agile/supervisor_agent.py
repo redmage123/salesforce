@@ -28,6 +28,12 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Callable, Any
 from enum import Enum
 from dataclasses import dataclass
+
+from artemis_constants import (
+    MAX_RETRY_ATTEMPTS,
+    DEFAULT_RETRY_INTERVAL_SECONDS,
+    RETRY_BACKOFF_FACTOR
+)
 from collections import defaultdict
 
 from artemis_stage_interface import PipelineStage, LoggerInterface
@@ -42,6 +48,15 @@ from artemis_state_machine import (
     StageState,
     EventType,
     IssueType
+)
+from cost_tracker import CostTracker, BudgetExceededError
+from config_validator import ConfigValidator, validate_config_or_exit
+from sandbox_executor import SandboxExecutor, SandboxConfig
+from supervisor_learning import (
+    SupervisorLearningEngine,
+    UnexpectedState,
+    LearnedSolution,
+    LearningStrategy
 )
 
 
@@ -90,11 +105,11 @@ class StageHealth:
 @dataclass
 class RecoveryStrategy:
     """Recovery strategy for a stage"""
-    max_retries: int = 3
-    retry_delay_seconds: float = 5.0
-    backoff_multiplier: float = 2.0
-    timeout_seconds: float = 300.0  # 5 minutes
-    circuit_breaker_threshold: int = 5
+    max_retries: int = MAX_RETRY_ATTEMPTS
+    retry_delay_seconds: float = DEFAULT_RETRY_INTERVAL_SECONDS
+    backoff_multiplier: float = RETRY_BACKOFF_FACTOR
+    timeout_seconds: float = 300.0  # 5 minutes (stage-specific, can vary)
+    circuit_breaker_threshold: int = MAX_RETRY_ATTEMPTS + 2  # 5
     circuit_breaker_timeout_seconds: float = 300.0  # 5 minutes
     fallback_action: Optional[Callable] = None
 
@@ -112,7 +127,12 @@ class SupervisorAgent:
         messenger: Optional[Any] = None,
         card_id: Optional[str] = None,
         rag: Optional[Any] = None,
-        verbose: bool = True
+        verbose: bool = True,
+        enable_cost_tracking: bool = True,
+        enable_config_validation: bool = True,
+        enable_sandboxing: bool = True,
+        daily_budget: Optional[float] = None,
+        monthly_budget: Optional[float] = None
     ):
         """
         Initialize supervisor agent
@@ -123,11 +143,63 @@ class SupervisorAgent:
             card_id: Optional card ID for state machine
             rag: Optional RAG agent for learning from history
             verbose: Enable verbose logging
+            enable_cost_tracking: Enable LLM cost tracking
+            enable_config_validation: Enable startup config validation
+            enable_sandboxing: Enable security sandboxing for code execution
+            daily_budget: Daily LLM budget (None = unlimited)
+            monthly_budget: Monthly LLM budget (None = unlimited)
         """
         self.logger = logger
         self.messenger = messenger
         self.verbose = verbose
         self.rag = rag
+        self.card_id = card_id
+
+        # Phase 2: Config validation at startup
+        if enable_config_validation:
+            if self.verbose:
+                print(f"[Supervisor] Running startup configuration validation...")
+            validator = ConfigValidator(verbose=self.verbose)
+            report = validator.validate_all()
+
+            if report.overall_status == "fail":
+                raise RuntimeError(f"Configuration validation failed: {report.errors} errors")
+            elif report.overall_status == "warning":
+                if self.verbose:
+                    print(f"[Supervisor] ⚠️  Configuration warnings: {report.warnings} warnings")
+
+        # Phase 2: Cost tracking
+        self.cost_tracker: Optional[CostTracker] = None
+        if enable_cost_tracking:
+            self.cost_tracker = CostTracker(
+                storage_path=f"/tmp/artemis_costs_{card_id}.json" if card_id else "/tmp/artemis_costs.json",
+                daily_budget=daily_budget,
+                monthly_budget=monthly_budget
+            )
+            if self.verbose:
+                budget_info = []
+                if daily_budget:
+                    budget_info.append(f"daily=${daily_budget:.2f}")
+                if monthly_budget:
+                    budget_info.append(f"monthly=${monthly_budget:.2f}")
+                budget_str = ", ".join(budget_info) if budget_info else "unlimited"
+                print(f"[Supervisor] Cost tracking enabled ({budget_str})")
+
+        # Phase 2: Security sandboxing
+        self.sandbox: Optional[SandboxExecutor] = None
+        if enable_sandboxing:
+            sandbox_config = SandboxConfig(
+                max_cpu_time=300,  # 5 minutes
+                max_memory_mb=512,  # 512 MB
+                timeout=600  # 10 minutes overall
+            )
+            self.sandbox = SandboxExecutor(sandbox_config)
+            if self.verbose:
+                print(f"[Supervisor] Security sandbox enabled (backend: {self.sandbox.backend_name})")
+
+        # Learning engine for dynamic problem solving
+        self.learning_engine: Optional[SupervisorLearningEngine] = None
+        # Will be initialized with LLM client when needed
 
         # State machine for tracking pipeline state
         self.state_machine: Optional[ArtemisStateMachine] = None
@@ -160,7 +232,9 @@ class SupervisorAgent:
             "failed_recoveries": 0,
             "processes_killed": 0,
             "timeouts_detected": 0,
-            "hanging_processes": 0
+            "hanging_processes": 0,
+            "budget_exceeded_count": 0,
+            "sandbox_blocked_count": 0
         }
 
     def register_stage(
@@ -260,6 +334,243 @@ class SupervisorAgent:
 
         if self.verbose:
             print(f"[Supervisor] 🚨 Circuit breaker OPEN for {stage_name} (timeout: {strategy.circuit_breaker_timeout_seconds}s)")
+
+    def track_llm_call(
+        self,
+        model: str,
+        provider: str,
+        tokens_input: int,
+        tokens_output: int,
+        stage: str,
+        purpose: str = "general"
+    ) -> Dict[str, Any]:
+        """
+        Track an LLM API call with cost management
+
+        Args:
+            model: Model name (e.g., gpt-4o, claude-3-5-sonnet)
+            provider: Provider (openai, anthropic)
+            tokens_input: Input tokens
+            tokens_output: Output tokens
+            stage: Pipeline stage making the call
+            purpose: Purpose of call (developer-a, code-review, etc.)
+
+        Returns:
+            Cost tracking result
+
+        Raises:
+            BudgetExceededError: If budget limit exceeded
+        """
+        if not self.cost_tracker:
+            if self.verbose:
+                print(f"[Supervisor] Cost tracking disabled, skipping")
+            return {"cost": 0.0, "tracked": False}
+
+        try:
+            result = self.cost_tracker.track_call(
+                model=model,
+                provider=provider,
+                tokens_input=tokens_input,
+                tokens_output=tokens_output,
+                stage=stage,
+                card_id=self.card_id or "unknown",
+                purpose=purpose
+            )
+
+            if self.verbose and result.get("alert"):
+                print(f"[Supervisor] 💰 Budget alert: {result['alert']}")
+
+            return result
+
+        except BudgetExceededError as e:
+            self.stats["budget_exceeded_count"] += 1
+
+            if self.messenger:
+                self.messenger.send_message(
+                    to_agent="orchestrator",
+                    message_type="budget_exceeded",
+                    card_id=self.card_id or "unknown",
+                    data={"error": str(e), "stage": stage}
+                )
+
+            if self.verbose:
+                print(f"[Supervisor] 🚨 BUDGET EXCEEDED: {e}")
+
+            raise
+
+    def enable_learning(self, llm_client: Any) -> None:
+        """
+        Enable learning capability with LLM client
+
+        Args:
+            llm_client: LLM client for querying solutions
+        """
+        self.learning_engine = SupervisorLearningEngine(
+            llm_client=llm_client,
+            rag_agent=self.rag,
+            verbose=self.verbose
+        )
+
+        if self.verbose:
+            print(f"[Supervisor] 🧠 Learning engine enabled")
+
+    def handle_unexpected_state(
+        self,
+        current_state: str,
+        expected_states: List[str],
+        context: Dict[str, Any],
+        auto_learn: bool = True
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Handle an unexpected state by learning and applying solution
+
+        Args:
+            current_state: Current state
+            expected_states: List of expected states
+            context: Context information
+            auto_learn: Automatically learn and apply solution
+
+        Returns:
+            Solution result if handled, None otherwise
+        """
+        if not self.learning_engine:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Learning engine not enabled, cannot handle unexpected state")
+            return None
+
+        # Detect unexpected state
+        unexpected = self.learning_engine.detect_unexpected_state(
+            card_id=self.card_id or "unknown",
+            current_state=current_state,
+            expected_states=expected_states,
+            context=context
+        )
+
+        if not unexpected:
+            return None  # State is actually expected
+
+        if not auto_learn:
+            # Just detect, don't learn/apply
+            return {
+                "unexpected_state": unexpected,
+                "action": "detected_only"
+            }
+
+        # Learn solution
+        if self.verbose:
+            print(f"[Supervisor] 🧠 Learning solution for unexpected state...")
+
+        solution = self.learning_engine.learn_solution(
+            unexpected,
+            strategy=LearningStrategy.LLM_CONSULTATION
+        )
+
+        if not solution:
+            if self.verbose:
+                print(f"[Supervisor] ❌ Could not learn solution")
+            return {
+                "unexpected_state": unexpected,
+                "action": "learning_failed"
+            }
+
+        # Apply solution
+        if self.verbose:
+            print(f"[Supervisor] 🔧 Applying learned solution...")
+
+        success = self.learning_engine.apply_learned_solution(solution, context)
+
+        return {
+            "unexpected_state": unexpected,
+            "solution": solution,
+            "success": success,
+            "action": "learned_and_applied"
+        }
+
+    def query_learned_solutions(
+        self,
+        problem_description: str,
+        top_k: int = 3
+    ) -> List[LearnedSolution]:
+        """
+        Query previously learned solutions
+
+        Args:
+            problem_description: Description of problem
+            top_k: Number of solutions to return
+
+        Returns:
+            List of relevant learned solutions
+        """
+        if not self.learning_engine or not self.rag:
+            return []
+
+        try:
+            # Query RAG for similar solutions
+            results = self.rag.query_similar(
+                query_text=problem_description,
+                artifact_types=["learned_solution"],
+                top_k=top_k
+            )
+
+            if self.verbose and results:
+                print(f"[Supervisor] 📚 Found {len(results)} similar learned solutions")
+
+            return results
+
+        except Exception as e:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Failed to query learned solutions: {e}")
+            return []
+
+    def execute_code_safely(
+        self,
+        code: str,
+        scan_security: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Execute code in security sandbox
+
+        Args:
+            code: Python code to execute
+            scan_security: Scan for security issues first
+
+        Returns:
+            Execution result
+
+        Raises:
+            RuntimeError: If sandbox disabled or execution fails
+        """
+        if not self.sandbox:
+            raise RuntimeError("Security sandbox not enabled")
+
+        if self.verbose:
+            print(f"[Supervisor] Executing code in sandbox (scan: {scan_security})")
+
+        result = self.sandbox.execute_python_code(code, scan_security=scan_security)
+
+        if result.killed:
+            self.stats["sandbox_blocked_count"] += 1
+
+            if self.messenger:
+                self.messenger.send_message(
+                    to_agent="orchestrator",
+                    message_type="sandbox_blocked",
+                    card_id=self.card_id or "unknown",
+                    data={"reason": result.kill_reason, "stderr": result.stderr}
+                )
+
+            if self.verbose:
+                print(f"[Supervisor] 🛡️  Sandbox blocked execution: {result.kill_reason}")
+
+        return {
+            "success": result.success,
+            "exit_code": result.exit_code,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "execution_time": result.execution_time,
+            "killed": result.killed,
+            "kill_reason": result.kill_reason
+        }
 
     def execute_with_supervision(
         self,
@@ -412,7 +723,7 @@ class SupervisorAgent:
                     )
                 break
 
-            time.sleep(5)  # Check every 5 seconds
+            time.sleep(DEFAULT_RETRY_INTERVAL_SECONDS)  # Check every 5 seconds
 
     def detect_hanging_processes(self) -> List[ProcessHealth]:
         """
@@ -539,7 +850,7 @@ class SupervisorAgent:
 
     def get_statistics(self) -> Dict[str, Any]:
         """
-        Get supervision statistics
+        Get supervision statistics (including Phase 2 metrics)
 
         Returns:
             Statistics dictionary
@@ -559,7 +870,7 @@ class SupervisorAgent:
                 "circuit_open": health.circuit_open
             }
 
-        return {
+        stats = {
             "overall_health": health_status.value,
             "total_interventions": self.stats["total_interventions"],
             "successful_recoveries": self.stats["successful_recoveries"],
@@ -569,6 +880,33 @@ class SupervisorAgent:
             "hanging_processes_detected": self.stats["hanging_processes"],
             "stage_statistics": stage_stats
         }
+
+        # Phase 2: Add cost tracking stats
+        if self.cost_tracker:
+            cost_stats = self.cost_tracker.get_statistics()
+            stats["cost_tracking"] = {
+                "total_cost": cost_stats["total_cost"],
+                "daily_cost": cost_stats["daily_cost"],
+                "monthly_cost": cost_stats["monthly_cost"],
+                "daily_remaining": cost_stats["daily_remaining"],
+                "monthly_remaining": cost_stats["monthly_remaining"],
+                "total_calls": cost_stats["total_calls"],
+                "budget_exceeded_count": self.stats["budget_exceeded_count"]
+            }
+
+        # Phase 2: Add sandboxing stats
+        if self.sandbox:
+            stats["security_sandbox"] = {
+                "backend": self.sandbox.backend_name,
+                "blocked_executions": self.stats["sandbox_blocked_count"]
+            }
+
+        # Learning engine stats
+        if self.learning_engine:
+            learning_stats = self.learning_engine.get_statistics()
+            stats["learning"] = learning_stats
+
+        return stats
 
     def handle_issue(
         self,
@@ -890,7 +1228,7 @@ class SupervisorAgent:
             return {"rag_enabled": True, "error": str(e)}
 
     def print_health_report(self) -> None:
-        """Print comprehensive health report"""
+        """Print comprehensive health report (including Phase 2 metrics)"""
         stats = self.get_statistics()
 
         print("\n" + "="*70)
@@ -915,6 +1253,40 @@ class SupervisorAgent:
         print(f"   Processes Killed:        {stats['processes_killed']}")
         print(f"   Timeouts Detected:       {stats['timeouts_detected']}")
         print(f"   Hanging Processes:       {stats['hanging_processes_detected']}")
+
+        # Phase 2: Cost tracking stats
+        if "cost_tracking" in stats:
+            ct = stats["cost_tracking"]
+            print(f"\n💰 Cost Management:")
+            print(f"   Total LLM Calls:         {ct['total_calls']}")
+            print(f"   Total Cost:              ${ct['total_cost']:.2f}")
+            print(f"   Daily Cost:              ${ct['daily_cost']:.2f}")
+            if ct['daily_remaining'] is not None:
+                print(f"   Daily Remaining:         ${ct['daily_remaining']:.2f}")
+            if ct['monthly_remaining'] is not None:
+                print(f"   Monthly Remaining:       ${ct['monthly_remaining']:.2f}")
+            if ct['budget_exceeded_count'] > 0:
+                print(f"   ⚠️  Budget Exceeded:       {ct['budget_exceeded_count']} times")
+
+        # Phase 2: Security sandbox stats
+        if "security_sandbox" in stats:
+            sb = stats["security_sandbox"]
+            print(f"\n🛡️  Security Sandbox:")
+            print(f"   Backend:                 {sb['backend']}")
+            print(f"   Blocked Executions:      {sb['blocked_executions']}")
+
+        # Learning engine stats
+        if "learning" in stats:
+            ln = stats["learning"]
+            print(f"\n🧠 Learning Engine:")
+            print(f"   Unexpected States:       {ln['unexpected_states_detected']}")
+            print(f"   Solutions Learned:       {ln['solutions_learned']}")
+            print(f"   Solutions Applied:       {ln['solutions_applied']}")
+            print(f"   LLM Consultations:       {ln['llm_consultations']}")
+            print(f"   Successful Applications: {ln['successful_applications']}")
+            print(f"   Failed Applications:     {ln['failed_applications']}")
+            if ln['total_learned_solutions'] > 0:
+                print(f"   Average Success Rate:    {ln['average_success_rate']*100:.1f}%")
 
         # Stage statistics
         if stats["stage_statistics"]:

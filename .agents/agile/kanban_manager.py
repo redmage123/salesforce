@@ -18,9 +18,10 @@ from artemis_exceptions import (
     FileWriteError,
     wrap_exception
 )
+from artemis_constants import KANBAN_BOARD_PATH
 
-# Board file path
-BOARD_PATH = "/home/bbrelin/src/repos/salesforce/.agents/agile/kanban_board.json"
+# Board file path (now using constant from artemis_constants)
+BOARD_PATH = str(KANBAN_BOARD_PATH)
 
 
 class CardBuilder:

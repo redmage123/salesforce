@@ -15,7 +15,10 @@ import sys
 import os
 from datetime import datetime
 from typing import Dict, Any, List
-sys.path.insert(0, '/home/bbrelin/src/repos/salesforce/.agents/agile')
+from pathlib import Path
+
+# Add agile directory to path (relative to this file)
+sys.path.insert(0, str(Path(__file__).parent.absolute()))
 
 from supervisor_agent import SupervisorAgent
 from artemis_state_machine import IssueType

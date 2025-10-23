@@ -13,6 +13,106 @@
 3. **PROVEN PATTERNS**: Use well-established patterns and practices
 4. **MINIMAL DEPENDENCIES**: Avoid unnecessary external dependencies
 5. **CONSERVATIVE CHOICES**: Prefer safety over innovation
+6. **SOLID COMPLIANCE**: ALL code MUST follow SOLID principles (mandatory)
+
+---
+
+## ⚠️ MANDATORY: SOLID PRINCIPLES
+
+**CRITICAL**: Every class, function, and module MUST adhere to SOLID principles. No exceptions.
+
+**Reference**: See `.agents/agile/SOLID_PRINCIPLES_GUIDE.md` for complete guide.
+
+### Quick SOLID Checklist (Verify Before Submitting)
+
+- [ ] **S - Single Responsibility**: Each class has ONE clear purpose
+  - ❌ `class UserManager` that handles users, emails, AND database
+  - ✅ `class UserService`, `class EmailService`, `class UserRepository`
+
+- [ ] **O - Open/Closed**: Can extend without modifying existing code
+  - ❌ Adding new payment method requires changing `PaymentProcessor`
+  - ✅ Create new `StripePayment(PaymentMethod)` class, no changes to processor
+
+- [ ] **L - Liskov Substitution**: Subclasses work everywhere parent works
+  - ❌ `Penguin(Bird)` throws exception in `bird.fly()`
+  - ✅ All birds implement `move()`, flying birds have `fly()`
+
+- [ ] **I - Interface Segregation**: Minimal, focused interfaces
+  - ❌ `Worker` interface requires `eat()` and `sleep()` for robots
+  - ✅ Separate `Workable`, `Eatable`, `Sleepable` interfaces
+
+- [ ] **D - Dependency Inversion**: Depend on abstractions, not concretions
+  - ❌ `UserService` directly creates `MySQLDatabase()` instance
+  - ✅ `UserService(database: Database)` accepts any Database implementation
+
+### Conservative SOLID Patterns You MUST Use
+
+**1. Dependency Injection (DIP)**
+```python
+# ❌ BAD: Hard-coded dependencies
+class UserService:
+    def __init__(self):
+        self.db = PostgreSQL()  # Tightly coupled
+
+# ✅ GOOD: Inject dependencies
+class UserService:
+    def __init__(self, db: Database):
+        self.db = db  # Depends on abstraction
+```
+
+**2. Single Responsibility (SRP)**
+```python
+# ❌ BAD: God class
+class User:
+    def save(self): ...
+    def validate(self): ...
+    def send_email(self): ...
+    def log(self): ...
+
+# ✅ GOOD: Separate concerns
+class User:
+    pass  # Data only
+
+class UserRepository:
+    def save(self, user: User): ...
+
+class UserValidator:
+    def validate(self, user: User): ...
+
+class EmailService:
+    def send_welcome(self, user: User): ...
+```
+
+**3. Strategy Pattern (OCP)**
+```python
+# ❌ BAD: if/elif for different behaviors
+def process_payment(method: str, amount: float):
+    if method == "stripe":
+        ...
+    elif method == "paypal":
+        ...
+
+# ✅ GOOD: Strategy pattern
+class PaymentStrategy(ABC):
+    @abstractmethod
+    def process(self, amount: float): ...
+
+class StripePayment(PaymentStrategy):
+    def process(self, amount: float): ...
+
+class PayPalPayment(PaymentStrategy):
+    def process(self, amount: float): ...
+
+def process_payment(strategy: PaymentStrategy, amount: float):
+    strategy.process(amount)
+```
+
+### SOLID = Higher Arbitration Score
+
+- **+10 points**: Perfect SOLID compliance
+- **+5 points**: Good SOLID practices
+- **0 points**: Some violations
+- **-10 points**: Major SOLID violations (god classes, tight coupling)
 
 ---
 

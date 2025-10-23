@@ -16,6 +16,8 @@ import os
 
 from artemis_stage_interface import LoggerInterface
 from standalone_developer_agent import StandaloneDeveloperAgent
+from artemis_constants import get_developer_prompt_path
+from pipeline_observer import PipelineObservable, EventBuilder
 
 
 class DeveloperInvoker:
@@ -29,8 +31,9 @@ class DeveloperInvoker:
     - Collects results
     """
 
-    def __init__(self, logger: LoggerInterface):
+    def __init__(self, logger: LoggerInterface, observable: Optional[PipelineObservable] = None):
         self.logger = logger
+        self.observable = observable
 
     def invoke_developer(
         self,
@@ -59,16 +62,22 @@ class DeveloperInvoker:
         """
         self.logger.log(f"Invoking {developer_name} ({developer_type} approach)", "INFO")
 
+        # Notify developer started
+        card_id = card.get('card_id', 'unknown')
+        if self.observable:
+            event = EventBuilder.developer_started(
+                card_id,
+                developer_name,
+                developer_type=developer_type,
+                task_title=card.get('title')
+            )
+            self.observable.notify(event)
+
         # Create output directory
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        # Determine which developer prompt file to use
-        if developer_name == "developer-a":
-            prompt_file = "/home/bbrelin/src/repos/salesforce/.agents/developer_a_prompt.md"
-        elif developer_name == "developer-b":
-            prompt_file = "/home/bbrelin/src/repos/salesforce/.agents/developer_b_prompt.md"
-        else:
-            prompt_file = "/home/bbrelin/src/repos/salesforce/.agents/developer_a_prompt.md"
+        # Determine which developer prompt file to use (using centralized constant)
+        prompt_file = str(get_developer_prompt_path(developer_name))
 
         # Get LLM provider from env or use default
         llm_provider = os.getenv("ARTEMIS_LLM_PROVIDER", "openai")
@@ -94,6 +103,30 @@ class DeveloperInvoker:
         )
 
         self.logger.log(f"✅ {developer_name} completed", "SUCCESS")
+
+        # Notify developer completed or failed
+        if result.get('success', False):
+            if self.observable:
+                event = EventBuilder.developer_completed(
+                    card_id,
+                    developer_name,
+                    files_created=len(result.get('files', [])),
+                    result=result
+                )
+                self.observable.notify(event)
+        else:
+            if self.observable:
+                error = Exception(result.get('error', 'Developer failed'))
+                from pipeline_observer import PipelineEvent, EventType
+                event = PipelineEvent(
+                    event_type=EventType.DEVELOPER_FAILED,
+                    card_id=card_id,
+                    developer_name=developer_name,
+                    error=error,
+                    data=result
+                )
+                self.observable.notify(event)
+
         return result
 
     def invoke_parallel_developers(
@@ -102,7 +135,8 @@ class DeveloperInvoker:
         card: Dict,
         adr_content: str,
         adr_file: str,
-        rag_agent=None  # RAG Agent for querying code review feedback
+        rag_agent=None,  # RAG Agent for querying code review feedback
+        parallel_execution: bool = True  # NEW: Enable true parallel execution
     ) -> List[Dict]:
         """
         Invoke multiple developers in parallel
@@ -113,13 +147,15 @@ class DeveloperInvoker:
             adr_content: ADR content
             adr_file: ADR file path
             rag_agent: RAG Agent for developers to query feedback (optional)
+            parallel_execution: Run developers in parallel threads (default: True)
 
         Returns:
             List of developer results
         """
-        self.logger.log(f"Invoking {num_developers} parallel developer(s)", "INFO")
+        self.logger.log(f"Invoking {num_developers} developer(s) ({'parallel' if parallel_execution else 'sequential'})", "INFO")
 
-        developers = []
+        # Prepare developer configurations
+        dev_configs = []
         for i in range(num_developers):
             if i == 0:
                 dev_name = "developer-a"
@@ -133,18 +169,83 @@ class DeveloperInvoker:
 
             output_dir = Path(f"/tmp/{dev_name}")
 
-            result = self.invoke_developer(
-                developer_name=dev_name,
-                developer_type=dev_type,
-                card=card,
-                adr_content=adr_content,
-                adr_file=adr_file,
-                output_dir=output_dir,
-                rag_agent=rag_agent  # Pass RAG agent to developer
-            )
+            dev_configs.append({
+                "developer_name": dev_name,
+                "developer_type": dev_type,
+                "card": card,
+                "adr_content": adr_content,
+                "adr_file": adr_file,
+                "output_dir": output_dir,
+                "rag_agent": rag_agent
+            })
 
+        # Execute developers
+        if parallel_execution and num_developers > 1:
+            # Run in parallel using threads
+            developers = self._invoke_parallel_threaded(dev_configs)
+        else:
+            # Run sequentially (default for single developer or if disabled)
+            developers = self._invoke_sequential(dev_configs)
+
+        return developers
+
+    def _invoke_sequential(self, dev_configs: List[Dict]) -> List[Dict]:
+        """
+        Invoke developers sequentially (one at a time)
+
+        Args:
+            dev_configs: List of developer configurations
+
+        Returns:
+            List of developer results
+        """
+        developers = []
+        for config in dev_configs:
+            result = self.invoke_developer(**config)
             developers.append(result)
+        return developers
 
+    def _invoke_parallel_threaded(self, dev_configs: List[Dict]) -> List[Dict]:
+        """
+        Invoke developers in parallel using threads
+
+        Args:
+            dev_configs: List of developer configurations
+
+        Returns:
+            List of developer results
+        """
+        import concurrent.futures
+        import threading
+
+        self.logger.log(f"Starting {len(dev_configs)} developers in parallel threads", "INFO")
+
+        developers = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(dev_configs)) as executor:
+            # Submit all developer tasks
+            future_to_dev = {
+                executor.submit(self.invoke_developer, **config): config['developer_name']
+                for config in dev_configs
+            }
+
+            # Collect results as they complete
+            for future in concurrent.futures.as_completed(future_to_dev):
+                dev_name = future_to_dev[future]
+                try:
+                    result = future.result()
+                    developers.append(result)
+                    self.logger.log(f"✅ {dev_name} completed (parallel)", "SUCCESS")
+                except Exception as e:
+                    self.logger.log(f"❌ {dev_name} failed with exception: {e}", "ERROR")
+                    developers.append({
+                        "developer": dev_name,
+                        "success": False,
+                        "error": str(e),
+                        "files": [],
+                        "output_dir": f"/tmp/{dev_name}"
+                    })
+
+        self.logger.log(f"All {len(dev_configs)} developers completed", "INFO")
         return developers
 
     def _build_developer_prompt(
@@ -166,13 +267,8 @@ class DeveloperInvoker:
         4. Store results in output directory
         """
 
-        # Determine which developer prompt to use
-        if developer_name == "developer-a":
-            prompt_file = "/home/bbrelin/src/repos/salesforce/.agents/developer_a_prompt.md"
-        elif developer_name == "developer-b":
-            prompt_file = "/home/bbrelin/src/repos/salesforce/.agents/developer_b_prompt.md"
-        else:
-            prompt_file = "/home/bbrelin/src/repos/salesforce/.agents/developer_a_prompt.md"
+        # Determine which developer prompt to use (using centralized constant)
+        prompt_file = str(get_developer_prompt_path(developer_name))
 
         task_title = card.get('title', 'Untitled Task')
         task_description = card.get('description', 'No description provided')

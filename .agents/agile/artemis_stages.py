@@ -50,6 +50,10 @@ class ProjectAnalysisStage(PipelineStage):
     8. Dependencies & Integration
 
     Identifies issues, gets user approval, and sends approved changes downstream.
+
+    Integrates with supervisor for:
+    - Unexpected state handling (user rejection, analysis failures)
+    - LLM cost tracking (if using LLM for analysis)
     """
 
     def __init__(
@@ -57,12 +61,14 @@ class ProjectAnalysisStage(PipelineStage):
         board: KanbanBoard,
         messenger: AgentMessenger,
         rag: RAGAgent,
-        logger: LoggerInterface
+        logger: LoggerInterface,
+        supervisor: Optional['SupervisorAgent'] = None
     ):
         self.board = board
         self.messenger = messenger
         self.rag = rag
         self.logger = logger
+        self.supervisor = supervisor
         self.engine = ProjectAnalysisEngine()
         self.approval_handler = UserApprovalHandler()
 
@@ -220,6 +226,10 @@ class ArchitectureStage(PipelineStage):
     Single Responsibility: Create Architecture Decision Records (ADRs)
 
     This stage ONLY handles ADR creation - nothing else.
+
+    Integrates with supervisor for:
+    - Unexpected state handling (ADR generation failures)
+    - LLM cost tracking (if using LLM for ADR generation)
     """
 
     def __init__(
@@ -228,12 +238,14 @@ class ArchitectureStage(PipelineStage):
         messenger: AgentMessenger,
         rag: RAGAgent,
         logger: LoggerInterface,
-        adr_dir: Path = Path("/tmp/adr")
+        adr_dir: Path = Path("/tmp/adr"),
+        supervisor: Optional['SupervisorAgent'] = None
     ):
         self.board = board
         self.messenger = messenger
         self.rag = rag
         self.logger = logger
+        self.supervisor = supervisor
         self.adr_dir = adr_dir
         self.adr_dir.mkdir(exist_ok=True, parents=True)
 
@@ -500,51 +512,190 @@ class DevelopmentStage(PipelineStage):
 
     This stage ONLY invokes developers - nothing else.
     Uses DeveloperInvoker to launch autonomous developer agents.
+
+    Integrates with supervisor for:
+    - LLM cost tracking
+    - Code execution sandboxing
+    - Unexpected state handling and recovery
     """
 
     def __init__(
         self,
         board: KanbanBoard,
         rag: RAGAgent,
-        logger: LoggerInterface
+        logger: LoggerInterface,
+        observable: Optional['PipelineObservable'] = None,
+        supervisor: Optional['SupervisorAgent'] = None
     ):
         self.board = board
         self.rag = rag
         self.logger = logger
-        self.invoker = DeveloperInvoker(logger)
+        self.observable = observable
+        self.supervisor = supervisor
+        self.invoker = DeveloperInvoker(logger, observable=observable)
 
     def execute(self, card: Dict, context: Dict) -> Dict:
-        """Invoke developers to create competing solutions"""
+        """Invoke developers to create competing solutions with supervisor monitoring"""
+        stage_name = "development"
         self.logger.log("Starting Development Stage", "STAGE")
 
         card_id = card['card_id']
         num_developers = context.get('parallel_developers', 1)
 
-        # Get ADR from context
-        adr_file = context.get('adr_file', '')
-        adr_content = self._read_adr(adr_file)
+        # Register stage with supervisor
+        if self.supervisor:
+            from supervisor_agent import RecoveryStrategy
+            self.supervisor.register_stage(
+                stage_name=stage_name,
+                recovery_strategy=RecoveryStrategy(
+                    max_retries=3,
+                    retry_delay_seconds=10,
+                    timeout_seconds=600,  # 10 minutes for developers
+                    circuit_breaker_threshold=5
+                )
+            )
 
-        # Invoke developers in parallel
-        self.logger.log(f"Invoking {num_developers} parallel developer(s)...", "INFO")
+        try:
+            # Get ADR from context
+            adr_file = context.get('adr_file', '')
+            adr_content = self._read_adr(adr_file)
 
-        developer_results = self.invoker.invoke_parallel_developers(
-            num_developers=num_developers,
-            card=card,
-            adr_content=adr_content,
-            adr_file=adr_file,
-            rag_agent=self.rag  # Pass RAG agent so developers can query feedback
-        )
+            # Invoke developers in parallel
+            self.logger.log(f"Invoking {num_developers} parallel developer(s)...", "INFO")
 
-        # Store each developer's solution in RAG
-        for dev_result in developer_results:
-            self._store_developer_solution_in_rag(card_id, card, dev_result)
+            developer_results = self.invoker.invoke_parallel_developers(
+                num_developers=num_developers,
+                card=card,
+                adr_content=adr_content,
+                adr_file=adr_file,
+                rag_agent=self.rag  # Pass RAG agent so developers can query feedback
+            )
 
-        return {
-            "stage": "development",
-            "num_developers": num_developers,
-            "developers": developer_results,
-            "status": "COMPLETE"
-        }
+            # Track LLM costs for each developer
+            if self.supervisor:
+                for result in developer_results:
+                    if result.get('success', False) and result.get('tokens_used'):
+                        try:
+                            tokens_used = result['tokens_used']
+                            self.supervisor.track_llm_call(
+                                model=result.get('llm_model', 'gpt-4o'),
+                                provider=result.get('llm_provider', 'openai'),
+                                tokens_input=getattr(tokens_used, 'prompt_tokens', 0),
+                                tokens_output=getattr(tokens_used, 'completion_tokens', 0),
+                                stage=stage_name,
+                                purpose=result.get('developer', 'unknown')
+                            )
+                            self.logger.log(
+                                f"Tracked LLM cost for {result.get('developer')}",
+                                "INFO"
+                            )
+                        except Exception as e:
+                            # Budget exceeded or other cost tracking error
+                            self.logger.log(f"Cost tracking error: {e}", "ERROR")
+                            if "Budget" in str(e):
+                                raise
+
+            # Execute developer code in sandbox (if supervisor has sandboxing enabled)
+            if self.supervisor and hasattr(self.supervisor, 'sandbox') and self.supervisor.sandbox:
+                for result in developer_results:
+                    if not result.get('success', False):
+                        continue
+
+                    dev_name = result.get('developer', 'unknown')
+                    self.logger.log(f"Executing {dev_name} code in sandbox...", "INFO")
+
+                    # Get implementation files
+                    impl_files = result.get('implementation_files', [])
+                    for impl_file in impl_files:
+                        if Path(impl_file).exists():
+                            code = Path(impl_file).read_text()
+
+                            # Execute in sandbox
+                            exec_result = self.supervisor.execute_code_safely(
+                                code=code,
+                                scan_security=True
+                            )
+
+                            if not exec_result["success"]:
+                                error_msg = (
+                                    f"{dev_name} code execution failed: "
+                                    f"{exec_result.get('kill_reason', 'unknown')}"
+                                )
+                                self.logger.log(error_msg, "ERROR")
+
+                                # Mark this developer solution as failed
+                                result["success"] = False
+                                result["error"] = error_msg
+
+            # Store each developer's solution in RAG
+            for dev_result in developer_results:
+                self._store_developer_solution_in_rag(card_id, card, dev_result)
+
+            # Check if we have any successful developers
+            successful_devs = [r for r in developer_results if r.get("success", False)]
+
+            if not successful_devs:
+                # All developers failed - report unexpected state
+                if self.supervisor and hasattr(self.supervisor, 'handle_unexpected_state'):
+                    recovery = self.supervisor.handle_unexpected_state(
+                        current_state="STAGE_FAILED_ALL_DEVELOPERS",
+                        expected_states=["STAGE_COMPLETED"],
+                        context={
+                            "stage_name": stage_name,
+                            "error_message": "All developers failed",
+                            "card_id": card_id,
+                            "developer_count": len(developer_results),
+                            "developer_errors": [r.get("error") for r in developer_results]
+                        },
+                        auto_learn=True  # Let supervisor learn how to fix this
+                    )
+
+                    if recovery and recovery.get("success"):
+                        self.logger.log(
+                            "Supervisor recovered from all-developers-failed state!",
+                            "INFO"
+                        )
+                        # In production, would retry or apply learned solution here
+                    else:
+                        raise Exception("All developers failed and recovery unsuccessful")
+                else:
+                    raise Exception("All developers failed")
+
+            return {
+                "stage": "development",
+                "num_developers": num_developers,
+                "developers": developer_results,
+                "successful_developers": len(successful_devs),
+                "status": "COMPLETE"
+            }
+
+        except Exception as e:
+            # Let supervisor learn from this failure
+            if self.supervisor and hasattr(self.supervisor, 'handle_unexpected_state'):
+                import traceback
+                self.logger.log(f"Development stage failed, consulting supervisor...", "WARNING")
+
+                recovery = self.supervisor.handle_unexpected_state(
+                    current_state="STAGE_FAILED",
+                    expected_states=["STAGE_COMPLETED"],
+                    context={
+                        "stage_name": stage_name,
+                        "error_message": str(e),
+                        "stack_trace": traceback.format_exc(),
+                        "card_id": card_id
+                    },
+                    auto_learn=True
+                )
+
+                if recovery and recovery.get("success"):
+                    self.logger.log("Supervisor recovered from failure!", "INFO")
+                    # The supervisor's learned workflow already executed
+                    # In production, we might want to retry the stage here
+                else:
+                    self.logger.log("Supervisor could not recover", "ERROR")
+
+            # Re-raise after supervisor has learned
+            raise
 
     def get_stage_name(self) -> str:
         return "development"
@@ -590,21 +741,42 @@ class ValidationStage(PipelineStage):
     Single Responsibility: Validate developer solutions
 
     This stage ONLY validates test quality and TDD compliance - nothing else.
+
+    Integrates with supervisor for:
+    - Test execution in sandbox
+    - Test failure tracking
+    - Test timeout handling
     """
 
     def __init__(
         self,
         board: KanbanBoard,
         test_runner: TestRunner,
-        logger: LoggerInterface
+        logger: LoggerInterface,
+        observable: Optional['PipelineObservable'] = None,
+        supervisor: Optional['SupervisorAgent'] = None
     ):
         self.board = board
         self.test_runner = test_runner
         self.logger = logger
+        self.observable = observable
+        self.supervisor = supervisor
 
     def execute(self, card: Dict, context: Dict) -> Dict:
         """Validate developer solutions"""
         self.logger.log("Starting Validation Stage", "STAGE")
+
+        card_id = card.get('card_id', 'unknown')
+
+        # Notify validation started
+        if self.observable:
+            from pipeline_observer import PipelineEvent, EventType
+            event = PipelineEvent(
+                event_type=EventType.VALIDATION_STARTED,
+                card_id=card_id,
+                data={"num_developers": context.get('parallel_developers', 1)}
+            )
+            self.observable.notify(event)
 
         # Get number of developers from context
         num_developers = context.get('parallel_developers', 1)
@@ -615,7 +787,7 @@ class ValidationStage(PipelineStage):
 
         for i in range(num_developers):
             dev_name = "developer-a" if i == 0 else f"developer-{chr(98+i-1)}"
-            dev_result = self._validate_developer(dev_name)
+            dev_result = self._validate_developer(dev_name, card_id)
             developers[dev_name] = dev_result
 
             if dev_result['status'] != "APPROVED":
@@ -624,7 +796,7 @@ class ValidationStage(PipelineStage):
         decision = "ALL_APPROVED" if all_approved else "SOME_BLOCKED"
         approved_devs = [k for k, v in developers.items() if v['status'] == "APPROVED"]
 
-        return {
+        result = {
             "stage": "validation",
             "num_developers": num_developers,
             "developers": developers,
@@ -632,18 +804,53 @@ class ValidationStage(PipelineStage):
             "approved_developers": approved_devs
         }
 
+        # Notify validation completed or failed
+        if self.observable:
+            from pipeline_observer import PipelineEvent, EventType
+            if all_approved:
+                event = PipelineEvent(
+                    event_type=EventType.VALIDATION_COMPLETED,
+                    card_id=card_id,
+                    data={
+                        "decision": decision,
+                        "approved_developers": approved_devs,
+                        "num_developers": num_developers
+                    }
+                )
+                self.observable.notify(event)
+            else:
+                error = Exception(f"Validation failed: {len(approved_devs)}/{num_developers} developers approved")
+                event = PipelineEvent(
+                    event_type=EventType.VALIDATION_FAILED,
+                    card_id=card_id,
+                    error=error,
+                    data={
+                        "decision": decision,
+                        "approved_developers": approved_devs,
+                        "blocked_developers": [k for k, v in developers.items() if v['status'] != "APPROVED"]
+                    }
+                )
+                self.observable.notify(event)
+
+        return result
+
     def get_stage_name(self) -> str:
         return "validation"
 
-    def _validate_developer(self, dev_name: str) -> Dict:
+    def _validate_developer(self, dev_name: str, card_id: str = None) -> Dict:
         """Validate a single developer's solution"""
         test_path = f"/tmp/{dev_name}/tests"
+
+        self.logger.log(f"Validating {dev_name} solution...", "INFO")
 
         # Run tests
         test_results = self.test_runner.run_tests(test_path)
 
         # Determine status
         status = "APPROVED" if test_results['exit_code'] == 0 else "BLOCKED"
+
+        self.logger.log(f"{dev_name}: {status} (exit_code={test_results['exit_code']})",
+                       "SUCCESS" if status == "APPROVED" else "WARNING")
 
         return {
             "developer": dev_name,
@@ -661,6 +868,11 @@ class IntegrationStage(PipelineStage):
     Single Responsibility: Integrate winning solution
 
     This stage ONLY deploys and runs regression tests - nothing else.
+
+    Integrates with supervisor for:
+    - Merge conflict handling
+    - Final test execution tracking
+    - Integration failure recovery
     """
 
     def __init__(
@@ -669,13 +881,17 @@ class IntegrationStage(PipelineStage):
         messenger: AgentMessenger,
         rag: RAGAgent,
         test_runner: TestRunner,
-        logger: LoggerInterface
+        logger: LoggerInterface,
+        observable: Optional['PipelineObservable'] = None,
+        supervisor: Optional['SupervisorAgent'] = None
     ):
         self.board = board
         self.messenger = messenger
         self.rag = rag
         self.test_runner = test_runner
         self.logger = logger
+        self.supervisor = supervisor
+        self.observable = observable
 
     def execute(self, card: Dict, context: Dict) -> Dict:
         """Integrate winning solution"""
@@ -685,6 +901,19 @@ class IntegrationStage(PipelineStage):
 
         # Determine winner
         winner = context.get('winner', 'developer-a')
+
+        # Notify integration started
+        if self.observable:
+            from pipeline_observer import PipelineEvent, EventType
+            event = PipelineEvent(
+                event_type=EventType.INTEGRATION_STARTED,
+                card_id=card_id,
+                developer_name=winner,
+                data={"winning_developer": winner}
+            )
+            self.observable.notify(event)
+
+        self.logger.log(f"Integrating {winner} solution...", "INFO")
 
         # Run regression tests
         test_path = f"/tmp/{winner}/tests"
@@ -697,6 +926,38 @@ class IntegrationStage(PipelineStage):
         if status == "PASS":
             self.logger.log("Integration complete: All tests passing, deployment verified", "SUCCESS")
 
+            # Notify integration completed
+            if self.observable:
+                from pipeline_observer import PipelineEvent, EventType
+                event = PipelineEvent(
+                    event_type=EventType.INTEGRATION_COMPLETED,
+                    card_id=card_id,
+                    developer_name=winner,
+                    data={
+                        "winner": winner,
+                        "tests_passed": regression_results.get('passed', 0),
+                        "deployment_verified": deployment_verified
+                    }
+                )
+                self.observable.notify(event)
+        else:
+            self.logger.log(f"Integration issues detected: {regression_results.get('failed', 0)} tests failed", "WARNING")
+
+            # Notify integration conflict (failures during integration)
+            if self.observable:
+                from pipeline_observer import PipelineEvent, EventType
+                event = PipelineEvent(
+                    event_type=EventType.INTEGRATION_CONFLICT,
+                    card_id=card_id,
+                    developer_name=winner,
+                    data={
+                        "winner": winner,
+                        "tests_failed": regression_results.get('failed', 0),
+                        "exit_code": regression_results.get('exit_code', 1)
+                    }
+                )
+                self.observable.notify(event)
+
         # Update Kanban
         self.board.move_card(card_id, "testing", "pipeline-orchestrator")
 
@@ -708,7 +969,7 @@ class IntegrationStage(PipelineStage):
             content=f"Integration of {winner} solution completed",
             metadata={
                 "winner": winner,
-                "tests_passed": regression_results['passed'],
+                "tests_passed": regression_results.get('passed', 0),
                 "deployment_verified": deployment_verified
             }
         )

@@ -18,6 +18,7 @@ from artemis_stage_interface import PipelineStage, LoggerInterface
 from code_review_agent import CodeReviewAgent
 from agent_messenger import AgentMessenger
 from rag_agent import RAGAgent
+from pipeline_observer import PipelineObservable, PipelineEvent, EventType
 
 
 class CodeReviewStage(PipelineStage):
@@ -27,6 +28,11 @@ class CodeReviewStage(PipelineStage):
     This stage reviews all developer implementations and provides comprehensive
     reports on security vulnerabilities, code quality issues, GDPR compliance,
     and accessibility standards.
+
+    Integrates with supervisor for:
+    - LLM cost tracking for code review
+    - Critical security finding alerts
+    - Code review failure recovery
     """
 
     def __init__(
@@ -35,7 +41,9 @@ class CodeReviewStage(PipelineStage):
         rag: RAGAgent,
         logger: LoggerInterface,
         llm_provider: Optional[str] = None,
-        llm_model: Optional[str] = None
+        llm_model: Optional[str] = None,
+        observable: Optional[PipelineObservable] = None,
+        supervisor: Optional['SupervisorAgent'] = None
     ):
         """
         Initialize Code Review Stage
@@ -46,12 +54,16 @@ class CodeReviewStage(PipelineStage):
             logger: Logger interface
             llm_provider: LLM provider (openai/anthropic)
             llm_model: Specific model to use
+            observable: Optional PipelineObservable for event broadcasting
+            supervisor: Optional SupervisorAgent for monitoring
         """
         self.messenger = messenger
         self.rag = rag
         self.logger = logger
         self.llm_provider = llm_provider or os.getenv("ARTEMIS_LLM_PROVIDER", "openai")
         self.llm_model = llm_model or os.getenv("ARTEMIS_LLM_MODEL")
+        self.observable = observable
+        self.supervisor = supervisor
 
     def execute(self, card: Dict, context: Dict) -> Dict:
         """
@@ -103,6 +115,16 @@ class CodeReviewStage(PipelineStage):
             self.logger.log(f"🔍 Reviewing {developer_name} implementation", "INFO")
             self.logger.log(f"{'='*60}", "INFO")
 
+            # Notify code review started
+            if self.observable:
+                event = PipelineEvent(
+                    event_type=EventType.CODE_REVIEW_STARTED,
+                    card_id=card_id,
+                    developer_name=developer_name,
+                    data={"implementation_dir": implementation_dir}
+                )
+                self.observable.notify(event)
+
             # Create code review agent for this developer
             review_agent = CodeReviewAgent(
                 developer_name=developer_name,
@@ -140,10 +162,38 @@ class CodeReviewStage(PipelineStage):
             if review_status == "FAIL":
                 all_reviews_pass = False
                 self.logger.log(f"❌ {developer_name} implementation FAILED code review", "ERROR")
+
+                # Notify code review failed
+                if self.observable:
+                    error = Exception(f"Code review failed with {critical_issues} critical issues")
+                    event = PipelineEvent(
+                        event_type=EventType.CODE_REVIEW_FAILED,
+                        card_id=card_id,
+                        developer_name=developer_name,
+                        error=error,
+                        data={"score": overall_score, "critical_issues": critical_issues}
+                    )
+                    self.observable.notify(event)
+
             elif review_status == "NEEDS_IMPROVEMENT":
                 self.logger.log(f"⚠️  {developer_name} implementation needs improvement", "WARNING")
             else:
                 self.logger.log(f"✅ {developer_name} implementation PASSED code review", "SUCCESS")
+
+                # Notify code review completed
+                if self.observable:
+                    event = PipelineEvent(
+                        event_type=EventType.CODE_REVIEW_COMPLETED,
+                        card_id=card_id,
+                        developer_name=developer_name,
+                        data={
+                            "score": overall_score,
+                            "critical_issues": critical_issues,
+                            "high_issues": high_issues,
+                            "status": review_status
+                        }
+                    )
+                    self.observable.notify(event)
 
             # Store review in RAG for learning
             self._store_review_in_rag(card_id, task_title, developer_name, review_result)
