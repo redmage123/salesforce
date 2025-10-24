@@ -15,7 +15,7 @@ import re
 import subprocess
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from artemis_stage_interface import PipelineStage, LoggerInterface
 from artemis_services import TestRunner, FileManager
@@ -30,12 +30,20 @@ from artemis_exceptions import (
     wrap_exception
 )
 
+# Import PromptManager for RAG-based prompts
+try:
+    from prompt_manager import PromptManager
+    PROMPT_MANAGER_AVAILABLE = True
+except ImportError:
+    PROMPT_MANAGER_AVAILABLE = False
+from supervised_agent_mixin import SupervisedStageMixin
+
 
 # ============================================================================
 # PROJECT ANALYSIS STAGE (Pre-Implementation Review)
 # ============================================================================
 
-class ProjectAnalysisStage(PipelineStage):
+class ProjectAnalysisStage(PipelineStage, SupervisedStageMixin):
     """
     Single Responsibility: Analyze project BEFORE implementation
 
@@ -54,6 +62,7 @@ class ProjectAnalysisStage(PipelineStage):
     Integrates with supervisor for:
     - Unexpected state handling (user rejection, analysis failures)
     - LLM cost tracking (if using LLM for analysis)
+    - Automatic heartbeat and health monitoring
     """
 
     def __init__(
@@ -62,18 +71,49 @@ class ProjectAnalysisStage(PipelineStage):
         messenger: AgentMessenger,
         rag: RAGAgent,
         logger: LoggerInterface,
-        supervisor: Optional['SupervisorAgent'] = None
+        supervisor: Optional['SupervisorAgent'] = None,
+        llm_client: Optional[Any] = None,
+        config: Optional[Any] = None
     ):
+        # Initialize PipelineStage
+        PipelineStage.__init__(self)
+
+        # Initialize SupervisedStageMixin for health monitoring
+        SupervisedStageMixin.__init__(
+            self,
+            supervisor=supervisor,
+            stage_name="ProjectAnalysisStage",
+            heartbeat_interval=15
+        )
+
         self.board = board
         self.messenger = messenger
         self.rag = rag
         self.logger = logger
-        self.supervisor = supervisor
-        self.engine = ProjectAnalysisEngine()
+        self.llm_client = llm_client
+        self.config = config  # Store config for auto-approve setting
+
+        # Initialize ProjectAnalysisEngine with LLM support
+        self.engine = ProjectAnalysisEngine(
+            llm_client=llm_client,
+            config=config,
+            enable_llm_analysis=True
+        )
         self.approval_handler = UserApprovalHandler()
 
     def execute(self, card: Dict, context: Dict) -> Dict:
-        """Run project analysis and get user approval"""
+        """Run project analysis and get user approval with supervisor monitoring"""
+        # Use supervised execution context manager for automatic monitoring
+        metadata = {
+            "task_id": card.get('card_id'),
+            "stage": "project_analysis"
+        }
+
+        with self.supervised_execution(metadata):
+            return self._do_analysis(card, context)
+
+    def _do_analysis(self, card: Dict, context: Dict) -> Dict:
+        """Internal method that performs the actual analysis work"""
         self.logger.log("Starting Project Analysis Stage", "STAGE")
 
         card_id = card['card_id']
@@ -89,27 +129,70 @@ class ProjectAnalysisStage(PipelineStage):
             'complexity': context.get('workflow_plan', {}).get('complexity', 'medium')
         }
 
+        # Update progress: starting analysis
+        self.update_progress({"step": "analyzing_task", "progress_percent": 10})
+
         # Run analysis across all dimensions
         analysis = self.engine.analyze_task(card, analysis_context)
+
+        # Update progress: analysis complete
+        self.update_progress({"step": "analysis_complete", "progress_percent": 40})
 
         self.logger.log(f"Analysis complete: {analysis['total_issues']} issues found", "INFO")
         self.logger.log(f"  CRITICAL: {analysis['critical_count']}", "WARNING" if analysis['critical_count'] > 0 else "INFO")
         self.logger.log(f"  HIGH: {analysis['high_count']}", "WARNING" if analysis['high_count'] > 0 else "INFO")
         self.logger.log(f"  MEDIUM: {analysis['medium_count']}", "INFO")
 
-        # Present findings to user
-        presentation = self.approval_handler.present_findings(analysis)
-        print("\n" + presentation)
+        # Update progress: presenting findings
+        self.update_progress({"step": "presenting_findings", "progress_percent": 50})
 
-        # Auto-approve for now (in production, would prompt user)
-        # Option 1 = APPROVE ALL
-        decision = self.approval_handler.get_approval_decision(analysis, "1")
+        # Check auto-approve config first (before presenting to user)
+        auto_approve = self.config.get('ARTEMIS_AUTO_APPROVE_PROJECT_ANALYSIS', True) if self.config else True
 
-        self.logger.log(f"User decision: {'APPROVED' if decision['approved'] else 'REJECTED'}", "SUCCESS")
+        if not auto_approve:
+            # Interactive mode - present findings to user
+            presentation = self.approval_handler.present_findings(analysis)
+            print("\n" + presentation)
+        else:
+            # Auto-approve mode - log summary instead of full presentation
+            self.logger.log(f"📊 Analysis Summary: {analysis['total_issues']} issues (Critical: {analysis['critical_count']}, High: {analysis['high_count']}, Medium: {analysis['medium_count']})", "INFO")
+
+        # Update progress: waiting for approval
+        self.update_progress({"step": "waiting_for_approval", "progress_percent": 60})
+
+        if auto_approve:
+            # Use agent's recommendation
+            recommendation = analysis.get('recommendation', 'APPROVE_ALL')
+            reason = analysis.get('recommendation_reason', 'Auto-approved by agent')
+            self.logger.log(f"✅ Auto-approving based on agent recommendation: {recommendation}", "INFO")
+            self.logger.log(f"   Reason: {reason}", "INFO")
+
+            # Map recommendation to approval decision
+            if recommendation == "REJECT":
+                decision_choice = "4"  # REJECT
+            elif recommendation == "APPROVE_CRITICAL":
+                decision_choice = "2"  # APPROVE_CRITICAL
+            else:
+                decision_choice = "1"  # APPROVE ALL
+        else:
+            # Interactive mode - would prompt user (not implemented in background mode)
+            self.logger.log("⚠️  Interactive approval required but running in non-interactive mode", "WARNING")
+            self.logger.log(f"   Agent recommends: {analysis.get('recommendation', 'APPROVE_ALL')}", "INFO")
+            decision_choice = "1"  # Default to approve all
+
+        decision = self.approval_handler.get_approval_decision(analysis, decision_choice)
+
+        self.logger.log(f"✅ User decision: {'APPROVED' if decision['approved'] else 'REJECTED'}", "SUCCESS")
+
+        # Update progress: processing decision
+        self.update_progress({"step": "processing_decision", "progress_percent": 70})
 
         # Send approved changes to Architecture Agent
         if decision['approved'] and len(decision['approved_issues']) > 0:
             self._send_approved_changes_to_architecture(card_id, decision['approved_issues'])
+
+        # Update progress: updating kanban
+        self.update_progress({"step": "updating_kanban", "progress_percent": 85})
 
         # Update Kanban
         self.board.update_card(card_id, {
@@ -117,6 +200,9 @@ class ProjectAnalysisStage(PipelineStage):
             "critical_issues": analysis['critical_count'],
             "approved_changes": decision['approved_count']
         })
+
+        # Update progress: storing in RAG
+        self.update_progress({"step": "storing_in_rag", "progress_percent": 95})
 
         # Store in RAG
         self._store_analysis_in_rag(card_id, card, analysis, decision)
@@ -136,6 +222,9 @@ class ProjectAnalysisStage(PipelineStage):
             "dimensions_analyzed": analysis['dimensions_analyzed']
         }
 
+        # Update progress: complete
+        self.update_progress({"step": "complete", "progress_percent": 100})
+
         return {
             "stage": "project_analysis",
             "analysis": serializable_analysis,
@@ -149,15 +238,16 @@ class ProjectAnalysisStage(PipelineStage):
     def _send_approved_changes_to_architecture(self, card_id: str, approved_issues: List):
         """Send approved changes to Architecture Agent via AgentMessenger"""
 
-        # Format approved changes for Architecture Agent
-        changes_summary = []
-        for issue in approved_issues:
-            changes_summary.append({
+        # Format approved changes for Architecture Agent using list comprehension
+        changes_summary = [
+            {
                 "category": issue.category,
                 "description": issue.description,
                 "suggestion": issue.suggestion,
                 "severity": issue.severity.value
-            })
+            }
+            for issue in approved_issues
+        ]
 
         self.messenger.send_data_update(
             to_agent="architecture-agent",
@@ -192,11 +282,13 @@ class ProjectAnalysisStage(PipelineStage):
             f"Approved Changes: {decision['approved_count']}"
         ]
 
-        # Add critical issues to content
+        # Add critical issues to content using list comprehension
         if analysis['critical_issues']:
             content_parts.append("\nCritical Issues:")
-            for issue in analysis['critical_issues']:
-                content_parts.append(f"  - [{issue.category}] {issue.description}")
+            content_parts.extend([
+                f"  - [{issue.category}] {issue.description}"
+                for issue in analysis['critical_issues']
+            ])
 
         content = "\n".join(content_parts)
 
@@ -221,7 +313,7 @@ class ProjectAnalysisStage(PipelineStage):
 # ARCHITECTURE STAGE
 # ============================================================================
 
-class ArchitectureStage(PipelineStage):
+class ArchitectureStage(PipelineStage, SupervisedStageMixin):
     """
     Single Responsibility: Create Architecture Decision Records (ADRs)
 
@@ -230,6 +322,7 @@ class ArchitectureStage(PipelineStage):
     Integrates with supervisor for:
     - Unexpected state handling (ADR generation failures)
     - LLM cost tracking (if using LLM for ADR generation)
+    - Automatic heartbeat and health monitoring
     """
 
     def __init__(
@@ -239,35 +332,81 @@ class ArchitectureStage(PipelineStage):
         rag: RAGAgent,
         logger: LoggerInterface,
         adr_dir: Path = Path("/tmp/adr"),
-        supervisor: Optional['SupervisorAgent'] = None
+        supervisor: Optional['SupervisorAgent'] = None,
+        llm_client: Optional[Any] = None
     ):
+        # Initialize PipelineStage
+        PipelineStage.__init__(self)
+
+        # Initialize SupervisedStageMixin for health monitoring
+        SupervisedStageMixin.__init__(
+            self,
+            supervisor=supervisor,
+            stage_name="ArchitectureStage",
+            heartbeat_interval=15
+        )
+
         self.board = board
         self.messenger = messenger
         self.rag = rag
         self.logger = logger
-        self.supervisor = supervisor
+        self.llm_client = llm_client
         self.adr_dir = adr_dir
         self.adr_dir.mkdir(exist_ok=True, parents=True)
 
+        # Initialize PromptManager if available
+        self.prompt_manager = None
+        if PROMPT_MANAGER_AVAILABLE and self.rag:
+            try:
+                self.prompt_manager = PromptManager(self.rag, verbose=False)
+                self.logger.log("✅ Prompt manager initialized (RAG-based prompts)", "INFO")
+            except Exception as e:
+                self.logger.log(f"⚠️  Could not initialize PromptManager: {e}", "WARNING")
+
     def execute(self, card: Dict, context: Dict) -> Dict:
-        """Create ADR for the task"""
+        """Create ADR for the task with supervisor monitoring"""
+        metadata = {
+            "task_id": card.get('card_id'),
+            "stage": "architecture"
+        }
+
+        with self.supervised_execution(metadata):
+            return self._create_adr(card, context)
+
+    def _create_adr(self, card: Dict, context: Dict) -> Dict:
+        """Internal method that performs ADR creation"""
         self.logger.log("Starting Architecture Stage", "STAGE")
 
         card_id = card['card_id']
 
+        # Update progress: getting ADR number
+        self.update_progress({"step": "getting_adr_number", "progress_percent": 10})
+
         # Get next ADR number
         adr_number = self._get_next_adr_number()
+
+        # Update progress: generating ADR
+        self.update_progress({"step": "generating_adr", "progress_percent": 30})
 
         # Create ADR file
         adr_content = self._generate_adr(card, adr_number)
         adr_filename = self._create_adr_filename(card['title'], adr_number)
         adr_path = self.adr_dir / adr_filename
 
+        # Update progress: writing ADR file
+        self.update_progress({"step": "writing_adr_file", "progress_percent": 50})
+
         FileManager.write_text(adr_path, adr_content)
         self.logger.log(f"ADR created: {adr_filename}", "SUCCESS")
 
+        # Update progress: sending notifications
+        self.update_progress({"step": "sending_notifications", "progress_percent": 65})
+
         # Update messaging
         self._send_adr_notification(card_id, str(adr_path), adr_number)
+
+        # Update progress: updating kanban
+        self.update_progress({"step": "updating_kanban", "progress_percent": 80})
 
         # Update Kanban
         self.board.update_card(card_id, {
@@ -277,7 +416,10 @@ class ArchitectureStage(PipelineStage):
         })
         self.board.move_card(card_id, "development", "pipeline-orchestrator")
 
-        # Store in RAG
+        # Update progress: storing ADR in RAG
+        self.update_progress({"step": "storing_adr_in_rag", "progress_percent": 70})
+
+        # Store ADR in RAG
         self.rag.store_artifact(
             artifact_type="architecture_decision",
             card_id=card_id,
@@ -286,14 +428,51 @@ class ArchitectureStage(PipelineStage):
             metadata={
                 "adr_number": adr_number,
                 "priority": card.get('priority', 'medium'),
-                "story_points": card.get('points', 5)
+                "story_points": card.get('points', 5),
+                "adr_file": str(adr_path)
             }
         )
+
+        # Update progress: generating user stories from ADR
+        self.update_progress({"step": "generating_user_stories", "progress_percent": 80})
+
+        # Generate user stories from ADR and add to Kanban
+        user_stories = self._generate_user_stories_from_adr(adr_content, adr_number, card)
+
+        # Update progress: adding user stories to kanban
+        self.update_progress({"step": "adding_stories_to_kanban", "progress_percent": 90})
+
+        story_cards = []
+        for story in user_stories:
+            story_card_id = self.board.add_card(
+                title=story['title'],
+                description=story['description'],
+                priority=story.get('priority', card.get('priority', 'medium')),
+                points=story.get('points', 3),
+                metadata={
+                    'parent_adr': adr_number,
+                    'parent_card': card_id,
+                    'acceptance_criteria': story.get('acceptance_criteria', [])
+                }
+            )
+            story_cards.append(story_card_id)
+            self.logger.log(f"  ✅ Created user story: {story['title']}", "INFO")
+
+        # Update progress: storing kanban in RAG
+        self.update_progress({"step": "storing_kanban_in_rag", "progress_percent": 95})
+
+        # Store Kanban board state in RAG
+        self._store_kanban_in_rag(card_id, story_cards)
+
+        # Update progress: complete
+        self.update_progress({"step": "complete", "progress_percent": 100})
 
         return {
             "stage": "architecture",
             "adr_number": adr_number,
             "adr_file": str(adr_path),
+            "user_stories_created": len(story_cards),
+            "story_card_ids": story_cards,
             "status": "COMPLETE"
         }
 
@@ -390,57 +569,285 @@ class ArchitectureStage(PipelineStage):
             }
         )
 
+    def _generate_user_stories_from_adr(
+        self,
+        adr_content: str,
+        adr_number: str,
+        parent_card: Dict
+    ) -> List[Dict]:
+        """
+        Generate user stories from ADR content using LLM
+
+        Args:
+            adr_content: Full ADR markdown content
+            adr_number: ADR number (e.g., "001")
+            parent_card: Parent task card
+
+        Returns:
+            List of user story dicts with title, description, acceptance_criteria, points
+        """
+        self.logger.log(f"🤖 Generating user stories from ADR-{adr_number}...", "INFO")
+
+        if not hasattr(self, 'llm_client') or not self.llm_client:
+            self.logger.log("⚠️  No LLM client available - skipping user story generation", "WARNING")
+            return []
+
+        try:
+            # Try to get prompt from RAG first
+            if self.prompt_manager:
+                try:
+                    self.logger.log("📝 Loading architecture prompt from RAG", "INFO")
+                    prompt_template = self.prompt_manager.get_prompt("architecture_design_adr")
+
+                    if prompt_template:
+                        # Render the prompt with ADR content
+                        rendered = self.prompt_manager.render_prompt(
+                            prompt=prompt_template,
+                            variables={
+                                "context": f"Converting ADR to user stories",
+                                "requirements": adr_content,
+                                "constraints": "Focus on implementation tasks",
+                                "scale_expectations": "2-5 user stories"
+                            }
+                        )
+                        self.logger.log(f"✅ Loaded RAG prompt with {len(prompt_template.perspectives)} perspectives", "INFO")
+                        system_message = rendered['system']
+                        user_message = rendered['user']
+                    else:
+                        raise Exception("Prompt not found in RAG")
+                except Exception as e:
+                    self.logger.log(f"⚠️  Error loading RAG prompt: {e} - using default", "WARNING")
+                    system_message = """You are an expert at converting Architecture Decision Records (ADRs) into actionable user stories.
+Generate user stories that implement the architectural decisions, following best practices:
+- Use "As a [role], I want [feature], so that [benefit]" format
+- Include specific acceptance criteria
+- Estimate story points (1-8 scale)
+- Break down complex decisions into multiple stories"""
+
+                    user_message = f"""Convert the following ADR into user stories:
+
+{adr_content}
+
+Generate 2-5 user stories in JSON format:
+{{
+  "user_stories": [
+    {{
+      "title": "As a developer, I want to implement X, so that Y",
+      "description": "Detailed description of what needs to be built",
+      "acceptance_criteria": [
+        "Given X, when Y, then Z",
+        "Criterion 2"
+      ],
+      "points": 5,
+      "priority": "high"
+    }}
+  ]
+}}
+
+Focus on implementation tasks, not architectural discussions."""
+            else:
+                system_message = """You are an expert at converting Architecture Decision Records (ADRs) into actionable user stories.
+Generate user stories that implement the architectural decisions, following best practices:
+- Use "As a [role], I want [feature], so that [benefit]" format
+- Include specific acceptance criteria
+- Estimate story points (1-8 scale)
+- Break down complex decisions into multiple stories"""
+
+                user_message = f"""Convert the following ADR into user stories:
+
+{adr_content}
+
+Generate 2-5 user stories in JSON format:
+{{
+  "user_stories": [
+    {{
+      "title": "As a developer, I want to implement X, so that Y",
+      "description": "Detailed description of what needs to be built",
+      "acceptance_criteria": [
+        "Given X, when Y, then Z",
+        "Criterion 2"
+      ],
+      "points": 5,
+      "priority": "high"
+    }}
+  ]
+}}
+
+Focus on implementation tasks, not architectural discussions."""
+
+            # Use LLM client's complete() method
+            from llm_client import LLMMessage
+            messages = [
+                LLMMessage(role="system", content=system_message),
+                LLMMessage(role="user", content=user_message)
+            ]
+
+            llm_response = self.llm_client.complete(
+                messages=messages,
+                temperature=0.4,
+                max_tokens=2000
+            )
+            response = llm_response.content
+
+            # Parse JSON response
+            import json
+            import re
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if not json_match:
+                self.logger.log("⚠️  LLM response did not contain valid JSON", "WARNING")
+                return []
+
+            data = json.loads(json_match.group(0))
+            user_stories = data.get('user_stories', [])
+
+            self.logger.log(f"✅ Generated {len(user_stories)} user stories from ADR-{adr_number}", "INFO")
+            return user_stories
+
+        except Exception as e:
+            self.logger.log(f"❌ Failed to generate user stories: {e}", "ERROR")
+            return []
+
+    def _store_kanban_in_rag(self, card_id: str, story_card_ids: List[str]) -> None:
+        """
+        Store Kanban board state in RAG database
+
+        Args:
+            card_id: Parent card ID
+            story_card_ids: List of generated story card IDs
+        """
+        try:
+            # Get current board state
+            board_state = {
+                "parent_card": card_id,
+                "generated_stories": story_card_ids,
+                "columns": {},
+                "total_cards": 0
+            }
+
+            # Collect all cards by column
+            if hasattr(self.board, 'columns'):
+                for column_name in self.board.columns:
+                    cards = self.board.get_cards_in_column(column_name)
+                    board_state["columns"][column_name] = [
+                        {
+                            "card_id": c.get('card_id'),
+                            "title": c.get('title'),
+                            "priority": c.get('priority'),
+                            "points": c.get('points')
+                        }
+                        for c in cards
+                    ]
+                    board_state["total_cards"] += len(cards)
+
+            # Store in RAG
+            self.rag.store_artifact(
+                artifact_type="kanban_board_state",
+                card_id=card_id,
+                task_title=f"Kanban State after ADR-{card_id}",
+                content=json.dumps(board_state, indent=2),
+                metadata={
+                    "parent_card": card_id,
+                    "story_count": len(story_card_ids),
+                    "total_cards": board_state["total_cards"],
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            )
+
+            self.logger.log(f"✅ Stored Kanban board state in RAG ({board_state['total_cards']} cards)", "INFO")
+
+        except Exception as e:
+            self.logger.log(f"⚠️  Failed to store Kanban in RAG: {e}", "WARNING")
+
 
 # ============================================================================
 # DEPENDENCY VALIDATION STAGE
 # ============================================================================
 
-class DependencyValidationStage(PipelineStage):
+class DependencyValidationStage(PipelineStage, SupervisedStageMixin):
     """
     Single Responsibility: Validate runtime dependencies
 
     This stage ONLY validates dependencies - nothing else.
+
+    Integrates with supervisor for:
+    - Dependency validation failure tracking
+    - Automatic heartbeat and health monitoring
     """
 
     def __init__(
         self,
         board: KanbanBoard,
         messenger: AgentMessenger,
-        logger: LoggerInterface
+        logger: LoggerInterface,
+        supervisor: Optional['SupervisorAgent'] = None
     ):
+        # Initialize PipelineStage
+        PipelineStage.__init__(self)
+
+        # Initialize SupervisedStageMixin for health monitoring
+        SupervisedStageMixin.__init__(
+            self,
+            supervisor=supervisor,
+            stage_name="DependencyValidationStage",
+            heartbeat_interval=15
+        )
+
         self.board = board
         self.messenger = messenger
         self.logger = logger
 
     def execute(self, card: Dict, context: Dict) -> Dict:
-        """Validate dependencies"""
+        """Execute with supervisor monitoring"""
+        metadata = {
+            "task_id": card.get('card_id'),
+            "stage": "dependencies"
+        }
+
+        with self.supervised_execution(metadata):
+            return self._do_work(card, context)
+
+    def _do_work(self, card: Dict, context: Dict) -> Dict:
+        """Internal method - performs dependency validation"""
         self.logger.log("Starting Dependency Validation Stage", "STAGE")
 
         card_id = card['card_id']
 
+        # Update progress: starting validation
+        self.update_progress({"step": "starting", "progress_percent": 10})
+
         # Check Python version
+        self.update_progress({"step": "checking_python_version", "progress_percent": 30})
         python_check = self._check_python_version()
 
         # Test basic imports
+        self.update_progress({"step": "testing_imports", "progress_percent": 50})
         import_check = self._test_imports()
 
         # Determine status
+        self.update_progress({"step": "determining_status", "progress_percent": 70})
         all_passed = python_check['compatible'] and import_check['all_passed']
         status = "PASS" if all_passed else "BLOCKED"
 
         if status == "PASS":
             self.logger.log("Dependency validation PASSED", "SUCCESS")
+            self.update_progress({"step": "sending_success_notification", "progress_percent": 85})
             self._send_success_notification(card_id)
         else:
             self.logger.log("Dependency validation FAILED", "ERROR")
+            self.update_progress({"step": "sending_failure_notification", "progress_percent": 85})
             self._send_failure_notification(card_id)
 
         # Update Kanban
+        self.update_progress({"step": "updating_kanban", "progress_percent": 95})
         self.board.move_card(card_id, "development", "pipeline-orchestrator")
+
+        # Update progress: complete
+        self.update_progress({"step": "complete", "progress_percent": 100})
 
         return {
             "stage": "dependencies",
-            "status": status,
+            "status": "COMPLETE" if all_passed else "FAILED",
+            "validation_status": status,  # Keep original PASS/BLOCKED info
             "checks": {
                 "python_version": python_check,
                 "import_test": import_check
@@ -506,7 +913,7 @@ class DependencyValidationStage(PipelineStage):
 # DEVELOPMENT STAGE (New - Invokes Developer A/B)
 # ============================================================================
 
-class DevelopmentStage(PipelineStage):
+class DevelopmentStage(PipelineStage, SupervisedStageMixin):
     """
     Single Responsibility: Invoke parallel developers
 
@@ -517,6 +924,7 @@ class DevelopmentStage(PipelineStage):
     - LLM cost tracking
     - Code execution sandboxing
     - Unexpected state handling and recovery
+    - Automatic heartbeat and health monitoring
     """
 
     def __init__(
@@ -527,6 +935,17 @@ class DevelopmentStage(PipelineStage):
         observable: Optional['PipelineObservable'] = None,
         supervisor: Optional['SupervisorAgent'] = None
     ):
+        # Initialize PipelineStage
+        PipelineStage.__init__(self)
+
+        # Initialize SupervisedStageMixin for health monitoring
+        SupervisedStageMixin.__init__(
+            self,
+            supervisor=supervisor,
+            stage_name="DevelopmentStage",
+            heartbeat_interval=15
+        )
+
         self.board = board
         self.rag = rag
         self.logger = logger
@@ -535,12 +954,25 @@ class DevelopmentStage(PipelineStage):
         self.invoker = DeveloperInvoker(logger, observable=observable)
 
     def execute(self, card: Dict, context: Dict) -> Dict:
-        """Invoke developers to create competing solutions with supervisor monitoring"""
+        """Execute with supervisor monitoring"""
+        metadata = {
+            "task_id": card.get('card_id'),
+            "stage": "development"
+        }
+
+        with self.supervised_execution(metadata):
+            return self._do_work(card, context)
+
+    def _do_work(self, card: Dict, context: Dict) -> Dict:
+        """Internal method - invokes developers and tracks their work"""
         stage_name = "development"
         self.logger.log("Starting Development Stage", "STAGE")
 
         card_id = card['card_id']
         num_developers = context.get('parallel_developers', 1)
+
+        # Update progress: starting
+        self.update_progress({"step": "starting", "progress_percent": 10})
 
         # Register stage with supervisor
         if self.supervisor:
@@ -557,10 +989,12 @@ class DevelopmentStage(PipelineStage):
 
         try:
             # Get ADR from context
+            self.update_progress({"step": "reading_adr", "progress_percent": 20})
             adr_file = context.get('adr_file', '')
             adr_content = self._read_adr(adr_file)
 
             # Invoke developers in parallel
+            self.update_progress({"step": "invoking_developers", "progress_percent": 30})
             self.logger.log(f"Invoking {num_developers} parallel developer(s)...", "INFO")
 
             developer_results = self.invoker.invoke_parallel_developers(
@@ -572,6 +1006,7 @@ class DevelopmentStage(PipelineStage):
             )
 
             # Track LLM costs for each developer
+            self.update_progress({"step": "tracking_llm_costs", "progress_percent": 50})
             if self.supervisor:
                 for result in developer_results:
                     if result.get('success', False) and result.get('tokens_used'):
@@ -596,6 +1031,7 @@ class DevelopmentStage(PipelineStage):
                                 raise
 
             # Execute developer code in sandbox (if supervisor has sandboxing enabled)
+            self.update_progress({"step": "sandboxing_code", "progress_percent": 65})
             if self.supervisor and hasattr(self.supervisor, 'sandbox') and self.supervisor.sandbox:
                 for result in developer_results:
                     if not result.get('success', False):
@@ -628,10 +1064,12 @@ class DevelopmentStage(PipelineStage):
                                 result["error"] = error_msg
 
             # Store each developer's solution in RAG
+            self.update_progress({"step": "storing_in_rag", "progress_percent": 80})
             for dev_result in developer_results:
                 self._store_developer_solution_in_rag(card_id, card, dev_result)
 
             # Check if we have any successful developers
+            self.update_progress({"step": "checking_results", "progress_percent": 90})
             successful_devs = [r for r in developer_results if r.get("success", False)]
 
             if not successful_devs:
@@ -660,6 +1098,9 @@ class DevelopmentStage(PipelineStage):
                         raise Exception("All developers failed and recovery unsuccessful")
                 else:
                     raise Exception("All developers failed")
+
+            # Update progress: complete
+            self.update_progress({"step": "complete", "progress_percent": 100})
 
             return {
                 "stage": "development",
@@ -717,14 +1158,18 @@ class DevelopmentStage(PipelineStage):
 
     def _store_developer_solution_in_rag(self, card_id: str, card: Dict, dev_result: Dict):
         """Store developer solution in RAG for learning"""
+        # Use .get() with defaults to handle missing keys defensively
+        developer = dev_result.get('developer', 'unknown')
+        approach = dev_result.get('approach', 'standard')  # Default approach if missing
+
         self.rag.store_artifact(
             artifact_type="developer_solution",
             card_id=card_id,
             task_title=card.get('title', 'Unknown'),
-            content=f"{dev_result['developer']} solution using {dev_result['approach']} approach",
+            content=f"{developer} solution using {approach} approach",
             metadata={
-                "developer": dev_result['developer'],
-                "approach": dev_result['approach'],
+                "developer": developer,
+                "approach": approach,
                 "tdd_compliant": dev_result.get('tdd_workflow', {}).get('tests_written_first', False),
                 "implementation_files": dev_result.get('implementation_files', []),
                 "test_files": dev_result.get('test_files', [])
@@ -736,7 +1181,7 @@ class DevelopmentStage(PipelineStage):
 # VALIDATION STAGE
 # ============================================================================
 
-class ValidationStage(PipelineStage):
+class ValidationStage(PipelineStage, SupervisedStageMixin):
     """
     Single Responsibility: Validate developer solutions
 
@@ -746,6 +1191,7 @@ class ValidationStage(PipelineStage):
     - Test execution in sandbox
     - Test failure tracking
     - Test timeout handling
+    - Automatic heartbeat and health monitoring
     """
 
     def __init__(
@@ -756,6 +1202,17 @@ class ValidationStage(PipelineStage):
         observable: Optional['PipelineObservable'] = None,
         supervisor: Optional['SupervisorAgent'] = None
     ):
+        # Initialize PipelineStage
+        PipelineStage.__init__(self)
+
+        # Initialize SupervisedStageMixin for health monitoring
+        SupervisedStageMixin.__init__(
+            self,
+            supervisor=supervisor,
+            stage_name="ValidationStage",
+            heartbeat_interval=15
+        )
+
         self.board = board
         self.test_runner = test_runner
         self.logger = logger
@@ -763,10 +1220,23 @@ class ValidationStage(PipelineStage):
         self.supervisor = supervisor
 
     def execute(self, card: Dict, context: Dict) -> Dict:
-        """Validate developer solutions"""
+        """Execute with supervisor monitoring"""
+        metadata = {
+            "task_id": card.get('card_id'),
+            "stage": "validation"
+        }
+
+        with self.supervised_execution(metadata):
+            return self._do_work(card, context)
+
+    def _do_work(self, card: Dict, context: Dict) -> Dict:
+        """Internal method - validates developer solutions"""
         self.logger.log("Starting Validation Stage", "STAGE")
 
         card_id = card.get('card_id', 'unknown')
+
+        # Update progress: starting
+        self.update_progress({"step": "starting", "progress_percent": 10})
 
         # Notify validation started
         if self.observable:
@@ -781,17 +1251,28 @@ class ValidationStage(PipelineStage):
         # Get number of developers from context
         num_developers = context.get('parallel_developers', 1)
 
+        # Update progress: validating developers
+        self.update_progress({"step": "validating_developers", "progress_percent": 30})
+
         # Validate each developer's solution
         developers = {}
         all_approved = True
 
         for i in range(num_developers):
             dev_name = "developer-a" if i == 0 else f"developer-{chr(98+i-1)}"
+
+            # Update progress for each developer
+            progress = 30 + (i + 1) * (40 // max(num_developers, 1))
+            self.update_progress({"step": f"validating_{dev_name}", "progress_percent": progress})
+
             dev_result = self._validate_developer(dev_name, card_id)
             developers[dev_name] = dev_result
 
             if dev_result['status'] != "APPROVED":
                 all_approved = False
+
+        # Update progress: processing results
+        self.update_progress({"step": "processing_results", "progress_percent": 70})
 
         decision = "ALL_APPROVED" if all_approved else "SOME_BLOCKED"
         approved_devs = [k for k, v in developers.items() if v['status'] == "APPROVED"]
@@ -805,6 +1286,7 @@ class ValidationStage(PipelineStage):
         }
 
         # Notify validation completed or failed
+        self.update_progress({"step": "sending_notifications", "progress_percent": 85})
         if self.observable:
             from pipeline_observer import PipelineEvent, EventType
             if all_approved:
@@ -831,6 +1313,9 @@ class ValidationStage(PipelineStage):
                     }
                 )
                 self.observable.notify(event)
+
+        # Update progress: complete
+        self.update_progress({"step": "complete", "progress_percent": 100})
 
         return result
 
@@ -863,7 +1348,7 @@ class ValidationStage(PipelineStage):
 # INTEGRATION STAGE
 # ============================================================================
 
-class IntegrationStage(PipelineStage):
+class IntegrationStage(PipelineStage, SupervisedStageMixin):
     """
     Single Responsibility: Integrate winning solution
 
@@ -873,6 +1358,7 @@ class IntegrationStage(PipelineStage):
     - Merge conflict handling
     - Final test execution tracking
     - Integration failure recovery
+    - Automatic heartbeat and health monitoring
     """
 
     def __init__(
@@ -885,6 +1371,17 @@ class IntegrationStage(PipelineStage):
         observable: Optional['PipelineObservable'] = None,
         supervisor: Optional['SupervisorAgent'] = None
     ):
+        # Initialize PipelineStage
+        PipelineStage.__init__(self)
+
+        # Initialize SupervisedStageMixin for health monitoring
+        SupervisedStageMixin.__init__(
+            self,
+            supervisor=supervisor,
+            stage_name="IntegrationStage",
+            heartbeat_interval=15
+        )
+
         self.board = board
         self.messenger = messenger
         self.rag = rag
@@ -894,13 +1391,29 @@ class IntegrationStage(PipelineStage):
         self.observable = observable
 
     def execute(self, card: Dict, context: Dict) -> Dict:
-        """Integrate winning solution"""
+        """Execute with supervisor monitoring"""
+        metadata = {
+            "task_id": card.get('card_id'),
+            "stage": "integration"
+        }
+
+        with self.supervised_execution(metadata):
+            return self._do_work(card, context)
+
+    def _do_work(self, card: Dict, context: Dict) -> Dict:
+        """Internal method - integrates winning solution"""
         self.logger.log("Starting Integration Stage", "STAGE")
 
         card_id = card['card_id']
 
+        # Update progress: starting
+        self.update_progress({"step": "starting", "progress_percent": 10})
+
         # Determine winner
         winner = context.get('winner', 'developer-a')
+
+        # Update progress: notifying start
+        self.update_progress({"step": "notifying_integration_start", "progress_percent": 20})
 
         # Notify integration started
         if self.observable:
@@ -916,10 +1429,12 @@ class IntegrationStage(PipelineStage):
         self.logger.log(f"Integrating {winner} solution...", "INFO")
 
         # Run regression tests
+        self.update_progress({"step": "running_regression_tests", "progress_percent": 40})
         test_path = f"/tmp/{winner}/tests"
         regression_results = self.test_runner.run_tests(test_path)
 
         # Verify deployment
+        self.update_progress({"step": "verifying_deployment", "progress_percent": 60})
         deployment_verified = regression_results['exit_code'] == 0
         status = "PASS" if deployment_verified else "FAIL"
 
@@ -927,6 +1442,7 @@ class IntegrationStage(PipelineStage):
             self.logger.log("Integration complete: All tests passing, deployment verified", "SUCCESS")
 
             # Notify integration completed
+            self.update_progress({"step": "notifying_success", "progress_percent": 75})
             if self.observable:
                 from pipeline_observer import PipelineEvent, EventType
                 event = PipelineEvent(
@@ -944,6 +1460,7 @@ class IntegrationStage(PipelineStage):
             self.logger.log(f"Integration issues detected: {regression_results.get('failed', 0)} tests failed", "WARNING")
 
             # Notify integration conflict (failures during integration)
+            self.update_progress({"step": "notifying_conflict", "progress_percent": 75})
             if self.observable:
                 from pipeline_observer import PipelineEvent, EventType
                 event = PipelineEvent(
@@ -959,9 +1476,11 @@ class IntegrationStage(PipelineStage):
                 self.observable.notify(event)
 
         # Update Kanban
+        self.update_progress({"step": "updating_kanban", "progress_percent": 85})
         self.board.move_card(card_id, "testing", "pipeline-orchestrator")
 
         # Store in RAG
+        self.update_progress({"step": "storing_in_rag", "progress_percent": 95})
         self.rag.store_artifact(
             artifact_type="integration_result",
             card_id=card_id,
@@ -973,6 +1492,9 @@ class IntegrationStage(PipelineStage):
                 "deployment_verified": deployment_verified
             }
         )
+
+        # Update progress: complete
+        self.update_progress({"step": "complete", "progress_percent": 100})
 
         return {
             "stage": "integration",
@@ -990,11 +1512,16 @@ class IntegrationStage(PipelineStage):
 # TESTING STAGE
 # ============================================================================
 
-class TestingStage(PipelineStage):
+class TestingStage(PipelineStage, SupervisedStageMixin):
     """
     Single Responsibility: Final quality gates
 
     This stage ONLY performs final testing - nothing else.
+
+    Integrates with supervisor for:
+    - Final test execution tracking
+    - Quality gate failure handling
+    - Automatic heartbeat and health monitoring
     """
 
     def __init__(
@@ -1003,8 +1530,20 @@ class TestingStage(PipelineStage):
         messenger: AgentMessenger,
         rag: RAGAgent,
         test_runner: TestRunner,
-        logger: LoggerInterface
+        logger: LoggerInterface,
+        supervisor: Optional['SupervisorAgent'] = None
     ):
+        # Initialize PipelineStage
+        PipelineStage.__init__(self)
+
+        # Initialize SupervisedStageMixin for health monitoring
+        SupervisedStageMixin.__init__(
+            self,
+            supervisor=supervisor,
+            stage_name="TestingStage",
+            heartbeat_interval=15
+        )
+
         self.board = board
         self.messenger = messenger
         self.rag = rag
@@ -1012,23 +1551,36 @@ class TestingStage(PipelineStage):
         self.logger = logger
 
     def execute(self, card: Dict, context: Dict) -> Dict:
-        """Run final quality gates"""
+        """Execute with supervisor monitoring"""
+        metadata = {
+            "task_id": card.get('card_id'),
+            "stage": "testing"
+        }
+
+        with self.supervised_execution(metadata):
+            return self._do_work(card, context)
+
+    def _do_work(self, card: Dict, context: Dict) -> Dict:
+        """Internal method - runs final quality gates"""
         self.logger.log("Starting Testing Stage", "STAGE")
 
         card_id = card['card_id']
         winner = context.get('winner', 'developer-a')
 
+        # Update progress: starting
+        self.update_progress({"step": "starting", "progress_percent": 10})
+
         # Run final regression tests
+        self.update_progress({"step": "running_regression_tests", "progress_percent": 30})
         test_path = f"/tmp/{winner}/tests"
         regression_results = self.test_runner.run_tests(test_path)
 
-        # Evaluate UI/UX (simplified)
-        uiux_score = 100  # In real implementation, this would be more sophisticated
-
         # Evaluate performance (simplified)
+        self.update_progress({"step": "evaluating_performance", "progress_percent": 60})
         performance_score = 85  # In real implementation, this would measure actual performance
 
         # All quality gates
+        self.update_progress({"step": "checking_quality_gates", "progress_percent": 80})
         all_gates_passed = regression_results['exit_code'] == 0
         status = "PASS" if all_gates_passed else "FAIL"
 
@@ -1036,9 +1588,11 @@ class TestingStage(PipelineStage):
             self.logger.log("Testing complete: All quality gates passed", "SUCCESS")
 
         # Update Kanban
+        self.update_progress({"step": "updating_kanban", "progress_percent": 90})
         self.board.move_card(card_id, "done", "pipeline-orchestrator")
 
         # Store in RAG
+        self.update_progress({"step": "storing_in_rag", "progress_percent": 95})
         self.rag.store_artifact(
             artifact_type="testing_result",
             card_id=card_id,
@@ -1046,17 +1600,18 @@ class TestingStage(PipelineStage):
             content=f"Final testing of {winner} solution completed",
             metadata={
                 "winner": winner,
-                "uiux_score": uiux_score,
                 "performance_score": performance_score,
                 "all_gates_passed": all_gates_passed
             }
         )
 
+        # Update progress: complete
+        self.update_progress({"step": "complete", "progress_percent": 100})
+
         return {
             "stage": "testing",
             "winner": winner,
             "regression_tests": regression_results,
-            "uiux_score": uiux_score,
             "performance_score": performance_score,
             "all_quality_gates_passed": all_gates_passed,
             "status": status

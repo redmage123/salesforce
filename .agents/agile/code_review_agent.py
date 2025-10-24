@@ -31,6 +31,20 @@ from artemis_exceptions import (
     FileWriteError,
     wrap_exception
 )
+from review_request_builder import (
+    ReviewRequestBuilder,
+    ImplementationFile,
+    read_implementation_files,
+    create_review_request
+)
+
+# Import PromptManager for RAG-based prompts
+try:
+    from prompt_manager import PromptManager
+    from rag_agent import RAGAgent
+    PROMPT_MANAGER_AVAILABLE = True
+except ImportError:
+    PROMPT_MANAGER_AVAILABLE = False
 
 
 class CodeReviewAgent:
@@ -44,7 +58,8 @@ class CodeReviewAgent:
         developer_name: str,
         llm_provider: Optional[str] = None,
         llm_model: Optional[str] = None,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
+        rag_agent: Optional[Any] = None
     ):
         """
         Initialize the code review agent.
@@ -54,6 +69,7 @@ class CodeReviewAgent:
             llm_provider: LLM provider ("openai" or "anthropic")
             llm_model: Specific model to use (optional)
             logger: Logger instance (optional)
+            rag_agent: RAG agent for prompt management (optional)
         """
         self.developer_name = developer_name
         self.llm_provider = llm_provider or os.getenv("ARTEMIS_LLM_PROVIDER", "openai")
@@ -64,6 +80,15 @@ class CodeReviewAgent:
         self.llm_client = create_llm_client(
             provider=self.llm_provider
         )
+
+        # Initialize PromptManager if RAG is available
+        self.prompt_manager = None
+        if PROMPT_MANAGER_AVAILABLE and rag_agent:
+            try:
+                self.prompt_manager = PromptManager(rag_agent, verbose=False)
+                self.logger.info("✅ Prompt manager initialized (RAG-based prompts)")
+            except Exception as e:
+                self.logger.warning(f"⚠️  Could not initialize PromptManager: {e}")
 
         self.logger.info(f"🔍 Code Review Agent initialized for {developer_name}")
         self.logger.info(f"   LLM Provider: {self.llm_provider}")
@@ -172,47 +197,56 @@ class CodeReviewAgent:
                 }
             )
 
-    def _read_implementation_files(self, implementation_dir: str) -> List[Dict[str, str]]:
-        """Read all implementation files from directory."""
-        files = []
-        impl_path = Path(implementation_dir)
+    def _read_implementation_files(self, implementation_dir: str) -> List[ImplementationFile]:
+        """
+        Read all implementation files from directory using Builder pattern
 
-        if not impl_path.exists():
-            self.logger.warning(f"Implementation directory not found: {implementation_dir}")
+        Returns:
+            List of ImplementationFile value objects
+        """
+        try:
+            files = read_implementation_files(implementation_dir)
+
+            # Log file details
+            for file in files:
+                self.logger.debug(f"  Read {file.path} ({file.lines} lines)")
+
             return files
-
-        # Read all .py, .js, .html, .css files
-        extensions = ['.py', '.js', '.jsx', '.ts', '.tsx', '.html', '.css', '.java', '.go', '.rb']
-
-        for ext in extensions:
-            for file_path in impl_path.rglob(f'*{ext}'):
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-                        relative_path = file_path.relative_to(impl_path)
-                        line_count = len(content.split('\n'))
-                        files.append({
-                            'path': str(relative_path),
-                            'content': content,
-                            'lines': line_count
-                        })
-                        self.logger.debug(f"  Read {relative_path} ({line_count} lines)")
-                except Exception as e:
-                    raise wrap_exception(
-                        e,
-                        FileReadError,
-                        "Failed to read implementation file",
-                        {
-                            "file_path": str(file_path),
-                            "implementation_dir": implementation_dir,
-                            "developer_name": self.developer_name
-                        }
-                    )
-
-        return files
+        except FileNotFoundError:
+            self.logger.warning(f"Implementation directory not found: {implementation_dir}")
+            return []
+        except Exception as e:
+            raise wrap_exception(
+                e,
+                FileReadError,
+                "Failed to read implementation files",
+                {
+                    "implementation_dir": implementation_dir,
+                    "developer_name": self.developer_name
+                }
+            )
 
     def _read_review_prompt(self) -> str:
-        """Read the code review agent prompt."""
+        """Read the code review agent prompt from RAG or fallback to file."""
+        # Try to get prompt from RAG first
+        if self.prompt_manager:
+            try:
+                self.logger.info("📝 Loading code review prompt from RAG")
+                prompt_template = self.prompt_manager.get_prompt("code_review_analysis")
+
+                if prompt_template:
+                    # Render the prompt (no variables needed for system message)
+                    rendered = self.prompt_manager.render_prompt(
+                        prompt=prompt_template,
+                        variables={}
+                    )
+                    self.logger.info(f"✅ Loaded RAG prompt with {len(prompt_template.perspectives)} perspectives")
+                    # Return combined system and user template
+                    return f"{rendered['system']}\n\n{rendered['user']}"
+            except Exception as e:
+                self.logger.warning(f"⚠️  Error loading RAG prompt: {e} - falling back to file")
+
+        # Fallback to reading from file
         prompt_file = Path(__file__).parent / "prompts" / "code_review_agent_prompt.md"
 
         if not prompt_file.exists():
@@ -222,6 +256,7 @@ class CodeReviewAgent:
             )
 
         try:
+            self.logger.info("📝 Loading code review prompt from file (fallback)")
             with open(prompt_file, 'r', encoding='utf-8') as f:
                 return f.read()
         except Exception as e:
@@ -235,53 +270,40 @@ class CodeReviewAgent:
     def _build_review_request(
         self,
         review_prompt: str,
-        implementation_files: List[Dict[str, str]],
+        implementation_files: List[ImplementationFile],
         task_title: str,
         task_description: str
     ) -> List[LLMMessage]:
-        """Build the complete review request for the LLM."""
+        """
+        Build the complete review request for the LLM using Builder pattern
 
-        # Build files content
-        files_content = []
-        for file_info in implementation_files:
-            files_content.append(f"## File: {file_info['path']}")
-            files_content.append(f"```")
-            files_content.append(file_info['content'])
-            files_content.append(f"```\n")
+        Uses ReviewRequestBuilder for fluent interface and validation
 
-        user_prompt = f"""
-# Code Review Request
+        Args:
+            review_prompt: System prompt for code review
+            implementation_files: List of ImplementationFile value objects
+            task_title: Task title
+            task_description: Task description
 
-## Task Context
+        Returns:
+            List of LLMMessage instances
+        """
+        # Use Builder pattern for clean, fluent construction
+        builder = ReviewRequestBuilder()
 
-**Task Title:** {task_title}
+        messages = (builder
+            .set_developer(self.developer_name)
+            .set_task(task_title, task_description)
+            .add_files(implementation_files)
+            .set_review_prompt(review_prompt)
+            .build())
 
-**Task Description:** {task_description}
+        # Log construction details
+        self.logger.debug(f"Built review request:")
+        self.logger.debug(f"  Files: {builder.get_file_count()}")
+        self.logger.debug(f"  Total lines: {builder.get_total_lines()}")
 
-**Developer:** {self.developer_name}
-
-## Implementation to Review
-
-{chr(10).join(files_content)}
-
-## Your Task
-
-Perform a comprehensive code review following the guidelines in your system prompt. Analyze for:
-
-1. **Code Quality** - Anti-patterns, optimization opportunities
-2. **Security** - OWASP Top 10 vulnerabilities, secure coding practices
-3. **GDPR Compliance** - Data privacy, consent, user rights
-4. **Accessibility** - WCAG 2.1 AA standards
-
-Return your review as structured JSON exactly matching the format specified in your prompt.
-
-Focus on being thorough, specific, and actionable. Include file paths, line numbers, code snippets, and clear recommendations.
-"""
-
-        return [
-            LLMMessage(role="system", content=review_prompt),
-            LLMMessage(role="user", content=user_prompt)
-        ]
+        return messages
 
     def _call_llm_for_review(self, messages: List[LLMMessage]):
         """Call LLM API to perform code review."""
@@ -421,11 +443,11 @@ Focus on being thorough, specific, and actionable. Include file paths, line numb
 
 """
 
-        # Add critical issues
+        # Add critical issues using join with generator expression
         critical = [i for i in issues if i['severity'] == 'CRITICAL']
         if critical:
-            for issue in critical:
-                md_content += f"""
+            md_content += '\n'.join(
+                f"""
 ### {issue['category']} - {issue['subcategory']}
 
 **File:** `{issue['file']}:{issue['line']}`
@@ -441,29 +463,37 @@ Focus on being thorough, specific, and actionable. Include file paths, line numb
 
 ---
 """
+                for issue in critical
+            )
         else:
             md_content += "_No critical issues found._\n\n"
 
-        # Add high issues
+        # Add high issues using join
         md_content += "## High Priority Issues\n\n"
         high = [i for i in issues if i['severity'] == 'HIGH']
         if high:
-            for issue in high[:5]:  # Top 5 high issues
-                md_content += f"- **{issue['category']}** ({issue['file']}:{issue['line']}): {issue['description']}\n"
+            md_content += '\n'.join(
+                f"- **{issue['category']}** ({issue['file']}:{issue['line']}): {issue['description']}"
+                for issue in high[:5]  # Top 5 high issues
+            ) + '\n'
         else:
             md_content += "_No high priority issues found._\n\n"
 
-        # Add positive findings
+        # Add positive findings using join
         if 'positive_findings' in review_data and review_data['positive_findings']:
             md_content += "\n## Positive Findings\n\n"
-            for finding in review_data['positive_findings']:
-                md_content += f"- {finding}\n"
+            md_content += '\n'.join(
+                f"- {finding}"
+                for finding in review_data['positive_findings']
+            ) + '\n'
 
-        # Add recommendations
+        # Add recommendations using join
         if 'recommendations' in review_data and review_data['recommendations']:
             md_content += "\n## Recommendations\n\n"
-            for rec in review_data['recommendations']:
-                md_content += f"- {rec}\n"
+            md_content += '\n'.join(
+                f"- {rec}"
+                for rec in review_data['recommendations']
+            ) + '\n'
 
         with open(summary_file, 'w', encoding='utf-8') as f:
             f.write(md_content)

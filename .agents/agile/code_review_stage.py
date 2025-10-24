@@ -19,9 +19,10 @@ from code_review_agent import CodeReviewAgent
 from agent_messenger import AgentMessenger
 from rag_agent import RAGAgent
 from pipeline_observer import PipelineObservable, PipelineEvent, EventType
+from supervised_agent_mixin import SupervisedStageMixin
 
 
-class CodeReviewStage(PipelineStage):
+class CodeReviewStage(PipelineStage, SupervisedStageMixin):
     """
     Single Responsibility: Review code for security, quality, GDPR, and accessibility
 
@@ -33,6 +34,7 @@ class CodeReviewStage(PipelineStage):
     - LLM cost tracking for code review
     - Critical security finding alerts
     - Code review failure recovery
+    - Automatic heartbeat and health monitoring
     """
 
     def __init__(
@@ -57,17 +59,38 @@ class CodeReviewStage(PipelineStage):
             observable: Optional PipelineObservable for event broadcasting
             supervisor: Optional SupervisorAgent for monitoring
         """
+        # Initialize PipelineStage
+        PipelineStage.__init__(self)
+
+        # Initialize SupervisedStageMixin for health monitoring
+        # Code review typically takes longer, so use 20 second heartbeat
+        SupervisedStageMixin.__init__(
+            self,
+            supervisor=supervisor,
+            stage_name="CodeReviewStage",
+            heartbeat_interval=20  # Longer interval for LLM-heavy stage
+        )
+
         self.messenger = messenger
         self.rag = rag
         self.logger = logger
         self.llm_provider = llm_provider or os.getenv("ARTEMIS_LLM_PROVIDER", "openai")
         self.llm_model = llm_model or os.getenv("ARTEMIS_LLM_MODEL")
         self.observable = observable
-        self.supervisor = supervisor
 
     def execute(self, card: Dict, context: Dict) -> Dict:
+        """Execute code review with supervisor monitoring"""
+        metadata = {
+            "task_id": card.get('card_id'),
+            "stage": "code_review"
+        }
+
+        with self.supervised_execution(metadata):
+            return self._do_code_review(card, context)
+
+    def _do_code_review(self, card: Dict, context: Dict) -> Dict:
         """
-        Execute code review on all developer implementations
+        Internal method - performs code review on all developer implementations
 
         Reviews each developer's implementation for:
         - OWASP Top 10 security vulnerabilities
@@ -89,6 +112,9 @@ class CodeReviewStage(PipelineStage):
         task_title = card.get('title', 'Unknown Task')
         task_description = card.get('description', '')
 
+        # Update progress: starting
+        self.update_progress({"step": "starting", "progress_percent": 5})
+
         # Get developer results from context
         developers = context.get('developers', [])
         if not developers:
@@ -101,15 +127,27 @@ class CodeReviewStage(PipelineStage):
 
         self.logger.log(f"Reviewing {len(developers)} developer implementation(s)", "INFO")
 
+        # Update progress: initializing reviews
+        self.update_progress({"step": "initializing_reviews", "progress_percent": 10})
+
         # Review each developer's implementation
         review_results = []
         all_reviews_pass = True
         total_critical_issues = 0
         total_high_issues = 0
 
-        for dev_result in developers:
+        for i, dev_result in enumerate(developers):
             developer_name = dev_result.get('developer', 'unknown')
             implementation_dir = dev_result.get('output_dir', f'/tmp/{developer_name}/')
+
+            # Update progress for each developer review (10% to 80% dynamically)
+            progress = 10 + ((i + 1) / len(developers)) * 70
+            self.update_progress({
+                "step": f"reviewing_{developer_name}",
+                "progress_percent": int(progress),
+                "current_developer": developer_name,
+                "total_developers": len(developers)
+            })
 
             self.logger.log(f"\n{'='*60}", "INFO")
             self.logger.log(f"🔍 Reviewing {developer_name} implementation", "INFO")
@@ -130,7 +168,8 @@ class CodeReviewStage(PipelineStage):
                 developer_name=developer_name,
                 llm_provider=self.llm_provider,
                 llm_model=self.llm_model,
-                logger=self.logger
+                logger=self.logger,
+                rag_agent=self.rag  # Pass RAG for prompt management
             )
 
             # Perform review
@@ -201,6 +240,9 @@ class CodeReviewStage(PipelineStage):
             # Send review notification to other agents
             self._send_review_notification(card_id, developer_name, review_result)
 
+        # Update progress: summarizing results
+        self.update_progress({"step": "summarizing_results", "progress_percent": 85})
+
         # Overall summary
         self.logger.log(f"\n{'='*60}", "INFO")
         self.logger.log("📊 Code Review Summary", "INFO")
@@ -208,6 +250,9 @@ class CodeReviewStage(PipelineStage):
         self.logger.log(f"Implementations Reviewed: {len(review_results)}", "INFO")
         self.logger.log(f"Total Critical Issues: {total_critical_issues}", "INFO")
         self.logger.log(f"Total High Issues: {total_high_issues}", "INFO")
+
+        # Update progress: determining status
+        self.update_progress({"step": "determining_status", "progress_percent": 95})
 
         # Determine overall stage status
         if total_critical_issues > 0:
@@ -219,6 +264,9 @@ class CodeReviewStage(PipelineStage):
         else:
             stage_status = "PASS"
             self.logger.log("✅ Code review PASSED - All implementations meet standards", "SUCCESS")
+
+        # Update progress: complete
+        self.update_progress({"step": "complete", "progress_percent": 100})
 
         return {
             "stage": "code_review",
