@@ -18,9 +18,13 @@ from artemis_stage_interface import LoggerInterface
 from standalone_developer_agent import StandaloneDeveloperAgent
 from artemis_constants import get_developer_prompt_path
 from pipeline_observer import PipelineObservable, EventBuilder
+from environment_context import get_environment_context_short
+from path_config_service import get_path_config
+from debug_mixin import DebugMixin
+from requirements_parser_agent import RequirementsParserAgent
 
 
-class DeveloperInvoker:
+class DeveloperInvoker(DebugMixin):
     """
     Invoke Developer A and Developer B as autonomous agents
 
@@ -32,8 +36,27 @@ class DeveloperInvoker:
     """
 
     def __init__(self, logger: LoggerInterface, observable: Optional[PipelineObservable] = None):
+        DebugMixin.__init__(self, component_name="developer_invoker")
         self.logger = logger
         self.observable = observable
+
+        # Get developer output base directory from environment or use default
+        self.developer_base_dir = self._get_developer_base_dir()
+
+        # Initialize requirements parser
+        llm_provider = os.getenv("ARTEMIS_LLM_PROVIDER", "openai")
+        self.requirements_parser = RequirementsParserAgent(
+            llm_provider=llm_provider,
+            logger=logger
+        )
+
+    def _get_developer_base_dir(self) -> Path:
+        """
+        Get the base directory for developer outputs via PathConfigService
+
+        Returns configured directory using centralized path configuration service.
+        """
+        return get_path_config().developer_output_dir
 
     def invoke_developer(
         self,
@@ -60,6 +83,12 @@ class DeveloperInvoker:
         Returns:
             Dict with developer results
         """
+        self.debug_trace("invoke_developer",
+                        developer_name=developer_name,
+                        developer_type=developer_type,
+                        card_id=card.get('card_id', 'unknown'),
+                        output_dir=str(output_dir))
+
         self.logger.log(f"Invoking {developer_name} ({developer_type} approach)", "INFO")
 
         # Notify developer started
@@ -82,25 +111,36 @@ class DeveloperInvoker:
         # Get LLM provider from env or use default
         llm_provider = os.getenv("ARTEMIS_LLM_PROVIDER", "openai")
 
+        # Parse requirements for validation
+        parsed_requirements = self._parse_requirements_for_task(card, adr_content)
+
         # Create standalone developer agent
         agent = StandaloneDeveloperAgent(
             developer_name=developer_name,
             developer_type=developer_type,
             llm_provider=llm_provider,
-            logger=self.logger
+            logger=self.logger,
+            rag_agent=rag_agent  # Pass RAG agent for DEPTH prompts
         )
 
-        # Execute implementation
-        result = agent.execute(
-            task_title=card.get('title', 'Untitled Task'),
-            task_description=card.get('description', 'No description provided'),
-            adr_content=adr_content,
-            adr_file=adr_file,
-            output_dir=output_dir,
-            developer_prompt_file=prompt_file,
-            card_id=card.get('card_id', ''),  # Pass card_id for RAG queries
-            rag_agent=rag_agent  # Pass RAG Agent reference
-        )
+        # Execute implementation with parsed requirements
+        with self.debug_section("Developer Execution", developer=developer_name):
+            result = agent.execute(
+                task_title=card.get('title', 'Untitled Task'),
+                task_description=card.get('description', 'No description provided'),
+                adr_content=adr_content,
+                adr_file=adr_file,
+                output_dir=output_dir,
+                developer_prompt_file=prompt_file,
+                card_id=card.get('card_id', ''),
+                rag_agent=rag_agent,
+                parsed_requirements=parsed_requirements  # NEW: Pass parsed requirements
+            )
+
+        self.debug_log("Developer execution completed",
+                      developer=developer_name,
+                      success=result.get('success', False),
+                      files_created=len(result.get('files', [])))
 
         self.logger.log(f"✅ {developer_name} completed", "SUCCESS")
 
@@ -129,6 +169,25 @@ class DeveloperInvoker:
 
         return result
 
+    def _parse_requirements_for_task(self, card: Dict, adr_content: str) -> Optional[Dict]:
+        """Parse requirements for validation system using debug tracing"""
+        self.debug_trace("_parse_requirements_for_task", card_id=card.get('card_id'))
+
+        try:
+            parsed = self.requirements_parser.parse_requirements_for_validation(
+                task_title=card.get('title', ''),
+                task_description=card.get('description', ''),
+                adr_content=adr_content
+            )
+
+            self.debug_log("Requirements parsed", artifact_type=parsed.get('artifact_type'))
+            return parsed
+
+        except Exception as e:
+            self.debug_log("Requirements parsing failed", error=str(e))
+            self.logger.log(f"⚠️  Requirements parsing failed: {e}", "WARNING")
+            return None
+
     def invoke_parallel_developers(
         self,
         num_developers: int,
@@ -152,6 +211,11 @@ class DeveloperInvoker:
         Returns:
             List of developer results
         """
+        self.debug_trace("invoke_parallel_developers",
+                        num_developers=num_developers,
+                        parallel_execution=parallel_execution,
+                        card_id=card.get('card_id', 'unknown'))
+
         self.logger.log(f"Invoking {num_developers} developer(s) ({'parallel' if parallel_execution else 'sequential'})", "INFO")
 
         # Prepare developer configurations
@@ -167,7 +231,8 @@ class DeveloperInvoker:
                 dev_name = f"developer-c"
                 dev_type = "innovative"
 
-            output_dir = Path(f"/tmp/{dev_name}")
+            # Use configured developer base directory instead of hardcoded /tmp
+            output_dir = Path(self.developer_base_dir) / dev_name
 
             dev_configs.append({
                 "developer_name": dev_name,
@@ -237,12 +302,13 @@ class DeveloperInvoker:
                     self.logger.log(f"✅ {dev_name} completed (parallel)", "SUCCESS")
                 except Exception as e:
                     self.logger.log(f"❌ {dev_name} failed with exception: {e}", "ERROR")
+                    # Use configured developer output directory via PathConfigService
                     developers.append({
                         "developer": dev_name,
                         "success": False,
                         "error": str(e),
                         "files": [],
-                        "output_dir": f"/tmp/{dev_name}"
+                        "output_dir": str(get_path_config().get_developer_dir(dev_name))
                     })
 
         self.logger.log(f"All {len(dev_configs)} developers completed", "INFO")
@@ -296,6 +362,8 @@ CRITICAL INSTRUCTIONS:
 
    **OUTPUT DIRECTORY**: {output_dir}
 
+{get_environment_context_short()}
+
    **MANDATORY TDD WORKFLOW**:
 
    Phase 1 - RED (Write Failing Tests):
@@ -303,9 +371,41 @@ CRITICAL INSTRUCTIONS:
    - Write tests that FAIL (feature not implemented yet)
    - Run tests to verify they fail
 
+   **CRITICAL TEST REQUIREMENTS**:
+   - DO NOT import external dependencies that you haven't implemented (Kafka, Spark, InfluxDB, etc.)
+   - If requirements mention external systems, use unittest.mock to mock them
+   - Write EXECUTABLE tests that can run without installing external infrastructure
+   - Focus on testing YOUR logic, not external integrations
+   - Example: If requirements mention Kafka, use Mock objects instead of actual Kafka imports
+
+   Example of CORRECT test approach:
+   ```python
+   import unittest
+   from unittest.mock import Mock, patch
+
+   class TestDataIngestion(unittest.TestCase):
+       @patch('your_module.KafkaProducer')  # Mock external dependency
+       def test_kafka_connection(self, mock_kafka):
+           mock_kafka.return_value = Mock()
+           # Test your logic, not Kafka itself
+           result = your_function()
+           self.assertIsNotNone(result)
+   ```
+
+   Example of INCORRECT test (DO NOT DO THIS):
+   ```python
+   from kafka import KafkaProducer  # ❌ NOT INSTALLED, WILL FAIL
+
+   class TestDataIngestion(unittest.TestCase):
+       def test_kafka_connection(self):
+           producer = KafkaProducer(...)  # ❌ CANNOT RUN
+   ```
+
    Phase 2 - GREEN (Make Tests Pass):
    - Implement MINIMUM code to make tests pass
    - Store implementation in: {output_dir}/
+   - Use Mock objects for external dependencies mentioned in requirements
+   - DO NOT implement actual Kafka/Spark/InfluxDB connections - use mock interfaces
    - Run tests to verify they pass
 
    Phase 3 - REFACTOR (Improve Quality):

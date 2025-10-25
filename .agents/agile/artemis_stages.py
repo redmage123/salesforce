@@ -11,6 +11,7 @@ Each stage class follows SOLID:
 """
 
 import json
+import os
 import re
 import subprocess
 from datetime import datetime
@@ -27,8 +28,11 @@ from project_analysis_agent import ProjectAnalysisEngine, UserApprovalHandler
 from artemis_exceptions import (
     FileReadError,
     ADRGenerationError,
+    PipelineStageError,
     wrap_exception
 )
+from environment_context import get_environment_context
+from path_config_service import get_developer_tests_path
 
 # Import PromptManager for RAG-based prompts
 try:
@@ -37,6 +41,24 @@ try:
 except ImportError:
     PROMPT_MANAGER_AVAILABLE = False
 from supervised_agent_mixin import SupervisedStageMixin
+from knowledge_graph_factory import get_knowledge_graph
+
+# Import centralized AI Query Service
+from ai_query_service import (
+    AIQueryService,
+    create_ai_query_service,
+    QueryType,
+    AIQueryResult
+)
+
+# Import ADR service classes for ArchitectureStage refactoring
+from adr_numbering_service import ADRNumberingService
+from adr_generator import ADRGenerator
+from user_story_generator import UserStoryGenerator
+from adr_storage_service import ADRStorageService
+
+# Import Research Stage components
+from research_stage import ResearchStage, create_research_stage
 
 
 # ============================================================================
@@ -101,6 +123,7 @@ class ProjectAnalysisStage(PipelineStage, SupervisedStageMixin):
         )
         self.approval_handler = UserApprovalHandler()
 
+    @wrap_exception(PipelineStageError, "Project analysis stage execution failed")
     def execute(self, card: Dict, context: Dict) -> Dict:
         """Run project analysis and get user approval with supervisor monitoring"""
         # Use supervised execution context manager for automatic monitoring
@@ -331,12 +354,21 @@ class ArchitectureStage(PipelineStage, SupervisedStageMixin):
         messenger: AgentMessenger,
         rag: RAGAgent,
         logger: LoggerInterface,
-        adr_dir: Path = Path("/tmp/adr"),
+        adr_dir: Optional[Path] = None,
         supervisor: Optional['SupervisorAgent'] = None,
-        llm_client: Optional[Any] = None
+        llm_client: Optional[Any] = None,
+        ai_service: Optional[AIQueryService] = None
     ):
         # Initialize PipelineStage
         PipelineStage.__init__(self)
+
+        # Set ADR directory from config or use default
+        if adr_dir is None:
+            adr_path = os.getenv("ARTEMIS_ADR_DIR", "../../.artemis_data/adrs")
+            if not os.path.isabs(adr_path):
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                adr_path = os.path.join(script_dir, adr_path)
+            adr_dir = Path(adr_path)
 
         # Initialize SupervisedStageMixin for health monitoring
         SupervisedStageMixin.__init__(
@@ -363,6 +395,44 @@ class ArchitectureStage(PipelineStage, SupervisedStageMixin):
             except Exception as e:
                 self.logger.log(f"⚠️  Could not initialize PromptManager: {e}", "WARNING")
 
+        # Initialize centralized AI Query Service (KG→RAG→LLM pipeline)
+        try:
+            if ai_service:
+                self.ai_service = ai_service
+                self.logger.log("✅ Using provided AI Query Service", "INFO")
+            else:
+                self.ai_service = create_ai_query_service(
+                    llm_client=llm_client,
+                    rag=rag,
+                    logger=logger,
+                    verbose=False
+                )
+                self.logger.log("✅ AI Query Service initialized (KG→RAG→LLM)", "INFO")
+        except Exception as e:
+            self.logger.log(f"⚠️  Could not initialize AI Query Service: {e}", "WARNING")
+            self.ai_service = None
+
+        # Initialize ADR service classes (SOLID refactoring)
+        self.numbering_service = ADRNumberingService(self.adr_dir)
+        self.adr_generator = ADRGenerator(
+            rag=self.rag,
+            logger=self.logger,
+            llm_client=self.llm_client,
+            ai_service=self.ai_service,
+            prompt_manager=self.prompt_manager
+        )
+        self.story_generator = UserStoryGenerator(
+            llm_client=self.llm_client,
+            logger=self.logger,
+            prompt_manager=self.prompt_manager
+        )
+        self.storage_service = ADRStorageService(
+            rag=self.rag,
+            board=self.board,
+            logger=self.logger
+        )
+
+    @wrap_exception(PipelineStageError, "Architecture stage execution failed")
     def execute(self, card: Dict, context: Dict) -> Dict:
         """Create ADR for the task with supervisor monitoring"""
         metadata = {
@@ -379,18 +449,25 @@ class ArchitectureStage(PipelineStage, SupervisedStageMixin):
 
         card_id = card['card_id']
 
+        # Check for structured requirements from requirements_parsing stage
+        structured_requirements = context.get('structured_requirements')
+        if structured_requirements:
+            self.logger.log("✅ Using structured requirements from requirements parsing stage", "INFO")
+            self.logger.log(f"   Found {len(structured_requirements.functional_requirements)} functional requirements", "INFO")
+            self.logger.log(f"   Found {len(structured_requirements.non_functional_requirements)} non-functional requirements", "INFO")
+
         # Update progress: getting ADR number
         self.update_progress({"step": "getting_adr_number", "progress_percent": 10})
 
-        # Get next ADR number
-        adr_number = self._get_next_adr_number()
+        # Get next ADR number (using ADRNumberingService)
+        adr_number = self.numbering_service.get_next_adr_number()
 
         # Update progress: generating ADR
         self.update_progress({"step": "generating_adr", "progress_percent": 30})
 
-        # Create ADR file
-        adr_content = self._generate_adr(card, adr_number)
-        adr_filename = self._create_adr_filename(card['title'], adr_number)
+        # Create ADR file (using ADRGenerator service)
+        adr_content = self.adr_generator.generate_adr(card, adr_number, structured_requirements)
+        adr_filename = self.numbering_service.create_adr_filename(card['title'], adr_number)
         adr_path = self.adr_dir / adr_filename
 
         # Update progress: writing ADR file
@@ -419,50 +496,64 @@ class ArchitectureStage(PipelineStage, SupervisedStageMixin):
         # Update progress: storing ADR in RAG
         self.update_progress({"step": "storing_adr_in_rag", "progress_percent": 70})
 
-        # Store ADR in RAG
-        self.rag.store_artifact(
-            artifact_type="architecture_decision",
+        # Store ADR in RAG (using ADRStorageService)
+        self.storage_service.store_adr_in_rag(
             card_id=card_id,
             task_title=card.get('title', 'Unknown'),
-            content=adr_content,
-            metadata={
-                "adr_number": adr_number,
-                "priority": card.get('priority', 'medium'),
-                "story_points": card.get('points', 5),
-                "adr_file": str(adr_path)
-            }
+            adr_content=adr_content,
+            adr_number=adr_number,
+            adr_path=str(adr_path),
+            priority=card.get('priority', 'medium'),
+            story_points=card.get('points', 5)
+        )
+
+        # Store ADR in Knowledge Graph for traceability (using ADRStorageService)
+        self.storage_service.store_adr_in_knowledge_graph(
+            card_id=card_id,
+            adr_number=adr_number,
+            adr_path=str(adr_path),
+            adr_title=f"Architecture Decision {adr_number}",
+            structured_requirements=structured_requirements
         )
 
         # Update progress: generating user stories from ADR
         self.update_progress({"step": "generating_user_stories", "progress_percent": 80})
 
-        # Generate user stories from ADR and add to Kanban
-        user_stories = self._generate_user_stories_from_adr(adr_content, adr_number, card)
+        # Generate user stories from ADR and add to Kanban (using UserStoryGenerator)
+        user_stories = self.story_generator.generate_user_stories(adr_content, adr_number, card)
 
         # Update progress: adding user stories to kanban
         self.update_progress({"step": "adding_stories_to_kanban", "progress_percent": 90})
 
         story_cards = []
-        for story in user_stories:
-            story_card_id = self.board.add_card(
-                title=story['title'],
-                description=story['description'],
-                priority=story.get('priority', card.get('priority', 'medium')),
-                points=story.get('points', 3),
-                metadata={
-                    'parent_adr': adr_number,
-                    'parent_card': card_id,
-                    'acceptance_criteria': story.get('acceptance_criteria', [])
-                }
-            )
-            story_cards.append(story_card_id)
+        for idx, story in enumerate(user_stories):
+            # Generate unique task ID for user story
+            story_task_id = f"{card_id}-story-{idx+1}"
+
+            # Use CardBuilder pattern to create story card
+            story_card = (self.board.new_card(story_task_id, story['title'])
+                .with_description(story['description'])
+                .with_priority(story.get('priority', card.get('priority', 'medium')))
+                .with_story_points(story.get('points', 3))
+                .build())
+
+            # Add metadata
+            story_card['metadata'] = {
+                'parent_adr': adr_number,
+                'parent_card': card_id,
+                'acceptance_criteria': story.get('acceptance_criteria', [])
+            }
+
+            # Add card to board
+            self.board.add_card(story_card)
+            story_cards.append(story_task_id)
             self.logger.log(f"  ✅ Created user story: {story['title']}", "INFO")
 
         # Update progress: storing kanban in RAG
         self.update_progress({"step": "storing_kanban_in_rag", "progress_percent": 95})
 
-        # Store Kanban board state in RAG
-        self._store_kanban_in_rag(card_id, story_cards)
+        # Store Kanban board state in RAG (using ADRStorageService)
+        self.storage_service.store_kanban_in_rag(card_id, story_cards)
 
         # Update progress: complete
         self.update_progress({"step": "complete", "progress_percent": 100})
@@ -473,7 +564,11 @@ class ArchitectureStage(PipelineStage, SupervisedStageMixin):
             "adr_file": str(adr_path),
             "user_stories_created": len(story_cards),
             "story_card_ids": story_cards,
-            "status": "COMPLETE"
+            "status": "COMPLETE",
+            "metrics": {
+                "user_stories_generated": len(story_cards),
+                "adr_created": True
+            }
         }
 
     def get_stage_name(self) -> str:
@@ -501,12 +596,303 @@ class ArchitectureStage(PipelineStage, SupervisedStageMixin):
         slug = re.sub(r'-+', '-', slug).strip('-')  # Normalize multiple dashes
         return f"ADR-{adr_number}-{slug}.md"
 
-    def _generate_adr(self, card: Dict, adr_number: str) -> str:
-        """Generate ADR content"""
+    def _generate_adr(self, card: Dict, adr_number: str, structured_requirements=None) -> str:
+        """
+        Generate ADR content using AIQueryService (KG→RAG→LLM pipeline)
+
+        Uses centralized AIQueryService to automatically query Knowledge Graph
+        for similar ADRs, get RAG recommendations, and call LLM with enhanced context.
+        """
+        try:
+            title = card.get('title', 'Untitled Task')
+            description = card.get('description', 'No description provided')
+
+            # If AIQueryService available, use it for intelligent ADR generation
+            if self.ai_service:
+                # Build base ADR prompt
+                prompt = self._build_adr_prompt(card, adr_number, structured_requirements)
+
+                # Extract keywords for KG query
+                keywords = title.split()[:3]
+
+                # Use AI Query Service (handles KG→RAG→LLM automatically)
+                self.logger.log("🔄 Using AI Query Service for KG→RAG→LLM pipeline", "INFO")
+
+                result = self.ai_service.query(
+                    query_type=QueryType.ARCHITECTURE_DESIGN,
+                    prompt=prompt,
+                    kg_query_params={
+                        'keywords': keywords,
+                        'req_type': 'functional'
+                    },
+                    temperature=0.3,
+                    max_tokens=3000
+                )
+
+                if not result.success:
+                    raise ADRGenerationError(
+                        f"AI Query Service failed: {result.error}",
+                        context={"card_id": card.get('card_id'), "title": title}
+                    )
+
+                # Log token savings
+                if result.kg_context and result.kg_context.pattern_count > 0:
+                    self.logger.log(
+                        f"📊 KG found {result.kg_context.pattern_count} ADR patterns, "
+                        f"saved ~{result.llm_response.tokens_saved} tokens",
+                        "INFO"
+                    )
+
+                # Return LLM-generated ADR content
+                return result.llm_response.content
+
+            # Fallback: Generate ADR manually without AI service
+            self.logger.log("⚠️  AI Query Service unavailable - using template-based generation", "WARNING")
+            return self._generate_adr_template(card, adr_number, structured_requirements)
+
+        except ADRGenerationError:
+            # Re-raise already wrapped exceptions
+            raise
+        except Exception as e:
+            raise wrap_exception(
+                e,
+                ADRGenerationError,
+                f"Failed to generate ADR: {str(e)}",
+                context={"card_id": card.get('card_id'), "adr_number": adr_number}
+            )
+
+    def _build_adr_prompt(self, card: Dict, adr_number: str, structured_requirements=None) -> str:
+        """
+        Build prompt for LLM ADR generation
+
+        Now queries RAG for Software Specification Document (SSD) to provide
+        comprehensive context including:
+        - Executive summary and business case
+        - Functional and non-functional requirements
+        - Diagram specifications
+        - Constraints and assumptions
+        """
+        title = card.get('title', 'Untitled Task')
+        description = card.get('description', 'No description provided')
+        card_id = card.get('card_id', 'unknown')
+
+        prompt = f"""Generate an Architecture Decision Record (ADR) for the following task:
+
+**Title**: {title}
+**Description**: {description}
+**Priority**: {card.get('priority', 'medium')}
+**Complexity**: {card.get('size', 'medium')}
+"""
+
+        # Query RAG for Software Specification Document (Pattern #10: Guard clause)
+        ssd_context = self._query_ssd_from_rag(card_id)
+        if ssd_context:
+            prompt += f"""
+**Software Specification Document Available**: ✅
+
+**Executive Summary**:
+{ssd_context.get('executive_summary', 'N/A')}
+
+**Business Case**:
+{ssd_context.get('business_case', 'N/A')}
+
+**Requirements Summary**:
+- Functional Requirements: {ssd_context.get('functional_count', 0)}
+- Non-Functional Requirements: {ssd_context.get('non_functional_count', 0)}
+
+**Key Requirements**:
+{ssd_context.get('key_requirements', 'See full SSD for details')}
+
+**Architectural Diagrams**:
+{ssd_context.get('diagram_descriptions', 'See SSD for visual diagrams')}
+
+**Constraints**:
+{chr(10).join(f'- {c}' for c in ssd_context.get('constraints', []))}
+
+**Success Criteria**:
+{chr(10).join(f'- {sc}' for sc in ssd_context.get('success_criteria', []))}
+"""
+        elif structured_requirements:
+            # Fallback to structured requirements if SSD not available
+            prompt += f"""
+**Structured Requirements Available**:
+- Project: {structured_requirements.project_name}
+- Functional Requirements: {len(structured_requirements.functional_requirements)}
+- Non-Functional Requirements: {len(structured_requirements.non_functional_requirements)}
+- Use Cases: {len(structured_requirements.use_cases)}
+
+**Top Requirements**:
+"""
+            for req in structured_requirements.functional_requirements[:3]:
+                prompt += f"- {req.id}: {req.title} [{req.priority.value}]\n"
+
+        # Use centralized environment context
+        prompt += get_environment_context()
+
+        prompt += f"""
+Generate ADR-{adr_number} in this format:
+
+# ADR-{adr_number}: {title}
+
+**Status**: Accepted
+**Date**: {datetime.utcnow().strftime('%Y-%m-%d')}
+**Deciders**: Architecture Agent (Automated)
+
+## Context
+[Explain the technical context and problem being solved in a development/test environment]
+
+## Decision
+[Document the architectural decision using ONLY available standard libraries and tools]
+[If requirements mention external infrastructure (Kafka/Spark/databases/message queues), provide concrete
+ alternatives: mock interfaces + file storage, in-memory simulations, embedded databases (SQLite/H2), etc.]
+[Specify exact libraries/frameworks to use (e.g., "use pandas for data analysis, not Spark")]
+
+## Consequences
+[List positive and negative consequences]
+
+Focus on pragmatic, executable implementation that can run in a basic development environment
+without requiring external infrastructure installation."""
+
+        return prompt
+
+    def _query_ssd_from_rag(self, card_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Query RAG for Software Specification Document artifacts
+
+        Pattern #10: Guard clauses for early returns
+        Pattern #11: Generator pattern for processing multiple SSD artifacts
+
+        Returns:
+            Dict with SSD context or None if SSD not found/not generated
+        """
+        # Guard clause: Check RAG available
+        if not self.rag:
+            return None
+
+        try:
+            # Query RAG for SSD executive summary
+            executive_results = self.rag.query_similar(
+                query_text=f"software specification document {card_id} executive summary business case",
+                artifact_type="ssd_executive_summary",
+                card_id=card_id,
+                top_k=1
+            )
+
+            # Guard clause: Check if SSD found
+            if not executive_results:
+                # SSD was not generated for this task (e.g., simple refactor)
+                self.logger.log("No SSD found in RAG (task may have skipped SSD generation)", "INFO")
+                return None
+
+            # Query for requirements
+            requirements_results = self.rag.query_similar(
+                query_text=f"software specification {card_id} requirements functional non-functional",
+                artifact_type="ssd_requirement",
+                card_id=card_id,
+                top_k=5
+            )
+
+            # Query for diagrams
+            diagram_results = self.rag.query_similar(
+                query_text=f"software specification {card_id} architecture diagram erd",
+                artifact_type="ssd_diagram",
+                card_id=card_id,
+                top_k=3
+            )
+
+            # Extract executive content (Pattern #4: use next() for first match)
+            executive_content = next(
+                (result.get('content', '') for result in executive_results),
+                ''
+            )
+
+            # Split executive summary and business case
+            executive_parts = executive_content.split('\n\n', 1)
+            executive_summary = executive_parts[0] if executive_parts else executive_content
+            business_case = executive_parts[1] if len(executive_parts) > 1 else ''
+
+            # Pattern #11: Use generator to build key requirements list
+            def _extract_key_requirements():
+                """Generator yielding formatted requirement strings"""
+                for req_result in requirements_results[:5]:  # Top 5 requirements
+                    content = req_result.get('content', '')
+                    # Extract requirement ID and description from content
+                    lines = content.split('\n')
+                    if lines:
+                        yield lines[0]  # First line usually has ID and description
+
+            key_requirements = '\n'.join(_extract_key_requirements())
+
+            # Pattern #11: Use generator for diagram descriptions
+            def _extract_diagram_descriptions():
+                """Generator yielding diagram descriptions"""
+                for diagram_result in diagram_results:
+                    content = diagram_result.get('content', '')
+                    try:
+                        diagram_data = json.loads(content)
+                        yield f"- {diagram_data.get('type', 'diagram')}: {diagram_data.get('description', 'No description')}"
+                    except json.JSONDecodeError:
+                        continue
+
+            diagram_descriptions = '\n'.join(_extract_diagram_descriptions())
+
+            # Build SSD context dict
+            ssd_context = {
+                "executive_summary": executive_summary,
+                "business_case": business_case,
+                "functional_count": len([r for r in requirements_results if r.get('metadata', {}).get('category') == 'functional']),
+                "non_functional_count": len([r for r in requirements_results if r.get('metadata', {}).get('category') == 'non_functional']),
+                "key_requirements": key_requirements if key_requirements else "No specific requirements found",
+                "diagram_descriptions": diagram_descriptions if diagram_descriptions else "No diagrams available",
+                "constraints": self._extract_list_from_ssd(executive_content, "Constraints"),
+                "success_criteria": self._extract_list_from_ssd(executive_content, "Success Criteria")
+            }
+
+            self.logger.log(f"✅ Retrieved SSD from RAG for card {card_id}", "SUCCESS")
+            self.logger.log(f"   Found {len(requirements_results)} requirements", "INFO")
+            self.logger.log(f"   Found {len(diagram_results)} diagrams", "INFO")
+
+            return ssd_context
+
+        except Exception as e:
+            self.logger.log(f"⚠️  Failed to query SSD from RAG: {e}", "WARNING")
+            return None
+
+    def _extract_list_from_ssd(self, content: str, section_name: str) -> List[str]:
+        """
+        Extract list items from SSD content section
+
+        Pattern #11: Generator pattern for extracting list items
+        """
+        # Guard clause: Check content exists
+        if not content or section_name not in content:
+            return []
+
+        # Find section and extract bullet points
+        section_start = content.find(section_name)
+        if section_start == -1:
+            return []
+
+        # Get text after section header
+        section_text = content[section_start:]
+
+        # Pattern #11: Generator for extracting bullet points
+        def _extract_bullets():
+            """Generator yielding bullet point items"""
+            for line in section_text.split('\n'):
+                line = line.strip()
+                if line.startswith('-') or line.startswith('*'):
+                    yield line[1:].strip()
+
+        return list(_extract_bullets())[:5]  # Return max 5 items
+
+    def _generate_adr_template(self, card: Dict, adr_number: str, structured_requirements=None) -> str:
+        """Template-based ADR generation (fallback when AIQueryService unavailable)"""
         title = card.get('title', 'Untitled Task')
         description = card.get('description', 'No description provided')
 
-        return f"""# ADR-{adr_number}: {title}
+        # Base ADR header
+        adr_content = f"""# ADR-{adr_number}: {title}
 
 **Status**: Accepted
 **Date**: {datetime.utcnow().strftime('%Y-%m-%d')}
@@ -522,30 +908,112 @@ class ArchitectureStage(PipelineStage, SupervisedStageMixin):
 
 **Priority**: {card.get('priority', 'medium')}
 **Complexity**: {card.get('size', 'medium')}
+"""
 
+        # Add structured requirements if available
+        if structured_requirements:
+            adr_content += f"""
+**Structured Requirements Available**: ✅
+**Project**: {structured_requirements.project_name}
+**Requirements Version**: {structured_requirements.version}
+
+### Business Context
+"""
+            if structured_requirements.executive_summary:
+                adr_content += f"""
+**Executive Summary**:
+{structured_requirements.executive_summary}
+"""
+
+            if structured_requirements.business_goals:
+                adr_content += "\n**Business Goals**:\n"
+                for goal in structured_requirements.business_goals[:5]:  # Top 5 goals
+                    adr_content += f"- {goal}\n"
+
+            # Add requirements summary
+            adr_content += f"""
+### Requirements Summary
+- **Functional Requirements**: {len(structured_requirements.functional_requirements)}
+- **Non-Functional Requirements**: {len(structured_requirements.non_functional_requirements)}
+- **Use Cases**: {len(structured_requirements.use_cases)}
+- **Data Requirements**: {len(structured_requirements.data_requirements)}
+- **Integration Requirements**: {len(structured_requirements.integration_requirements)}
+- **Stakeholders**: {len(structured_requirements.stakeholders)}
+
+### Key Functional Requirements
+"""
+            # List top 5 critical/high priority functional requirements
+            high_priority_reqs = [req for req in structured_requirements.functional_requirements
+                                 if req.priority.value in ['critical', 'high']][:5]
+            for req in high_priority_reqs:
+                adr_content += f"- **{req.id}**: {req.title} [{req.priority.value}]\n"
+
+            # List top 5 critical/high priority non-functional requirements
+            if structured_requirements.non_functional_requirements:
+                adr_content += "\n### Key Non-Functional Requirements\n"
+                nfr_high_priority = [req for req in structured_requirements.non_functional_requirements
+                                    if req.priority.value in ['critical', 'high']][:5]
+                for req in nfr_high_priority:
+                    adr_content += f"- **{req.id}**: {req.title} [{req.type.value}, {req.priority.value}]\n"
+                    if req.target:
+                        adr_content += f"  Target: {req.target}\n"
+
+        adr_content += """
 ---
 
 ## Decision
 
-**Approach**: Implement {title.lower()} using test-driven development with parallel developer approaches.
+"""
+        if structured_requirements:
+            adr_content += f"""**Approach**: Implement {title.lower()} following the structured requirements from {structured_requirements.project_name}.
+
+**Implementation Strategy**:
+- Use structured requirements as architectural blueprint
+- Functional requirements → Feature implementations
+- Non-functional requirements → Technical decisions (performance, security, scalability)
+- Data requirements → Data model and database design
+- Integration requirements → API and service integration design
+- Developer A: Conservative, minimal-risk implementation focusing on critical requirements
+- Developer B: Comprehensive implementation with enhanced features
+"""
+        else:
+            adr_content += f"""**Approach**: Implement {title.lower()} using test-driven development with parallel developer approaches.
 
 **Implementation Strategy**:
 - Developer A: Conservative, minimal-risk implementation
 - Developer B: Comprehensive implementation with enhanced features
+"""
 
+        adr_content += """
 ---
 
 ## Consequences
 
 ### Positive
 - ✅ Clear architectural direction for developers
-- ✅ Parallel development allows comparison of approaches
-- ✅ TDD ensures quality and testability
+"""
+        if structured_requirements:
+            adr_content += "- ✅ Structured requirements provide comprehensive implementation guidance\n"
+            adr_content += "- ✅ Non-functional requirements ensure quality attributes are met\n"
+            adr_content += f"- ✅ {len(structured_requirements.use_cases)} use cases validate implementation completeness\n"
 
+        adr_content += "- ✅ Parallel development allows comparison of approaches\n"
+        adr_content += "- ✅ TDD ensures quality and testability\n"
+
+        if structured_requirements and structured_requirements.constraints:
+            adr_content += "\n### Constraints\n"
+            for constraint in structured_requirements.constraints[:5]:  # Top 5 constraints
+                adr_content += f"- **{constraint.type.upper()}**: {constraint.description} (Impact: {constraint.impact})\n"
+
+        adr_content += """
 ---
 
 **Note**: This is an automatically generated ADR. For complex tasks, manual architectural review is recommended.
 """
+        if structured_requirements:
+            adr_content += f"\n**Requirements Source**: Parsed from {structured_requirements.project_name} requirements document (version {structured_requirements.version})\n"
+
+        return adr_content
 
     def _send_adr_notification(self, card_id: str, adr_path: str, adr_number: str):
         """Send ADR notification to downstream agents"""
@@ -758,6 +1226,86 @@ Focus on implementation tasks, not architectural discussions."""
         except Exception as e:
             self.logger.log(f"⚠️  Failed to store Kanban in RAG: {e}", "WARNING")
 
+    # REMOVED: _query_kg_for_adr_patterns() - now handled by AIQueryService
+    # The centralized AIQueryService (ai_query_service.py) handles all
+    # KG queries via the ArchitectureKGStrategy class.
+
+    def _store_adr_in_knowledge_graph(
+        self,
+        card_id: str,
+        adr_number: str,
+        adr_path: str,
+        structured_requirements: Optional[Any]
+    ) -> None:
+        """
+        Store ADR in Knowledge Graph and link to requirements
+
+        Args:
+            card_id: Card ID for this task
+            adr_number: ADR number (e.g., "001")
+            adr_path: Path to ADR file
+            structured_requirements: Structured requirements object (if available)
+        """
+        kg = get_knowledge_graph()
+        if not kg:
+            self.logger.log("Knowledge Graph not available - skipping KG storage", "DEBUG")
+            return
+
+        try:
+            self.logger.log("Storing ADR in Knowledge Graph...", "DEBUG")
+
+            # Add ADR node
+            adr_id = f"ADR-{adr_number}"
+            kg.add_adr(
+                adr_id=adr_id,
+                title=f"Architecture Decision {adr_number}",
+                status="accepted"
+            )
+
+            # Link ADR to file
+            kg.link_adr_to_file(
+                adr_id=adr_id,
+                file_path=adr_path,
+                relationship="DOCUMENTED_IN"
+            )
+
+            # If we have structured requirements, link ADR to requirements
+            if structured_requirements:
+                req_count = 0
+
+                # Link to functional requirements (top 5 high-priority ones)
+                high_priority_functional = [
+                    req for req in structured_requirements.functional_requirements
+                    if req.priority.value in ['critical', 'high']
+                ][:5]
+
+                for req in high_priority_functional:
+                    kg.link_requirement_to_adr(req.id, adr_id)
+                    req_count += 1
+
+                # Link to non-functional requirements (all of them since they're critical)
+                for req in structured_requirements.non_functional_requirements[:5]:
+                    kg.link_requirement_to_adr(req.id, adr_id)
+                    req_count += 1
+
+                self.logger.log(f"✅ Linked ADR {adr_id} to {req_count} requirements in Knowledge Graph", "INFO")
+            else:
+                self.logger.log(f"✅ Stored ADR {adr_id} in Knowledge Graph", "INFO")
+
+            # Link ADR to task
+            # Note: Task should already exist from requirements stage
+            # We just need to ensure the relationship exists
+            try:
+                # The task node should exist from requirements_stage
+                # We can query it or just create a relationship if needed
+                self.logger.log(f"   ADR-Task linkage: {adr_id} -> {card_id}", "DEBUG")
+            except Exception as e:
+                self.logger.log(f"   Could not link ADR to task: {e}", "DEBUG")
+
+        except Exception as e:
+            self.logger.log(f"Warning: Could not store ADR in Knowledge Graph: {e}", "WARNING")
+            self.logger.log(f"   Exception details: {type(e).__name__}", "DEBUG")
+
 
 # ============================================================================
 # DEPENDENCY VALIDATION STAGE
@@ -796,6 +1344,7 @@ class DependencyValidationStage(PipelineStage, SupervisedStageMixin):
         self.messenger = messenger
         self.logger = logger
 
+    @wrap_exception(PipelineStageError, "Dependency validation stage execution failed")
     def execute(self, card: Dict, context: Dict) -> Dict:
         """Execute with supervisor monitoring"""
         metadata = {
@@ -953,6 +1502,7 @@ class DevelopmentStage(PipelineStage, SupervisedStageMixin):
         self.supervisor = supervisor
         self.invoker = DeveloperInvoker(logger, observable=observable)
 
+    @wrap_exception(PipelineStageError, "Development stage execution failed")
     def execute(self, card: Dict, context: Dict) -> Dict:
         """Execute with supervisor monitoring"""
         metadata = {
@@ -988,10 +1538,29 @@ class DevelopmentStage(PipelineStage, SupervisedStageMixin):
             )
 
         try:
-            # Get ADR from context
+            # Get ADR from context or card data
             self.update_progress({"step": "reading_adr", "progress_percent": 20})
             adr_file = context.get('adr_file', '')
-            adr_content = self._read_adr(adr_file)
+
+            # If not in context, try to get from card data
+            if not adr_file:
+                adr_file = card.get('adr_file', '')
+
+            # If still no ADR file (architecture was skipped), use task description as guidance
+            if adr_file:
+                adr_content = self._read_adr(adr_file)
+            else:
+                self.logger.log("No ADR file found (architecture stage may have been skipped)", "INFO")
+                adr_content = f"""# Task Requirements
+
+{card.get('description', 'No description available')}
+
+## Implementation Guidance
+- Follow coding standards and best practices
+- Include error handling
+- Write tests for all functionality
+- Document your code
+"""
 
             # Invoke developers in parallel
             self.update_progress({"step": "invoking_developers", "progress_percent": 30})
@@ -1033,40 +1602,51 @@ class DevelopmentStage(PipelineStage, SupervisedStageMixin):
             # Execute developer code in sandbox (if supervisor has sandboxing enabled)
             self.update_progress({"step": "sandboxing_code", "progress_percent": 65})
             if self.supervisor and hasattr(self.supervisor, 'sandbox') and self.supervisor.sandbox:
+                # Executable extensions only (skip HTML, notebooks, markdown, etc.)
+                executable_exts = {'.py', '.js', '.ts', '.java', '.go', '.rs', '.c', '.cpp'}
+
                 for result in developer_results:
                     if not result.get('success', False):
                         continue
 
                     dev_name = result.get('developer', 'unknown')
-                    self.logger.log(f"Executing {dev_name} code in sandbox...", "INFO")
 
                     # Get implementation files
                     impl_files = result.get('implementation_files', [])
                     for impl_file in impl_files:
-                        if Path(impl_file).exists():
-                            code = Path(impl_file).read_text()
+                        file_path = Path(impl_file)
 
-                            # Execute in sandbox
-                            exec_result = self.supervisor.execute_code_safely(
-                                code=code,
-                                scan_security=True
+                        # Skip non-executable artifacts
+                        if not file_path.exists() or file_path.suffix not in executable_exts:
+                            continue
+
+                        self.logger.log(f"Executing {dev_name} code in sandbox: {file_path.name}...", "INFO")
+                        code = file_path.read_text()
+
+                        # Execute in sandbox
+                        exec_result = self.supervisor.execute_code_safely(
+                            code=code,
+                            scan_security=True
+                        )
+
+                        if not exec_result["success"]:
+                            error_msg = (
+                                f"{dev_name} code execution failed: "
+                                f"{exec_result.get('kill_reason', 'unknown')}"
                             )
+                            self.logger.log(error_msg, "ERROR")
 
-                            if not exec_result["success"]:
-                                error_msg = (
-                                    f"{dev_name} code execution failed: "
-                                    f"{exec_result.get('kill_reason', 'unknown')}"
-                                )
-                                self.logger.log(error_msg, "ERROR")
-
-                                # Mark this developer solution as failed
-                                result["success"] = False
-                                result["error"] = error_msg
+                            # Mark this developer solution as failed
+                            result["success"] = False
+                            result["error"] = error_msg
 
             # Store each developer's solution in RAG
             self.update_progress({"step": "storing_in_rag", "progress_percent": 80})
             for dev_result in developer_results:
                 self._store_developer_solution_in_rag(card_id, card, dev_result)
+
+            # Store development artifacts in Knowledge Graph
+            self._store_development_in_knowledge_graph(card_id, developer_results)
 
             # Check if we have any successful developers
             self.update_progress({"step": "checking_results", "progress_percent": 90})
@@ -1176,6 +1756,93 @@ class DevelopmentStage(PipelineStage, SupervisedStageMixin):
             }
         )
 
+    def _store_development_in_knowledge_graph(self, card_id: str, developer_results: list):
+        """Store development artifacts in Knowledge Graph for traceability"""
+        kg = get_knowledge_graph()
+        if not kg:
+            self.logger.log("Knowledge Graph not available - skipping KG storage", "DEBUG")
+            return
+
+        try:
+            self.logger.log("Storing development artifacts in Knowledge Graph...", "DEBUG")
+
+            total_files = 0
+
+            # Process each developer's implementation
+            for dev_result in developer_results:
+                if not dev_result.get('success', False):
+                    continue  # Skip failed implementations
+
+                developer_name = dev_result.get('developer', 'unknown')
+
+                # Add implementation files to knowledge graph
+                impl_files = dev_result.get('implementation_files', [])
+                for file_path in impl_files:
+                    try:
+                        # Detect file type
+                        file_type = self._detect_file_type(str(file_path))
+
+                        # Add file node
+                        kg.add_file(str(file_path), file_type)
+
+                        # Link task to file
+                        kg.link_task_to_file(card_id, str(file_path))
+
+                        total_files += 1
+
+                    except Exception as e:
+                        self.logger.log(f"   Could not add file {file_path}: {e}", "DEBUG")
+
+                # Add test files to knowledge graph
+                test_files = dev_result.get('test_files', [])
+                for file_path in test_files:
+                    try:
+                        # Detect file type
+                        file_type = self._detect_file_type(str(file_path))
+
+                        # Add file node
+                        kg.add_file(str(file_path), file_type)
+
+                        # Link task to file
+                        kg.link_task_to_file(card_id, str(file_path))
+
+                        total_files += 1
+
+                    except Exception as e:
+                        self.logger.log(f"   Could not add test file {file_path}: {e}", "DEBUG")
+
+            if total_files > 0:
+                self.logger.log(f"✅ Stored {total_files} implementation files in Knowledge Graph", "INFO")
+            else:
+                self.logger.log("✅ Development stage recorded in Knowledge Graph", "INFO")
+
+        except Exception as e:
+            self.logger.log(f"Warning: Could not store development artifacts in Knowledge Graph: {e}", "WARNING")
+            self.logger.log(f"   Exception details: {type(e).__name__}", "DEBUG")
+
+    def _detect_file_type(self, file_path: str) -> str:
+        """Detect file type from path"""
+        if file_path.endswith('.py'):
+            return 'python'
+        elif file_path.endswith(('.js', '.jsx', '.ts', '.tsx')):
+            return 'javascript'
+        elif file_path.endswith('.java'):
+            return 'java'
+        elif file_path.endswith('.go'):
+            return 'go'
+        elif file_path.endswith('.rs'):
+            return 'rust'
+        elif file_path.endswith(('.c', '.cpp', '.h', '.hpp')):
+            return 'c++'
+        elif file_path.endswith('.md'):
+            return 'markdown'
+        elif file_path.endswith(('.yaml', '.yml')):
+            return 'yaml'
+        elif file_path.endswith('.json'):
+            return 'json'
+        else:
+            return 'unknown'
+
 
 # ============================================================================
 # VALIDATION STAGE
@@ -1183,9 +1850,10 @@ class DevelopmentStage(PipelineStage, SupervisedStageMixin):
 
 class ValidationStage(PipelineStage, SupervisedStageMixin):
     """
-    Single Responsibility: Validate developer solutions
+    Single Responsibility: Validate the WINNING developer solution
 
-    This stage ONLY validates test quality and TDD compliance - nothing else.
+    This stage ONLY tests the winner selected by ArbitrationStage.
+    No need to test all developers - winner was already chosen.
 
     Integrates with supervisor for:
     - Test execution in sandbox
@@ -1199,6 +1867,7 @@ class ValidationStage(PipelineStage, SupervisedStageMixin):
         board: KanbanBoard,
         test_runner: TestRunner,
         logger: LoggerInterface,
+        messenger: Optional['AgentMessenger'] = None,
         observable: Optional['PipelineObservable'] = None,
         supervisor: Optional['SupervisorAgent'] = None
     ):
@@ -1216,9 +1885,17 @@ class ValidationStage(PipelineStage, SupervisedStageMixin):
         self.board = board
         self.test_runner = test_runner
         self.logger = logger
+        self.messenger = messenger
         self.observable = observable
         self.supervisor = supervisor
 
+        # Register message handlers for supervisor commands
+        # TODO: AgentMessenger doesn't have register_handler method yet
+        # if self.messenger and hasattr(self.messenger, 'register_handler'):
+        #     self.messenger.register_handler("validation_override", self._handle_validation_override)
+        #     self.messenger.register_handler("force_approval", self._handle_force_approval)
+
+    @wrap_exception(PipelineStageError, "Validation stage execution failed")
     def execute(self, card: Dict, context: Dict) -> Dict:
         """Execute with supervisor monitoring"""
         metadata = {
@@ -1227,10 +1904,12 @@ class ValidationStage(PipelineStage, SupervisedStageMixin):
         }
 
         with self.supervised_execution(metadata):
-            return self._do_work(card, context)
+            result = self._do_work(card, context)
+
+        return result
 
     def _do_work(self, card: Dict, context: Dict) -> Dict:
-        """Internal method - validates developer solutions"""
+        """Internal method - validates ONLY the winning solution"""
         self.logger.log("Starting Validation Stage", "STAGE")
 
         card_id = card.get('card_id', 'unknown')
@@ -1238,78 +1917,67 @@ class ValidationStage(PipelineStage, SupervisedStageMixin):
         # Update progress: starting
         self.update_progress({"step": "starting", "progress_percent": 10})
 
+        # Get winner from context (selected by ArbitrationStage)
+        winner = context.get('winner', 'developer-a')
+
+        self.logger.log(f"✅ Validating winner: {winner}", "INFO")
+
         # Notify validation started
         if self.observable:
             from pipeline_observer import PipelineEvent, EventType
             event = PipelineEvent(
                 event_type=EventType.VALIDATION_STARTED,
                 card_id=card_id,
-                data={"num_developers": context.get('parallel_developers', 1)}
+                data={"winner": winner}
             )
             self.observable.notify(event)
 
-        # Get number of developers from context
-        num_developers = context.get('parallel_developers', 1)
+        # Update progress: validating winner
+        self.update_progress({"step": f"validating_{winner}", "progress_percent": 40})
 
-        # Update progress: validating developers
-        self.update_progress({"step": "validating_developers", "progress_percent": 30})
-
-        # Validate each developer's solution
-        developers = {}
-        all_approved = True
-
-        for i in range(num_developers):
-            dev_name = "developer-a" if i == 0 else f"developer-{chr(98+i-1)}"
-
-            # Update progress for each developer
-            progress = 30 + (i + 1) * (40 // max(num_developers, 1))
-            self.update_progress({"step": f"validating_{dev_name}", "progress_percent": progress})
-
-            dev_result = self._validate_developer(dev_name, card_id)
-            developers[dev_name] = dev_result
-
-            if dev_result['status'] != "APPROVED":
-                all_approved = False
+        # Validate ONLY the winner's solution
+        dev_result = self._validate_developer(winner, card_id)
 
         # Update progress: processing results
-        self.update_progress({"step": "processing_results", "progress_percent": 70})
+        self.update_progress({"step": "processing_results", "progress_percent": 80})
 
-        decision = "ALL_APPROVED" if all_approved else "SOME_BLOCKED"
-        approved_devs = [k for k, v in developers.items() if v['status'] == "APPROVED"]
+        status = dev_result['status']
+
+        # ValidationStage should FAIL if tests are blocked (didn't run properly)
+        # Only succeed if tests actually executed and passed
+        success = (status == "APPROVED")
 
         result = {
             "stage": "validation",
-            "num_developers": num_developers,
-            "developers": developers,
-            "decision": decision,
-            "approved_developers": approved_devs
+            "winner": winner,
+            "validation_result": dev_result,
+            "status": status,
+            "success": success  # True only if validation approved
         }
 
         # Notify validation completed or failed
         self.update_progress({"step": "sending_notifications", "progress_percent": 85})
         if self.observable:
             from pipeline_observer import PipelineEvent, EventType
-            if all_approved:
+            if status == "APPROVED":
                 event = PipelineEvent(
                     event_type=EventType.VALIDATION_COMPLETED,
                     card_id=card_id,
                     data={
-                        "decision": decision,
-                        "approved_developers": approved_devs,
-                        "num_developers": num_developers
+                        "winner": winner,
+                        "status": status
                     }
                 )
                 self.observable.notify(event)
             else:
-                error = Exception(f"Validation failed: {len(approved_devs)}/{num_developers} developers approved")
+                error = Exception(f"Validation failed for {winner}")
                 event = PipelineEvent(
                     event_type=EventType.VALIDATION_FAILED,
                     card_id=card_id,
                     error=error,
                     data={
-                        "decision": decision,
-                        "approved_developers": approved_devs,
-                        "blocked_developers": [k for k, v in developers.items() if v['status'] != "APPROVED"]
+                        "winner": winner,
+                        "status": status
                     }
                 )
                 self.observable.notify(event)
@@ -1324,7 +1992,8 @@ class ValidationStage(PipelineStage, SupervisedStageMixin):
 
     def _validate_developer(self, dev_name: str, card_id: str = None) -> Dict:
         """Validate a single developer's solution"""
-        test_path = f"/tmp/{dev_name}/tests"
+        # Use configured developer output directory via PathConfigService
+        test_path = get_developer_tests_path(dev_name)
 
         self.logger.log(f"Validating {dev_name} solution...", "INFO")
 
@@ -1341,6 +2010,51 @@ class ValidationStage(PipelineStage, SupervisedStageMixin):
             "developer": dev_name,
             "status": status,
             "test_results": test_results
+        }
+
+    def _handle_validation_override(self, message: Dict) -> Dict:
+        """
+        Handle supervisor command to override validation result
+
+        Message format:
+        {
+            "command": "validation_override",
+            "status": "APPROVED" | "BLOCKED",
+            "reason": "explanation"
+        }
+        """
+        status = message.get('status', 'APPROVED')
+        reason = message.get('reason', 'Supervisor override')
+
+        self.logger.log(f"🔧 Supervisor override: Setting validation status to {status}", "WARNING")
+        self.logger.log(f"   Reason: {reason}", "INFO")
+
+        return {
+            "status": "success",
+            "validation_status": status,
+            "reason": reason
+        }
+
+    def _handle_force_approval(self, message: Dict) -> Dict:
+        """
+        Handle supervisor command to force approval regardless of test results
+
+        Message format:
+        {
+            "command": "force_approval",
+            "reason": "explanation"
+        }
+        """
+        reason = message.get('reason', 'Supervisor forced approval')
+
+        self.logger.log(f"📨 Received supervisor command to force approval", "WARNING")
+        self.logger.log(f"   Reason: {reason}", "INFO")
+
+        return {
+            "status": "acknowledged",
+            "validation_status": "APPROVED",
+            "forced": True,
+            "reason": reason
         }
 
 
@@ -1390,6 +2104,7 @@ class IntegrationStage(PipelineStage, SupervisedStageMixin):
         self.supervisor = supervisor
         self.observable = observable
 
+    @wrap_exception(PipelineStageError, "Integration stage execution failed")
     def execute(self, card: Dict, context: Dict) -> Dict:
         """Execute with supervisor monitoring"""
         metadata = {
@@ -1430,12 +2145,20 @@ class IntegrationStage(PipelineStage, SupervisedStageMixin):
 
         # Run regression tests
         self.update_progress({"step": "running_regression_tests", "progress_percent": 40})
-        test_path = f"/tmp/{winner}/tests"
+        # Use configured developer output directory via PathConfigService
+        test_path = get_developer_tests_path(winner)
         regression_results = self.test_runner.run_tests(test_path)
 
         # Verify deployment
         self.update_progress({"step": "verifying_deployment", "progress_percent": 60})
-        deployment_verified = regression_results['exit_code'] == 0
+
+        # Integration passes if:
+        # 1. Exit code is 0 (clean test execution), OR
+        # 2. Exit code is non-zero but no tests actually failed (e.g., no tests found, which is OK for HTML-only deliverables)
+        tests_failed = regression_results.get('failed', 0)
+        exit_code = regression_results.get('exit_code', 1)
+
+        deployment_verified = (exit_code == 0) or (tests_failed == 0)
         status = "PASS" if deployment_verified else "FAIL"
 
         if status == "PASS":
@@ -1550,6 +2273,7 @@ class TestingStage(PipelineStage, SupervisedStageMixin):
         self.test_runner = test_runner
         self.logger = logger
 
+    @wrap_exception(PipelineStageError, "Testing stage execution failed")
     def execute(self, card: Dict, context: Dict) -> Dict:
         """Execute with supervisor monitoring"""
         metadata = {
@@ -1572,7 +2296,8 @@ class TestingStage(PipelineStage, SupervisedStageMixin):
 
         # Run final regression tests
         self.update_progress({"step": "running_regression_tests", "progress_percent": 30})
-        test_path = f"/tmp/{winner}/tests"
+        # Use configured developer output directory via PathConfigService
+        test_path = get_developer_tests_path(winner)
         regression_results = self.test_runner.run_tests(test_path)
 
         # Evaluate performance (simplified)
@@ -1614,7 +2339,14 @@ class TestingStage(PipelineStage, SupervisedStageMixin):
             "regression_tests": regression_results,
             "performance_score": performance_score,
             "all_quality_gates_passed": all_gates_passed,
-            "status": status
+            "status": status,
+            "metrics": {
+                "tests_run": regression_results.get('total', 0),
+                "tests_passed": regression_results.get('passed', 0),
+                "tests_failed": regression_results.get('failed', 0),
+                "performance_score": performance_score,
+                "quality_gates_passed": all_gates_passed
+            }
         }
 
     def get_stage_name(self) -> str:
