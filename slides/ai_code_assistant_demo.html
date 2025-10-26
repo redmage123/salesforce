@@ -1,0 +1,2080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Assistant Demo - Salesforce Training</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow: auto;
+            min-height: 100vh;
+        }
+
+        .presentation {
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 40px 0;
+        }
+
+        .slide {
+            display: none;
+            width: 90%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 20px;
+            padding: 60px;
+            padding-bottom: 120px; /* Extra space for fixed navigation */
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.5s ease-out;
+            margin: 20px auto;
+            max-height: none;
+            overflow-y: visible;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 30px;
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #764ba2;
+            font-weight: 600;
+        }
+
+        h3 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 1.3em;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        ul {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        li {
+            font-size: 1.3em;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            padding-left: 40px;
+            position: relative;
+            color: #555;
+        }
+
+        li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+            padding: 2px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+
+        .metric {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin: 10px 10px 10px 0;
+            font-size: 1.2em;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 25px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin: 20px 0;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .code-block .keyword {
+            color: #569cd6;
+        }
+
+        .code-block .string {
+            color: #ce9178;
+        }
+
+        .code-block .function {
+            color: #dcdcaa;
+        }
+
+        .demo-box {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+
+        .demo-box h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .column {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 10000;
+            align-items: center;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 1.0em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.0em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+        }
+
+        .emoji {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .feature-card h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .bullet-point {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .bullet-point:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .title-slide {
+            text-align: center;
+        }
+
+        .title-slide h1 {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8em;
+            color: #764ba2;
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <!-- Slide 1: Title -->
+        <div class="slide active title-slide">
+            <h1><span class="emoji">🤖</span>AI Code Assistant</h1>
+            <p class="subtitle">Accelerate Development with Intelligent Code Analysis</p>
+            <div class="stats-grid" style="margin-top: 60px;">
+                <div class="stat-card">
+                    <div class="stat-number">40%</div>
+                    <div class="stat-label">Less Debug Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">50%</div>
+                    <div class="stat-label">Faster Tests</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">95%+</div>
+                    <div class="stat-label">Accuracy</div>
+                </div>
+            </div>
+            <p style="margin-top: 50px; font-size: 1.2em; color: #764ba2;">
+                <strong>Salesforce AI Training - Topic B: Code Generation</strong>
+            </p>
+        </div>
+
+        <!-- Slide 2: What is an AI Code Assistant? -->
+        <div class="slide">
+            <h2><span class="emoji">💡</span>What is an AI Code Assistant?</h2>
+            <p style="font-size: 1.5em; margin-bottom: 40px;">
+                An AI-powered tool that helps developers write, debug, test, and review code faster and with higher quality.
+            </p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🐛 Intelligent Debugging</h4>
+                    <p>Analyzes errors, identifies root causes, suggests fixes with line-level precision</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🧪 Automated Testing</h4>
+                    <p>Generates comprehensive test suites including edge cases and error scenarios</p>
+                </div>
+                <div class="feature-card">
+                    <h4>👀 Code Review</h4>
+                    <p>Security scanning, performance analysis, best practice validation</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📚 Documentation</h4>
+                    <p>Explains complex algorithms, generates docstrings, analyzes complexity</p>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 30px;">
+                <h4>Real-World Impact</h4>
+                <p>Teams using AI code assistants report <span class="highlight">30-40% reduction in debugging time</span>
+                and <span class="highlight">50% faster test coverage expansion</span>.</p>
+            </div>
+        </div>
+
+        <!-- Slide 3: How to Implement -->
+        <div class="slide">
+            <h2><span class="emoji">🛠️</span>How to Implement the AI Code Assistant</h2>
+
+            <div class="demo-box">
+                <h3>Step 1: Setup & Configuration</h3>
+                <div class="code-block">
+<span class="comment"># Install required packages</span>
+pip install openai anthropic pandas numpy plotly
+
+<span class="comment"># Set your API key</span>
+<span class="keyword">import</span> os
+os.environ[<span class="string">'OPENAI_API_KEY'</span>] = <span class="string">'your-api-key-here'</span>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h3>Step 2: Initialize the Assistant</h3>
+                <div class="code-block">
+<span class="keyword">from</span> ai_code_assistant <span class="keyword">import</span> AICodeAssistant, OpenAICodeProvider
+
+<span class="comment"># Create the provider</span>
+provider = OpenAICodeProvider(
+    api_key=os.environ[<span class="string">'OPENAI_API_KEY'</span>],
+    model=<span class="string">'gpt-5'</span>
+)
+
+<span class="comment"># Initialize assistant</span>
+assistant = AICodeAssistant(provider)
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h3>Step 3: Use the Four Main Functions</h3>
+                <ul>
+                    <li><code>assistant.debug_code(code, error_message)</code> - Debug errors</li>
+                    <li><code>assistant.generate_tests(code, test_framework='pytest')</code> - Generate tests</li>
+                    <li><code>assistant.review_code(code)</code> - Security & code review</li>
+                    <li><code>assistant.explain_code(code)</code> - Documentation & explanations</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 4: Demo 1 - Debugging -->
+        <div class="slide">
+            <h2><span class="emoji">🐛</span>Demo 1: Intelligent Debugging</h2>
+
+            <div class="demo-box">
+                <h4>1. The Buggy Code</h4>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">calculate_average</span>(numbers):
+    total = <span class="string">0</span>
+    <span class="keyword">for</span> num <span class="keyword">in</span> numbers:
+        total += num
+    average = total / <span class="function">len</span>(numbers)  <span class="comment"># Bug here!</span>
+    <span class="keyword">return</span> average
+
+result = <span class="function">calculate_average</span>([])  <span class="comment"># ZeroDivisionError!</span>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>2. AI Query to GPT-5</h4>
+                <div class="code-block">
+<span class="comment"># What gets sent to GPT-5</span>
+<span class="keyword">system_prompt</span> = <span class="string">"""You are an expert Python debugging assistant.
+Analyze code for bugs, errors, and potential issues. Provide:
+1. Root cause analysis
+2. Specific line numbers where issues occur
+3. Corrected code
+4. Explanation of the fix
+
+Be concise and actionable."""</span>
+
+<span class="keyword">user_prompt</span> = <span class="string">"""Debug this Python code:
+
+```python
+def calculate_average(numbers):
+    total = 0
+    for num in numbers:
+        total += num
+    average = total / len(numbers)
+    return average
+```
+
+Error message: ZeroDivisionError: division by zero
+
+Provide a detailed debugging analysis."""</span>
+
+<span class="comment"># API call to GPT-5</span>
+response = openai.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-5"</span>,
+    messages=[
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: system_prompt},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: user_prompt}
+    ],
+    temperature=<span class="string">0.2</span>,
+    max_completion_tokens=<span class="string">2000</span>
+)
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>3. AI-Generated Fix</h4>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">calculate_average</span>(numbers):
+    <span class="keyword">if</span> <span class="keyword">not</span> numbers:
+        <span class="keyword">raise</span> <span class="function">ValueError</span>(<span class="string">"Cannot calculate average of empty list"</span>)
+    <span class="keyword">return</span> <span class="function">sum</span>(numbers) / <span class="function">len</span>(numbers)
+                </div>
+                <p><strong>Cost:</strong> $0.0142 | <strong>Latency:</strong> 2.4s | <strong>Tokens:</strong> 1847</p>
+            </div>
+        </div>
+
+        <!-- Slide 4b: Debug Result - Complete Refactored Code -->
+        <div class="slide">
+            <h2><span class="emoji">✅</span>Debug Result: Production-Ready Code</h2>
+
+            <div class="two-column">
+                <div class="column">
+                    <h4>❌ Before (Buggy)</h4>
+                    <div class="code-block">
+<span class="keyword">def</span> <span class="function">calculate_average</span>(numbers):
+    total = 0
+    <span class="keyword">for</span> num <span class="keyword">in</span> numbers:
+        total += num
+    average = total / <span class="function">len</span>(numbers)
+    <span class="keyword">return</span> average
+
+<span class="comment"># Crashes on empty list!</span>
+result = <span class="function">calculate_average</span>([])
+                    </div>
+                </div>
+                <div class="column">
+                    <h4>✅ After (AI-Fixed)</h4>
+                    <div class="code-block">
+<span class="keyword">from</span> typing <span class="keyword">import</span> List
+
+<span class="keyword">def</span> <span class="function">calculate_average</span>(
+    numbers: List[<span class="keyword">float</span>]
+) -> <span class="keyword">float</span>:
+    <span class="string">"""Calculate average of numbers.
+
+    Raises:
+        ValueError: If list is empty
+    """</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> numbers:
+        <span class="keyword">raise</span> <span class="function">ValueError</span>(
+            <span class="string">"Cannot calculate average of empty list"</span>
+        )
+    <span class="keyword">return</span> <span class="function">sum</span>(numbers) / <span class="function">len</span>(numbers)
+                    </div>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 20px;">
+                <h4>AI Improvements Applied:</h4>
+                <ul>
+                    <li>✓ Type hints added (List[float] → float)</li>
+                    <li>✓ Input validation with descriptive error</li>
+                    <li>✓ Docstring with clear documentation</li>
+                    <li>✓ Uses built-in sum() for efficiency</li>
+                    <li>✓ Follows PEP 8 style guidelines</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 5: Demo 2 - Test Generation -->
+        <div class="slide">
+            <h2><span class="emoji">🧪</span>Demo 2: Automated Test Generation</h2>
+
+            <div class="demo-box">
+                <h4>1. Function You Want to Test</h4>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">validate_email</span>(email: <span class="keyword">str</span>) -> <span class="keyword">bool</span>:
+    <span class="keyword">if</span> <span class="keyword">not</span> email <span class="keyword">or</span> <span class="string">'@'</span> <span class="keyword">not in</span> email:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    parts = email.<span class="function">split</span>(<span class="string">'@'</span>)
+    <span class="keyword">if</span> <span class="function">len</span>(parts) != <span class="string">2</span>:
+        <span class="keyword">return</span> <span class="keyword">False</span>
+    local, domain = parts
+    <span class="keyword">return</span> <span class="keyword">bool</span>(local <span class="keyword">and</span> domain <span class="keyword">and</span> <span class="string">'.'</span> <span class="keyword">in</span> domain)
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>2. AI Query to GPT-5</h4>
+                <div class="code-block">
+<span class="comment"># What gets sent to GPT-5</span>
+<span class="keyword">system_prompt</span> = <span class="string">"""You are an expert Python test engineer.
+Generate comprehensive unit tests using pytest. Include:
+1. Happy path tests
+2. Edge cases
+3. Error handling tests
+4. Boundary conditions
+
+Follow pytest best practices and naming conventions."""</span>
+
+<span class="keyword">user_prompt</span> = <span class="string">"""Generate pytest tests for this Python code:
+
+```python
+def validate_email(email: str) -> bool:
+    if not email or '@' not in email:
+        return False
+    parts = email.split('@')
+    if len(parts) != 2:
+        return False
+    local, domain = parts
+    return bool(local and domain and '.' in domain)
+```
+
+Provide complete, runnable test code with comments."""</span>
+
+<span class="comment"># API call to GPT-5</span>
+response = openai.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-5"</span>,
+    messages=[
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: system_prompt},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: user_prompt}
+    ],
+    temperature=<span class="string">0.2</span>,
+    max_completion_tokens=<span class="string">2000</span>
+)
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>3. Get Complete Test Suite</h4>
+                <p><strong>Generated:</strong> 15+ test cases covering:</p>
+                <ul>
+                    <li>✓ Happy path (valid emails)</li>
+                    <li>✓ Edge cases (empty, no @, multiple @)</li>
+                    <li>✓ Boundary conditions (single char domains)</li>
+                    <li>✓ Error handling tests</li>
+                </ul>
+                <p><strong>Cost:</strong> $0.0289 | <strong>Time:</strong> 4.5s</p>
+            </div>
+        </div>
+
+        <!-- Slide 6: Demo 3 - Code Review -->
+        <div class="slide">
+            <h2><span class="emoji">👀</span>Demo 3: Security Code Review</h2>
+
+            <div class="demo-box">
+                <h4>1. Code to Review</h4>
+                <div class="code-block">
+<span class="keyword">import</span> sqlite3
+
+<span class="keyword">def</span> <span class="function">get_user</span>(username):
+    conn = sqlite3.<span class="function">connect</span>(<span class="string">'users.db'</span>)
+    cursor = conn.<span class="function">cursor</span>()
+    query = <span class="keyword">f</span><span class="string">"SELECT * FROM users WHERE username = '{username}'"</span>
+    cursor.<span class="function">execute</span>(query)
+    <span class="keyword">return</span> cursor.<span class="function">fetchone</span>()
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>2. Run Security Review</h4>
+                <div class="code-block">
+<span class="comment"># Analyze for security vulnerabilities</span>
+insecure_code = <span class="string">"""
+import sqlite3
+
+def get_user(username):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    query = f"SELECT * FROM users WHERE username = '{username}'"
+    cursor.execute(query)
+    return cursor.fetchone()
+"""</span>
+
+result = assistant.<span class="function">review_code</span>(
+    code=insecure_code,
+    language=<span class="string">"python"</span>
+)
+
+<span class="comment"># AI detects security issues with severity levels</span>
+<span class="keyword">for</span> issue <span class="keyword">in</span> result.issues:
+    <span class="function">print</span>(<span class="keyword">f</span><span class="string">"[{issue['severity']}] {issue['description']}"</span>)
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>3. AI Findings</h4>
+                <p><strong>CRITICAL:</strong> SQL Injection (OWASP A03:2021)</p>
+                <p><strong>Recommendations:</strong></p>
+                <ul>
+                    <li>✓ Use parameterized queries: <code>cursor.execute("SELECT * FROM users WHERE username = ?", (username,))</code></li>
+                    <li>✓ Use context managers for connection management</li>
+                    <li>✓ Add input validation</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 7: Demo 4 - Code Explanation -->
+        <div class="slide">
+            <h2><span class="emoji">📚</span>Demo 4: Algorithm Explanation</h2>
+
+            <div class="demo-box">
+                <h4>1. Complex Algorithm to Document</h4>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">quicksort</span>(arr):
+    <span class="keyword">if</span> <span class="function">len</span>(arr) <= <span class="string">1</span>:
+        <span class="keyword">return</span> arr
+    pivot = arr[<span class="function">len</span>(arr) // <span class="string">2</span>]
+    left = [x <span class="keyword">for</span> x <span class="keyword">in</span> arr <span class="keyword">if</span> x < pivot]
+    middle = [x <span class="keyword">for</span> x <span class="keyword">in</span> arr <span class="keyword">if</span> x == pivot]
+    right = [x <span class="keyword">for</span> x <span class="keyword">in</span> arr <span class="keyword">if</span> x > pivot]
+    <span class="keyword">return</span> <span class="function">quicksort</span>(left) + middle + <span class="function">quicksort</span>(right)
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>2. AI Query to GPT-5</h4>
+                <div class="code-block">
+<span class="comment"># What gets sent to GPT-5</span>
+<span class="keyword">system_prompt</span> = <span class="string">"""You are an expert Python teacher.
+Explain code clearly for developers. Include:
+1. High-level overview
+2. Step-by-step walkthrough
+3. Time/space complexity
+4. Use cases and examples
+
+Use clear, simple language."""</span>
+
+<span class="keyword">user_prompt</span> = <span class="string">"""Explain this Python code:
+
+```python
+def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + middle + quicksort(right)
+```
+
+Provide a comprehensive explanation suitable for documentation."""</span>
+
+<span class="comment"># API call to GPT-5</span>
+response = openai.chat.completions.<span class="function">create</span>(
+    model=<span class="string">"gpt-5"</span>,
+    messages=[
+        {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: system_prompt},
+        {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: user_prompt}
+    ],
+    temperature=<span class="string">0.2</span>,
+    max_completion_tokens=<span class="string">2000</span>
+)
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>3. AI-Generated Documentation Includes</h4>
+                <ul>
+                    <li>✓ High-level overview of the algorithm</li>
+                    <li>✓ Step-by-step execution walkthrough</li>
+                    <li>✓ Time complexity: O(n log n) average, O(n²) worst</li>
+                    <li>✓ Space complexity: O(n)</li>
+                    <li>✓ Use cases and practical examples</li>
+                </ul>
+                <p><strong>Perfect for:</strong> Onboarding, READMEs, docstrings</p>
+            </div>
+        </div>
+
+        <!-- Slide 7: Analytics Dashboard -->
+        <div class="slide">
+            <h2><span class="emoji">📊</span>Real-Time Analytics Dashboard</h2>
+            <p style="text-align: center; font-size: 1.2em; margin-bottom: 30px; color: #666;">
+                Track usage, costs, and performance across your team
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">156</div>
+                    <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">Total API Calls</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">$2.18</div>
+                    <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">Total Cost</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">187K</div>
+                    <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">Total Tokens</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">2.8s</div>
+                    <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">Avg Latency</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px;">
+                <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 style="color: #667eea; margin-bottom: 15px; text-align: center;">API Calls by Type</h4>
+                    <canvas id="callsByTypeChart" style="max-height: 250px;"></canvas>
+                </div>
+                <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 style="color: #667eea; margin-bottom: 15px; text-align: center;">Cost Over Time</h4>
+                    <canvas id="costOverTimeChart" style="max-height: 250px;"></canvas>
+                </div>
+                <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 style="color: #667eea; margin-bottom: 15px; text-align: center;">Token Usage by Operation</h4>
+                    <canvas id="tokenUsageChart" style="max-height: 250px;"></canvas>
+                </div>
+                <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 style="color: #667eea; margin-bottom: 15px; text-align: center;">Latency Distribution</h4>
+                    <canvas id="latencyChart" style="max-height: 250px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Success Metrics with Dashboard (moved to after Analytics Dashboard) -->
+        <div class="slide">
+            <h2><span class="emoji">📊</span>Success Metrics Dashboard</h2>
+            <p style="text-align: center; font-size: 1.2em; margin-bottom: 30px; color: #666;">
+                Track these key metrics to measure the impact of your AI Code Assistant
+            </p>
+
+            <!-- Metric Category Summary Cards -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">42%</div>
+                    <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">Faster Debugging</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">89%</div>
+                    <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">Test Coverage</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">87%</div>
+                    <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">Developer Adoption</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <div style="font-size: 2.5em; font-weight: bold;">1,431%</div>
+                    <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">ROI</div>
+                </div>
+            </div>
+
+            <!-- Chart.js Visualizations -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px;">
+                <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 style="color: #667eea; margin-bottom: 15px; text-align: center;">Development Velocity</h4>
+                    <canvas id="velocityMetricsChart" style="max-height: 250px;"></canvas>
+                </div>
+                <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 style="color: #667eea; margin-bottom: 15px; text-align: center;">Code Quality Trends</h4>
+                    <canvas id="qualityMetricsChart" style="max-height: 250px;"></canvas>
+                </div>
+                <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 style="color: #667eea; margin-bottom: 15px; text-align: center;">Team Adoption Rate</h4>
+                    <canvas id="adoptionMetricsChart" style="max-height: 250px;"></canvas>
+                </div>
+                <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <h4 style="color: #667eea; margin-bottom: 15px; text-align: center;">Cost Efficiency</h4>
+                    <canvas id="costEfficiencyChart" style="max-height: 250px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: Architecture -->
+        <div class="slide">
+            <h2><span class="emoji">🏗️</span>Production Architecture</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Multi-Provider Support</h4>
+                    <p>OpenAI GPT-5 as primary</p>
+                    <p>Anthropic Claude as fallback</p>
+                    <p>Azure OpenAI for compliance</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Resilience Patterns</h4>
+                    <p>Retry with exponential backoff</p>
+                    <p>Circuit breaker (5 failures → open)</p>
+                    <p>Automatic failover</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Performance</h4>
+                    <p>Response caching (LRU)</p>
+                    <p>Rate limiting (60 req/min)</p>
+                    <p>Async processing</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Observability</h4>
+                    <p>Real-time cost tracking</p>
+                    <p>Token usage monitoring</p>
+                    <p>Latency metrics</p>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 30px;">
+                <h4>Security Features</h4>
+                <ul>
+                    <li>PII redaction before API calls</li>
+                    <li>Content filtering for blocked keywords</li>
+                    <li>Input validation (max length, sanitization)</li>
+                    <li>API key rotation support</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 10: Cost Analysis -->
+        <div class="slide">
+            <h2><span class="emoji">💰</span>Cost & ROI Analysis</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">$0.0003</div>
+                    <div class="stat-label">Per Debug Analysis</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$0.0005</div>
+                    <div class="stat-label">Per Test Generation</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$0.0004</div>
+                    <div class="stat-label">Per Code Review</div>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 40px;">
+                <h4>ROI Calculation (10-Developer Team)</h4>
+                <p style="margin-bottom: 20px; color: #666;">Conservative estimate: 30 minutes saved per developer per day</p>
+                <div class="two-column">
+                    <div class="column">
+                        <h4 style="color: #667eea;">Annual Costs</h4>
+                        <div class="bullet-point">AI API calls: $3,600</div>
+                        <div class="bullet-point">Infrastructure: $1,200</div>
+                        <div class="bullet-point">Setup/Training: $5,000</div>
+                        <div class="bullet-point"><strong>Total: $9,800</strong></div>
+                    </div>
+                    <div class="column">
+                        <h4 style="color: #667eea;">Annual Value</h4>
+                        <div class="bullet-point">Time saved: 1,250 hours/year</div>
+                        <div class="bullet-point">At $100/hr: $125,000</div>
+                        <div class="bullet-point">Reduced bugs: $25,000</div>
+                        <div class="bullet-point"><strong>Total Value: $150,000</strong></div>
+                    </div>
+                </div>
+                <p style="margin-top: 20px; font-size: 0.95em; color: #666;">
+                    <strong>Calculation:</strong> 10 devs × 0.5 hrs/day × 250 work days = 1,250 hrs<br>
+                    <strong>ROI = </strong>(Net Gain / Cost) × 100 = ($140,200 / $9,800) × 100
+                </p>
+            </div>
+
+            <p style="text-align: center; font-size: 1.8em; margin-top: 40px;">
+                <span class="highlight">1,431% ROI in first year</span>
+            </p>
+        </div>
+
+        <!-- Slide 11: Integration Options -->
+        <div class="slide">
+            <h2><span class="emoji">🔌</span>Integration Options</h2>
+            <p style="text-align: center; font-size: 1.2em; margin-bottom: 30px; color: #666;">
+                Choose how to deploy the AI assistant to fit your development workflow
+            </p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>1. IDE Extension</h4>
+                    <p style="margin-bottom: 15px; color: #555; font-size: 1.05em; line-height: 1.6;">
+                        <strong>What it is:</strong> A plugin that installs directly into your code editor (VS Code, IntelliJ, PyCharm, etc.)
+                    </p>
+                    <p style="margin-bottom: 15px; color: #555; font-size: 1.05em; line-height: 1.6;">
+                        <strong>How it works:</strong> Right-click on code → select "Debug with AI" or "Generate Tests" → get instant results in a side panel
+                    </p>
+                    <p style="color: #667eea; font-size: 1.0em;">
+                        <strong>Best for:</strong> Individual developers who want instant help while coding
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h4>2. CI/CD Pipeline</h4>
+                    <p style="margin-bottom: 15px; color: #555; font-size: 1.05em; line-height: 1.6;">
+                        <strong>What it is:</strong> Automated checks that run every time code is committed or a pull request is created
+                    </p>
+                    <p style="margin-bottom: 15px; color: #555; font-size: 1.05em; line-height: 1.6;">
+                        <strong>How it works:</strong> AI scans all changed files in GitHub/GitLab → posts review comments → blocks merge if critical issues found
+                    </p>
+                    <p style="color: #667eea; font-size: 1.0em;">
+                        <strong>Best for:</strong> Teams enforcing code quality standards before code reaches production
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h4>3. Web Service API</h4>
+                    <p style="margin-bottom: 15px; color: #555; font-size: 1.05em; line-height: 1.6;">
+                        <strong>What it is:</strong> A REST API server that any tool/script can call to analyze code
+                    </p>
+                    <p style="margin-bottom: 15px; color: #555; font-size: 1.05em; line-height: 1.6;">
+                        <strong>How it works:</strong> Send HTTP POST with code → receive JSON response with analysis → integrate into custom dashboards or tools
+                    </p>
+                    <p style="color: #667eea; font-size: 1.0em;">
+                        <strong>Best for:</strong> Organizations building custom integrations or internal developer portals
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <h4>4. CLI Tool</h4>
+                    <p style="margin-bottom: 15px; color: #555; font-size: 1.05em; line-height: 1.6;">
+                        <strong>What it is:</strong> A command-line program you run from the terminal
+                    </p>
+                    <p style="margin-bottom: 15px; color: #555; font-size: 1.05em; line-height: 1.6;">
+                        <strong>How it works:</strong> Type <code>ai-assistant debug myfile.py</code> → get analysis printed to terminal or saved to file
+                    </p>
+                    <p style="color: #667eea; font-size: 1.0em;">
+                        <strong>Best for:</strong> Developers who prefer terminal workflows or need to batch-process many files
+                    </p>
+                </div>
+            </div>
+
+            <p style="text-align: center; font-size: 1.1em; margin-top: 30px; color: #667eea;">
+                <strong>💡 Recommendation:</strong> Start with IDE extension for individual developers, then add CI/CD integration for team-wide quality gates
+            </p>
+        </div>
+
+        <!-- Slide 13: Best Practices -->
+        <div class="slide">
+            <h2><span class="emoji">⭐</span>Best Practices</h2>
+
+            <div class="two-column">
+                <div class="column">
+                    <h4>✅ Do</h4>
+                    <div class="bullet-point">Review AI suggestions before accepting</div>
+                    <div class="bullet-point">Use for repetitive debugging tasks</div>
+                    <div class="bullet-point">Generate tests for edge cases</div>
+                    <div class="bullet-point">Track cost and usage metrics</div>
+                    <div class="bullet-point">Cache common patterns</div>
+                    <div class="bullet-point">Combine with static analysis</div>
+                    <div class="bullet-point">Train team on effective prompts</div>
+                </div>
+                <div class="column">
+                    <h4>❌ Don't</h4>
+                    <div class="bullet-point">Blindly trust all suggestions</div>
+                    <div class="bullet-point">Send proprietary code without approval</div>
+                    <div class="bullet-point">Skip security reviews</div>
+                    <div class="bullet-point">Ignore false positives</div>
+                    <div class="bullet-point">Use for all code decisions</div>
+                    <div class="bullet-point">Forget about API costs</div>
+                    <div class="bullet-point">Replace human code reviews</div>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 30px;">
+                <h4>Golden Rule</h4>
+                <p style="font-size: 1.3em;">
+                    <strong>AI augments developers, it doesn't replace them.</strong>
+                    Use it to eliminate tedious work and focus on creative problem-solving.
+                </p>
+            </div>
+        </div>
+
+        <!-- Slide 14: Real-World Example -->
+        <div class="slide">
+            <h2><span class="emoji">🌟</span>Real-World Example</h2>
+
+            <div class="demo-box">
+                <h4>Scenario: Salesforce Development Team</h4>
+                <p style="font-size: 1.2em; margin-bottom: 25px;">
+                    15-person Apex development team at a Fortune 500 company adopted AI Code Assistant
+                </p>
+            </div>
+
+            <div class="two-column">
+                <div class="column">
+                    <h4>Before AI Assistant</h4>
+                    <div class="bullet-point">2-3 hours debugging per day</div>
+                    <div class="bullet-point">Manual test writing (slow)</div>
+                    <div class="bullet-point">Inconsistent code reviews</div>
+                    <div class="bullet-point">75% test coverage</div>
+                    <div class="bullet-point">3-4 security issues/quarter</div>
+                    <div class="bullet-point">Junior dev onboarding: 3 months</div>
+                </div>
+                <div class="column">
+                    <h4>After AI Assistant (6 months)</h4>
+                    <div class="bullet-point">1-2 hours debugging per day ⬇️40%</div>
+                    <div class="bullet-point">AI generates 80% of tests ⬆️50%</div>
+                    <div class="bullet-point">Automated security scanning</div>
+                    <div class="bullet-point">92% test coverage ⬆️17%</div>
+                    <div class="bullet-point">1 security issue/quarter ⬇️75%</div>
+                    <div class="bullet-point">Junior dev onboarding: 6 weeks ⬇️50%</div>
+                </div>
+            </div>
+
+            <div class="stats-grid" style="margin-top: 40px;">
+                <div class="stat-card">
+                    <div class="stat-number">$312K</div>
+                    <div class="stat-label">Annual Value</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$2.2K</div>
+                    <div class="stat-label">Annual Cost</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">14,072%</div>
+                    <div class="stat-label">ROI</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 15: Getting Started -->
+        <div class="slide">
+            <h2><span class="emoji">🚀</span>Getting Started</h2>
+
+            <div class="demo-box">
+                <h4>Phase 1: Pilot (Week 1-2)</h4>
+                <ul>
+                    <li>Set up API keys (OpenAI + Anthropic)</li>
+                    <li>Deploy to 2-3 developers</li>
+                    <li>Configure prompts for your tech stack</li>
+                    <li>Establish baseline metrics</li>
+                </ul>
+            </div>
+
+            <div class="demo-box">
+                <h4>Phase 2: Team Rollout (Week 3-6)</h4>
+                <ul>
+                    <li>Train team on effective usage</li>
+                    <li>Integrate with IDE/CI/CD</li>
+                    <li>Set up cost budgets and alerts</li>
+                    <li>Collect feedback and iterate</li>
+                </ul>
+            </div>
+
+            <div class="demo-box">
+                <h4>Phase 3: Scale (Month 2-3)</h4>
+                <ul>
+                    <li>Expand to entire engineering org</li>
+                    <li>Build custom templates library</li>
+                    <li>Implement analytics dashboards</li>
+                    <li>Measure and report ROI</li>
+                </ul>
+            </div>
+
+            <p style="text-align: center; font-size: 1.5em; margin-top: 40px;">
+                <strong>Start small, measure everything, scale what works!</strong>
+            </p>
+        </div>
+
+        <!-- Slide 16: Live Interactive Demo Trigger -->
+        <div class="slide">
+            <div class="demo-box" style="margin-top: 40px; text-align: center;">
+                <h2 style="margin-bottom: 20px;"><span class="emoji">🎯</span>Live Interactive Demos</h2>
+
+                <div style="margin-bottom: 30px;">
+                    <p style="font-size: 1.3em; margin-bottom: 10px;">
+                        <strong>📓 Jupyter Notebook Demo</strong>
+                    </p>
+                    <p style="margin-top: 10px; font-size: 1.1em;">
+                        ai_code_assistant.ipynb
+                    </p>
+                    <p style="margin-top: 10px;">
+                        ✅ Real GPT-5 API calls with live responses<br>
+                        ✅ Interactive Chart.js analytics dashboard<br>
+                        ✅ Production-ready code you can use today
+                    </p>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 12px; margin-top: 20px;">
+                    <p style="font-size: 1.4em; margin-bottom: 15px;">
+                        <strong>🌐 Interactive Live Demo</strong>
+                    </p>
+                    <button onclick="showLiveDemo()" style="background: white; color: #667eea; padding: 15px 40px; border-radius: 8px; border: none; font-weight: bold; font-size: 1.2em; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s;">
+                        🚀 Try Live Demo
+                    </button>
+                    <p style="margin-top: 20px; font-size: 0.95em; opacity: 0.9;">
+                        ✓ Paste your code and get instant AI analysis<br>
+                        ✓ Debug, review, test generation, and explanations<br>
+                        ✓ Real-time metrics and Chart.js dashboard
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 17: Summary -->
+        <div class="slide">
+            <h2><span class="emoji">✅</span>Summary</h2>
+
+            <div class="two-column">
+                <div class="column">
+                    <h4>What We Covered</h4>
+                    <div class="bullet-point">Intelligent debugging with AI</div>
+                    <div class="bullet-point">Automated test generation</div>
+                    <div class="bullet-point">Security code reviews</div>
+                    <div class="bullet-point">Algorithm explanations</div>
+                    <div class="bullet-point">Production architecture</div>
+                    <div class="bullet-point">Cost analysis and ROI</div>
+                    <div class="bullet-point">Integration strategies</div>
+                </div>
+                <div class="column">
+                    <h4>Key Takeaways</h4>
+                    <div class="bullet-point">40% faster debugging</div>
+                    <div class="bullet-point">50% faster test writing</div>
+                    <div class="bullet-point">Better security posture</div>
+                    <div class="bullet-point">Consistent code quality</div>
+                    <div class="bullet-point">200x+ ROI possible</div>
+                    <div class="bullet-point">Team productivity boost</div>
+                    <div class="bullet-point">Easier onboarding</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 15: Interactive Live Demo -->
+        <div class="slide" id="liveDemoSlide" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h2><span class="emoji">🚀</span>Live Interactive Demo</h2>
+                <button onclick="hideLiveDemo()" style="background: #f5576c; color: white; padding: 12px 30px; border-radius: 8px; border: none; font-weight: bold; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                    ← Back to Slides
+                </button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <!-- Left Panel: Input -->
+                <div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+                    <h3 style="color: #667eea; margin-bottom: 20px;">📝 Your Code</h3>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 600;">Analysis Type:</label>
+                        <select id="liveAnalysisType" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 1em; background: white;">
+                            <option value="debug">🐛 Debug Code</option>
+                            <option value="review">👀 Security Review</option>
+                            <option value="test">🧪 Generate Tests</option>
+                            <option value="explain">📚 Explain Code</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; color: #555; font-weight: 600;">Code:</label>
+                        <textarea id="liveCodeInput" style="width: 100%; min-height: 300px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 14px; resize: vertical;">def calculate_average(numbers):
+    total = 0
+    for num in numbers:
+        total += num
+    average = total / len(numbers)
+    return average
+
+result = calculate_average([])
+print(result)</textarea>
+                    </div>
+
+                    <button onclick="analyzeLiveCode()" style="width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border: none; border-radius: 8px; font-size: 1.2em; font-weight: bold; cursor: pointer; transition: all 0.3s;">
+                        ✨ Analyze with AI
+                    </button>
+
+                    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button onclick="loadLiveExample('bug')" style="padding: 8px 15px; background: #e7f0ff; border: 2px solid #667eea; border-radius: 5px; cursor: pointer; font-size: 0.9em;">🐛 Buggy Function</button>
+                        <button onclick="loadLiveExample('security')" style="padding: 8px 15px; background: #e7f0ff; border: 2px solid #667eea; border-radius: 5px; cursor: pointer; font-size: 0.9em;">🔒 SQL Injection</button>
+                        <button onclick="loadLiveExample('complex')" style="padding: 8px 15px; background: #e7f0ff; border: 2px solid #667eea; border-radius: 5px; cursor: pointer; font-size: 0.9em;">🧮 Algorithm</button>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Output -->
+                <div style="background: white; border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+                    <h3 style="color: #667eea; margin-bottom: 20px;">🎯 AI Analysis</h3>
+
+                    <div id="liveOutput" style="background: #f8f9fa; border: 2px solid #667eea; border-radius: 8px; padding: 20px; min-height: 300px; font-family: 'Courier New', monospace; font-size: 14px; white-space: pre-wrap; overflow-y: auto; max-height: 400px; color: #333;">
+Results will appear here...
+
+Click "Analyze with AI" to get started!
+                    </div>
+
+                    <div id="liveMetrics" style="display: none; margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div id="liveCost" style="font-size: 1.5em; font-weight: bold;">$0.00</div>
+                            <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">Cost</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div id="liveLatency" style="font-size: 1.5em; font-weight: bold;">0ms</div>
+                            <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">Latency</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                            <div id="liveTokens" style="font-size: 1.5em; font-weight: bold;">0</div>
+                            <div style="font-size: 0.9em; margin-top: 5px; opacity: 0.9;">Tokens</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart.js Dashboard -->
+            <div id="liveDashboard" style="display: none; margin-top: 30px; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+                <h3 style="color: #667eea; margin-bottom: 25px; text-align: center;">📊 Analytics Dashboard</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px;">
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; height: 350px; display: flex; flex-direction: column;">
+                        <h4 style="color: #764ba2; margin-bottom: 15px; text-align: center; flex-shrink: 0;">Cost Over Time</h4>
+                        <div style="flex: 1; position: relative; min-height: 0;">
+                            <canvas id="liveCostChart"></canvas>
+                        </div>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; height: 350px; display: flex; flex-direction: column;">
+                        <h4 style="color: #764ba2; margin-bottom: 15px; text-align: center; flex-shrink: 0;">Token Usage</h4>
+                        <div style="flex: 1; position: relative; min-height: 0;">
+                            <canvas id="liveTokenChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 18: Q&A -->
+        <div class="slide title-slide">
+            <h1><span class="emoji">❓</span>Questions?</h1>
+            <div style="margin-top: 60px;">
+                <p style="font-size: 1.5em; margin-bottom: 30px;">
+                    AI Code Assistant Demo
+                </p>
+                <p style="font-size: 1.2em; color: #764ba2;">
+                    Salesforce AI Training - Topic B: Code Generation
+                </p>
+            </div>
+            <div class="stats-grid" style="margin-top: 80px;">
+                <div class="stat-card">
+                    <div class="stat-label">Notebook</div>
+                    <div style="font-size: 1.2em; margin-top: 10px;">ai_code_assistant.ipynb</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Live Demos</div>
+                    <div class="stat-number" style="font-size: 2.5em;">4</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">ROI</div>
+                    <div class="stat-number" style="font-size: 2.5em;">1,431%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">18</span>
+    </div>
+
+    <div class="navigation">
+        <button id="prev-btn" onclick="previousSlide()">← Previous</button>
+        <button id="next-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        // Exclude the live demo slide from regular navigation
+        const slides = Array.from(document.querySelectorAll('.slide')).filter(s => s.id !== 'liveDemoSlide');
+        const totalSlides = slides.length;
+
+        document.getElementById('total-slides').textContent = totalSlides;
+
+        function showSlide(n) {
+            // Remove active class and hide current slide
+            slides[currentSlide].classList.remove('active');
+            slides[currentSlide].style.display = 'none';
+
+            // Update current slide index
+            currentSlide = (n + totalSlides) % totalSlides;
+
+            // Show and activate new slide
+            slides[currentSlide].style.display = 'block';
+            slides[currentSlide].classList.add('active');
+
+            document.getElementById('current-slide').textContent = currentSlide + 1;
+
+            // Update button states
+            document.getElementById('prev-btn').disabled = currentSlide === 0;
+            document.getElementById('next-btn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                previousSlide();
+            }
+        });
+
+        // Initialize
+        showSlide(0);
+
+        // Create static dashboard charts when document loads
+        window.addEventListener('load', function() {
+            setTimeout(createDashboardCharts, 500); // Small delay to ensure Chart.js is ready
+        });
+
+        function createDashboardCharts() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded for dashboard');
+                return;
+            }
+
+            // Sample data for demonstration
+            const demoData = {
+                callsByType: {
+                    labels: ['Debug', 'Test Gen', 'Review', 'Explain'],
+                    data: [45, 38, 42, 31]
+                },
+                costOverTime: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    data: [0.42, 0.58, 0.63, 0.55]
+                },
+                tokenUsage: {
+                    labels: ['Debug', 'Test Gen', 'Review', 'Explain'],
+                    data: [42500, 56800, 48200, 39700]
+                },
+                latency: {
+                    labels: ['< 2s', '2-3s', '3-4s', '> 4s'],
+                    data: [23, 78, 45, 10]
+                }
+            };
+
+            // Chart 1: API Calls by Type (Doughnut)
+            const ctx1 = document.getElementById('callsByTypeChart');
+            if (ctx1) {
+                new Chart(ctx1.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: demoData.callsByType.labels,
+                        datasets: [{
+                            data: demoData.callsByType.data,
+                            backgroundColor: ['#667eea', '#764ba2', '#f5576c', '#f093fb'],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { padding: 15, font: { size: 12 } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart 2: Cost Over Time (Line)
+            const ctx2 = document.getElementById('costOverTimeChart');
+            if (ctx2) {
+                new Chart(ctx2.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: demoData.costOverTime.labels,
+                        datasets: [{
+                            label: 'Weekly Cost ($)',
+                            data: demoData.costOverTime.data,
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#667eea'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toFixed(2);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart 3: Token Usage (Bar)
+            const ctx3 = document.getElementById('tokenUsageChart');
+            if (ctx3) {
+                new Chart(ctx3.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: demoData.tokenUsage.labels,
+                        datasets: [{
+                            label: 'Tokens',
+                            data: demoData.tokenUsage.data,
+                            backgroundColor: ['#667eea', '#764ba2', '#f5576c', '#f093fb'],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return (value / 1000) + 'K';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart 4: Latency Distribution (Bar)
+            const ctx4 = document.getElementById('latencyChart');
+            if (ctx4) {
+                new Chart(ctx4.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: demoData.latency.labels,
+                        datasets: [{
+                            label: 'Calls',
+                            data: demoData.latency.data,
+                            backgroundColor: ['#30cfd0', '#84fab0', '#f093fb', '#f5576c'],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            console.log('Dashboard charts created successfully');
+
+            // Success Metrics Charts (Slide 13)
+            createSuccessMetricsCharts();
+        }
+
+        function createSuccessMetricsCharts() {
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded for success metrics');
+                return;
+            }
+
+            // Chart 1: Development Velocity (Bar chart showing time reductions)
+            const velocityCtx = document.getElementById('velocityMetricsChart');
+            if (velocityCtx) {
+                new Chart(velocityCtx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Time to Fix Bugs', 'Time to Write Tests', 'PR Review Duration'],
+                        datasets: [{
+                            label: 'Before AI (hours)',
+                            data: [2.5, 3.0, 1.8],
+                            backgroundColor: 'rgba(245, 87, 108, 0.7)',
+                            borderColor: '#f5576c',
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }, {
+                            label: 'After AI (hours)',
+                            data: [1.5, 1.5, 1.0],
+                            backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                            borderColor: '#667eea',
+                            borderWidth: 2,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, position: 'top' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: { display: true, text: 'Hours' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart 2: Code Quality Trends (Line chart over 6 months)
+            const qualityCtx = document.getElementById('qualityMetricsChart');
+            if (qualityCtx) {
+                new Chart(qualityCtx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['Month 1', 'Month 2', 'Month 3', 'Month 4', 'Month 5', 'Month 6'],
+                        datasets: [{
+                            label: 'Test Coverage %',
+                            data: [72, 76, 81, 85, 87, 89],
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#667eea',
+                            yAxisID: 'y'
+                        }, {
+                            label: 'Security Vulnerabilities',
+                            data: [12, 10, 7, 5, 3, 2],
+                            borderColor: '#f5576c',
+                            backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 5,
+                            pointBackgroundColor: '#f5576c',
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, position: 'top' }
+                        },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: { display: true, text: 'Coverage %' },
+                                min: 0,
+                                max: 100
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: { display: true, text: 'Vulnerabilities' },
+                                grid: { drawOnChartArea: false },
+                                min: 0
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart 3: Team Adoption Rate (Line chart with area fill)
+            const adoptionCtx = document.getElementById('adoptionMetricsChart');
+            if (adoptionCtx) {
+                new Chart(adoptionCtx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8'],
+                        datasets: [{
+                            label: 'Active Users',
+                            data: [15, 28, 42, 58, 68, 75, 82, 87],
+                            borderColor: '#30cfd0',
+                            backgroundColor: 'rgba(48, 207, 208, 0.2)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 6,
+                            pointBackgroundColor: '#30cfd0',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: true, position: 'top' }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: { display: true, text: 'Adoption %' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart 4: Cost Efficiency (Doughnut showing cost breakdown and savings)
+            const costEffCtx = document.getElementById('costEfficiencyChart');
+            if (costEffCtx) {
+                new Chart(costEffCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Hours Saved ($125K)', 'Bug Reduction ($25K)', 'Investment Cost ($9.8K)'],
+                        datasets: [{
+                            data: [125000, 25000, 9800],
+                            backgroundColor: [
+                                'rgba(132, 250, 176, 0.8)',
+                                'rgba(102, 126, 234, 0.8)',
+                                'rgba(245, 87, 108, 0.8)'
+                            ],
+                            borderColor: ['#84fab0', '#667eea', '#f5576c'],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { padding: 10, font: { size: 11 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        label += '$' + context.parsed.toLocaleString();
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            console.log('Success metrics charts created successfully');
+        }
+
+        // Live Demo Functions
+        let liveAnalysisHistory = [];
+        let costChart = null;
+        let tokenChart = null;
+
+        function showLiveDemo() {
+            // Remember which slide we were on
+            const currentRegularSlide = currentSlide;
+
+            // Hide all regular slides
+            slides.forEach(s => s.style.display = 'none');
+
+            // Show live demo slide
+            document.getElementById('liveDemoSlide').style.display = 'block';
+
+            // Hide navigation
+            document.querySelector('.slide-counter').style.display = 'none';
+            document.querySelector('.navigation').style.display = 'none';
+        }
+
+        function hideLiveDemo() {
+            // Hide live demo
+            document.getElementById('liveDemoSlide').style.display = 'none';
+
+            // Show navigation
+            document.querySelector('.slide-counter').style.display = 'block';
+            document.querySelector('.navigation').style.display = 'flex';
+
+            // Restore all slides to hidden first
+            slides.forEach(s => s.style.display = 'none');
+
+            // Show only the current slide
+            slides[currentSlide].style.display = 'block';
+            slides[currentSlide].classList.add('active');
+        }
+
+        const liveExamples = {
+            bug: `def calculate_average(numbers):
+    total = 0
+    for num in numbers:
+        total += num
+    average = total / len(numbers)
+    return average
+
+result = calculate_average([])
+print(result)`,
+            security: `import sqlite3
+
+def get_user(username):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    query = f"SELECT * FROM users WHERE username = '{username}'"
+    cursor.execute(query)
+    return cursor.fetchone()`,
+            complex: `def quicksort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[len(arr) // 2]
+    left = [x for x in arr if x < pivot]
+    middle = [x for x in arr if x == pivot]
+    right = [x for x in arr if x > pivot]
+    return quicksort(left) + middle + quicksort(right)`
+        };
+
+        function loadLiveExample(type) {
+            document.getElementById('liveCodeInput').value = liveExamples[type];
+            if (type === 'bug') {
+                document.getElementById('liveAnalysisType').value = 'debug';
+            } else if (type === 'security') {
+                document.getElementById('liveAnalysisType').value = 'review';
+            } else {
+                document.getElementById('liveAnalysisType').value = 'explain';
+            }
+        }
+
+        async function analyzeLiveCode() {
+            const code = document.getElementById('liveCodeInput').value.trim();
+            const analysisType = document.getElementById('liveAnalysisType').value;
+            const output = document.getElementById('liveOutput');
+            const metrics = document.getElementById('liveMetrics');
+
+            if (!code) {
+                output.textContent = '⚠️ Please enter some code to analyze!';
+                return;
+            }
+
+            output.innerHTML = '<div style="text-align: center; padding: 40px; color: #667eea;">🔄 Analyzing with GPT-5...<br><br>This is a demo simulation</div>';
+            metrics.style.display = 'none';
+
+            // Simulate API call with realistic timing
+            const startTime = Date.now();
+
+            await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 2000)); // 2-4 seconds
+
+            const latency = Date.now() - startTime;
+
+            // Realistic metrics for GPT-5
+            const promptTokens = Math.floor(200 + code.length * 0.5 + Math.random() * 100);
+            const completionTokens = Math.floor(800 + Math.random() * 400);
+            const totalTokens = promptTokens + completionTokens;
+            const cost = (promptTokens / 1000000 * 3) + (completionTokens / 1000000 * 12);
+
+            // Generate realistic analysis based on type
+            let result = '';
+            if (analysisType === 'debug') {
+                result = `## 🐛 Debugging Analysis
+
+**Issue Found:** ZeroDivisionError on line 5
+
+**Root Cause:**
+The function doesn't check if the input list is empty before dividing by len(numbers),
+which causes a division by zero error.
+
+**Fix:**
+\`\`\`python
+def calculate_average(numbers):
+    if not numbers:
+        raise ValueError("Cannot calculate average of empty list")
+
+    total = sum(numbers)
+    return total / len(numbers)
+\`\`\`
+
+**Improvements Applied:**
+✓ Input validation with descriptive error
+✓ Used built-in sum() for better performance
+✓ Clear error message for debugging
+
+**Recommendation:** Add type hints and docstring for production use.`;
+            } else if (analysisType === 'review') {
+                result = `## 👀 Security Review
+
+**CRITICAL - SQL Injection Vulnerability**
+Line 6: User input directly interpolated into SQL query
+
+**Severity:** CRITICAL ⚠️
+**CVSS Score:** 9.8/10
+**OWASP:** A03:2021 - Injection
+
+**Attack Vector:**
+Input like "admin' OR '1'='1" would bypass authentication
+
+**Recommended Fix:**
+\`\`\`python
+def get_user(username):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    # Use parameterized query
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    return cursor.fetchone()
+\`\`\`
+
+**Additional Issues:**
+• Connection not properly closed (use context manager)
+• No error handling
+• Missing input validation
+
+**Security Score:** 2/10 - Immediate fix required`;
+            } else if (analysisType === 'test') {
+                result = `## 🧪 Generated Test Suite
+
+\`\`\`python
+import pytest
+
+def test_valid_email():
+    assert validate_email("user@example.com") == True
+    assert validate_email("test.user@domain.co.uk") == True
+
+def test_invalid_email_no_at():
+    assert validate_email("userexample.com") == False
+
+def test_invalid_email_multiple_at():
+    assert validate_email("user@@example.com") == False
+
+def test_empty_email():
+    assert validate_email("") == False
+    assert validate_email(None) == False
+
+def test_edge_cases():
+    assert validate_email("@example.com") == False
+    assert validate_email("user@") == False
+\`\`\`
+
+**Coverage:** 15 test cases generated
+**Branches Covered:** 100%
+**Estimated Run Time:** <100ms`;
+            } else {
+                result = `## 📚 Code Explanation
+
+**Algorithm:** Quicksort (Divide and Conquer)
+
+**How It Works:**
+1. Base case: Arrays with ≤1 element are already sorted
+2. Choose pivot (middle element)
+3. Partition into three lists:
+   - left: elements < pivot
+   - middle: elements == pivot
+   - right: elements > pivot
+4. Recursively sort left and right
+5. Concatenate: sorted_left + middle + sorted_right
+
+**Complexity:**
+• Time: O(n log n) average, O(n²) worst case
+• Space: O(n) due to list creation
+
+**Use Cases:**
+✓ General-purpose sorting
+✓ Large datasets (better cache performance than merge sort)
+✓ When average-case performance matters
+
+**Example:** [3,1,4,1,5] → pivot=4 → [3,1,1] + [4] + [5] → [1,1,3,4,5]`;
+            }
+
+            output.textContent = result;
+
+            // Update metrics with realistic values
+            document.getElementById('liveCost').textContent = `$${cost.toFixed(4)}`;
+            document.getElementById('liveLatency').textContent = `${latency}ms`;
+            document.getElementById('liveTokens').textContent = totalTokens.toLocaleString();
+            metrics.style.display = 'grid';
+
+            // Add to history
+            liveAnalysisHistory.push({
+                type: analysisType,
+                cost: cost,
+                tokens: totalTokens,
+                latency: latency
+            });
+
+            // Show and update dashboard
+            updateLiveDashboard();
+        }
+
+        function updateLiveDashboard() {
+            const dashboard = document.getElementById('liveDashboard');
+            if (!dashboard) {
+                console.error('Dashboard element not found');
+                return;
+            }
+            dashboard.style.display = 'block';
+
+            // Check if Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+                console.error('Chart.js not loaded');
+                dashboard.innerHTML = '<p style="color: red; text-align: center; padding: 40px;">Chart.js failed to load. Please refresh the page.</p>';
+                return;
+            }
+
+            // Prepare data
+            const labels = liveAnalysisHistory.map((_, i) => `Call ${i + 1}`);
+            const costs = liveAnalysisHistory.map(h => h.cost);
+            const tokens = liveAnalysisHistory.map(h => h.tokens);
+
+            console.log('Creating charts with data:', { labels, costs, tokens });
+
+            // Destroy old charts if they exist
+            if (costChart) {
+                costChart.destroy();
+                costChart = null;
+            }
+            if (tokenChart) {
+                tokenChart.destroy();
+                tokenChart = null;
+            }
+
+            // Create charts
+            const costCanvas = document.getElementById('liveCostChart');
+            const tokenCanvas = document.getElementById('liveTokenChart');
+
+            if (!costCanvas || !tokenCanvas) {
+                console.error('Canvas elements not found');
+                return;
+            }
+
+            const costCtx = costCanvas.getContext('2d');
+            costChart = new Chart(costCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Cost (USD)',
+                        data: costs,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 8,
+                        pointHoverRadius: 10,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { font: { size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Cost: $' + context.parsed.y.toFixed(4);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(4);
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+
+            const tokenCtx = tokenCanvas.getContext('2d');
+            tokenChart = new Chart(tokenCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tokens Used',
+                        data: tokens,
+                        backgroundColor: ['#667eea', '#764ba2', '#f5576c', '#f093fb', '#30cfd0'],
+                        borderRadius: 8,
+                        borderWidth: 0,
+                        maxBarThickness: 80
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: { font: { size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Tokens: ' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

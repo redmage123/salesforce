@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Boilerplate Generator Demo - Salesforce Training</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow: auto;
+            min-height: 100vh;
+        }
+
+        .presentation {
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 40px 0;
+        }
+
+        .slide {
+            display: none;
+            width: 90%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 20px;
+            padding: 60px;
+            padding-bottom: 120px; /* Extra space for fixed navigation */
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideIn 0.3.8s ease-out;
+            margin: 20px auto;
+            max-height: none;
+            overflow-y: visible;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 30px;
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #764ba2;
+            font-weight: 600;
+        }
+
+        h3 {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 1.3em;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            color: #555;
+        }
+
+        ul {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        li {
+            font-size: 1.3em;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            padding-left: 40px;
+            position: relative;
+            color: #555;
+        }
+
+        li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 2px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+
+        .metric {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            margin: 10px 10px 10px 0;
+            font-size: 1.2em;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 25px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin: 20px 0;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .code-block .comment {
+            color: #6a9955;
+        }
+
+        .code-block .keyword {
+            color: #569cd6;
+        }
+
+        .code-block .string {
+            color: #ce9178;
+        }
+
+        .code-block .function {
+            color: #dcdcaa;
+        }
+
+        .demo-box {
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 5px;
+        }
+
+        .demo-box h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .column {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 10000;
+            align-items: center;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            border: 2px solid #667eea;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 1.0em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        button:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .slide-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.0em;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+        }
+
+        .emoji {
+            font-size: 1.5em;
+            margin-right: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .feature-card h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .bullet-point {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .bullet-point:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .title-slide {
+            text-align: center;
+        }
+
+        .title-slide h1 {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .title-slide .subtitle {
+            font-size: 1.8em;
+            color: #764ba2;
+            margin-bottom: 40px;
+        }
+
+        .framework-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="presentation">
+        <!-- Slide 1: Title -->
+        <div class="slide active title-slide">
+            <h1><span class="emoji">🚀</span>AI Boilerplate Generator</h1>
+            <p class="subtitle">Accelerate Development with Intelligent Code Scaffolding</p>
+            <div class="stats-grid" style="margin-top: 60px;">
+                <div class="stat-card">
+                    <div class="stat-number">70%</div>
+                    <div class="stat-label">Less Boilerplate Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">10x</div>
+                    <div class="stat-label">Faster Prototyping</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Consistency</div>
+                </div>
+            </div>
+            <p style="margin-top: 50px; font-size: 1.2em; color: #764ba2;">
+                <strong>Salesforce AI Training - Topic B: Code Generation</strong>
+            </p>
+        </div>
+
+        <!-- Slide 2: The Boilerplate Problem -->
+        <div class="slide">
+            <h2><span class="emoji">😫</span>The Boilerplate Problem</h2>
+
+            <div class="demo-box">
+                <h4>Developers Spend Too Much Time On:</h4>
+                <div class="two-column">
+                    <div class="column">
+                        <div class="bullet-point">Writing CRUD operations</div>
+                        <div class="bullet-point">Setting up API endpoints</div>
+                        <div class="bullet-point">Creating form components</div>
+                        <div class="bullet-point">Database models & migrations</div>
+                        <div class="bullet-point">Authentication scaffolding</div>
+                    </div>
+                    <div class="column">
+                        <div class="bullet-point">Test file boilerplate</div>
+                        <div class="bullet-point">Configuration files</div>
+                        <div class="bullet-point">Repetitive patterns</div>
+                        <div class="bullet-point">Framework-specific setup</div>
+                        <div class="bullet-point">Documentation templates</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <div class="stat-number">40-60%</div>
+                    <div class="stat-label">of coding time on boilerplate</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                    <div class="stat-number">2-3 days</div>
+                    <div class="stat-label">to scaffold new project</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);">
+                    <div class="stat-number">Inconsistent</div>
+                    <div class="stat-label">patterns across team</div>
+                </div>
+            </div>
+
+            <p style="text-align: center; font-size: 1.5em; margin-top: 30px;">
+                <span class="highlight">AI can generate this code in seconds, not hours</span>
+            </p>
+        </div>
+
+        <!-- Slide 3: Solution Overview -->
+        <div class="slide">
+            <h2><span class="emoji">💡</span>AI Boilerplate Generator</h2>
+
+            <p style="font-size: 1.5em; margin-bottom: 40px;">
+                Generate production-ready code from simple specifications
+            </p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>🔌 REST API Generation</h4>
+                    <p>Complete FastAPI/Django apps with CRUD operations, auth, validation, and error handling</p>
+                    <div class="framework-badge">FastAPI</div>
+                    <div class="framework-badge">Django</div>
+                    <div class="framework-badge">Express</div>
+                </div>
+                <div class="feature-card">
+                    <h4>⚛️ Component Scaffolding</h4>
+                    <p>React/Vue components with TypeScript, hooks, state management, and tests</p>
+                    <div class="framework-badge">React</div>
+                    <div class="framework-badge">Vue</div>
+                    <div class="framework-badge">Angular</div>
+                </div>
+                <div class="feature-card">
+                    <h4>☁️ Salesforce Apex</h4>
+                    <p>Bulk-safe service classes with triggers, test coverage, and governor limit awareness</p>
+                    <div class="framework-badge">Apex</div>
+                    <div class="framework-badge">LWC</div>
+                    <div class="framework-badge">Aura</div>
+                </div>
+                <div class="feature-card">
+                    <h4>🔄 Code Refactoring</h4>
+                    <p>Modernize legacy code to current standards with breaking change analysis</p>
+                    <div class="framework-badge">Python 3.10+</div>
+                    <div class="framework-badge">ES6+</div>
+                    <div class="framework-badge">Java 17</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: How to Implement -->
+        <div class="slide">
+            <h2><span class="emoji">🛠️</span>How to Use the Boilerplate Generator</h2>
+
+            <div class="demo-box">
+                <h3>Step 1: Setup</h3>
+                <div class="code-block">
+<span class="comment"># Install and configure</span>
+pip install openai pandas numpy
+
+<span class="keyword">import</span> os
+os.environ[<span class="string">'OPENAI_API_KEY'</span>] = <span class="string">'your-api-key'</span>
+
+<span class="keyword">from</span> ai_boilerplate_generator <span class="keyword">import</span> AIBoilerplateGenerator, OpenAIProvider
+
+provider = OpenAIProvider(os.environ[<span class="string">'OPENAI_API_KEY'</span>], model=<span class="string">'gpt-5'</span>)
+generator = AIBoilerplateGenerator(provider)
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h3>Step 2: Four Main Generation Functions</h3>
+                <ul>
+                    <li><code>generator.generate_rest_api(spec, framework='fastapi')</code></li>
+                    <li><code>generator.generate_react_component(spec)</code></li>
+                    <li><code>generator.generate_apex_class(spec)</code></li>
+                    <li><code>generator.refactor_legacy_code(code, language, target_version)</code></li>
+                </ul>
+            </div>
+
+            <div class="demo-box">
+                <h3>Step 3: Supports 15+ Frameworks</h3>
+                <p>FastAPI, Django, Express, Flask, Spring Boot, React, Vue, Angular, Apex, LWC, and more!</p>
+            </div>
+        </div>
+
+        <!-- Slide 5: Implementation Code -->
+        <div class="slide">
+            <h2><span class="emoji">💻</span>Implementation: The Core Class</h2>
+
+            <div class="demo-box">
+                <h4>AIBoilerplateGenerator Class (from the notebook)</h4>
+                <div class="code-block">
+<span class="keyword">class</span> <span class="function">AIBoilerplateGenerator</span>:
+    <span class="string">"""AI-powered code generation and refactoring"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(<span class="keyword">self</span>, primary: AIProvider, fallback: Optional[AIProvider] = <span class="keyword">None</span>):
+        <span class="keyword">self</span>.primary = primary
+        <span class="keyword">self</span>.fallback = fallback
+        <span class="keyword">self</span>.telemetry: List[TelemetryLog] = []
+
+    <span class="keyword">def</span> <span class="function">generate_rest_api</span>(<span class="keyword">self</span>, spec: Dict[<span class="keyword">str</span>, Any], framework: <span class="keyword">str</span> = <span class="string">'fastapi'</span>) -> GeneratedCode:
+        <span class="string">"""Generate REST API boilerplate"""</span>
+        entity = spec.get(<span class="string">'entity'</span>, <span class="string">'Item'</span>)
+        fields = spec.get(<span class="string">'fields'</span>, [])
+        auth = spec.get(<span class="string">'auth'</span>, <span class="keyword">False</span>)
+
+        system_prompt = <span class="string">f"""You are an expert {framework} developer.
+Generate production-ready REST API code with:
+- CRUD operations (GET, POST, PUT, DELETE)
+- Input validation and error handling
+- Type hints and docstrings
+- Security best practices"""</span>
+
+        user_prompt = <span class="string">f"""Generate a {framework} REST API for: {entity}
+
+Fields: {json.dumps(fields, indent=2)}
+{'Include JWT authentication.' if auth else ''}
+
+Return complete, runnable code organized into files."""</span>
+
+        <span class="comment"># Call GPT-5 to generate code</span>
+        response, metadata = <span class="keyword">self</span>._call_ai(system_prompt, user_prompt)
+
+        <span class="comment"># Parse response into files (models.py, routes.py, etc.)</span>
+        files = <span class="keyword">self</span>._parse_code_blocks(response)
+
+        <span class="keyword">return</span> GeneratedCode(
+            code=response,
+            pattern=<span class="string">'rest_api'</span>,
+            framework=framework,
+            files=files,
+            metadata=metadata
+        )
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <p><strong>Key Points:</strong></p>
+                <ul>
+                    <li>📝 Crafts precise prompts for GPT-5</li>
+                    <li>🔄 Calls OpenAI API with error handling</li>
+                    <li>📦 Parses AI response into structured files</li>
+                    <li>📊 Tracks costs and telemetry</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 5a: AI Provider Implementation -->
+        <div class="slide">
+            <h2><span class="emoji">🤖</span>Implementation: OpenAI Provider</h2>
+
+            <div class="demo-box">
+                <h4>How We Call GPT-5</h4>
+                <div class="code-block">
+<span class="keyword">class</span> <span class="function">OpenAIProvider</span>(AIProvider):
+    <span class="keyword">def</span> <span class="function">__init__</span>(<span class="keyword">self</span>, api_key: <span class="keyword">str</span>, model: <span class="keyword">str</span> = <span class="string">'gpt-5'</span>):
+        <span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+        <span class="keyword">self</span>.client = OpenAI(api_key=api_key)
+        <span class="keyword">self</span>.model = model
+
+    <span class="keyword">def</span> <span class="function">complete</span>(<span class="keyword">self</span>, system_prompt: <span class="keyword">str</span>, user_prompt: <span class="keyword">str</span>,
+                 temperature: <span class="keyword">float</span> = <span class="string">0.3</span>) -> Tuple[<span class="keyword">str</span>, Dict]:
+        <span class="comment"># Call OpenAI API</span>
+        start = time.time()
+
+        response = <span class="keyword">self</span>.client.chat.completions.create(
+            model=<span class="keyword">self</span>.model,
+            messages=[
+                {<span class="string">"role"</span>: <span class="string">"system"</span>, <span class="string">"content"</span>: system_prompt},
+                {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: user_prompt}
+            ],
+            temperature=temperature,
+            max_completion_tokens=<span class="string">3000</span>  <span class="comment"># Large enough for code</span>
+        )
+
+        <span class="comment"># Calculate cost</span>
+        latency = (time.time() - start) * <span class="string">1000</span>
+        usage = response.usage
+        pricing = MODEL_PRICING[<span class="keyword">self</span>.model]
+        cost = (
+            (usage.prompt_tokens / <span class="string">1_000_000</span>) * pricing[<span class="string">'input'</span>] +
+            (usage.completion_tokens / <span class="string">1_000_000</span>) * pricing[<span class="string">'output'</span>]
+        )
+
+        <span class="comment"># Return code + metadata</span>
+        metadata = {
+            <span class="string">'model'</span>: <span class="keyword">self</span>.model,
+            <span class="string">'provider'</span>: <span class="string">'openai'</span>,
+            <span class="string">'cost_usd'</span>: cost,
+            <span class="string">'latency_ms'</span>: latency,
+            <span class="string">'total_tokens'</span>: usage.total_tokens
+        }
+
+        <span class="keyword">return</span> response.choices[<span class="string">0</span>].message.content, metadata
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <p><strong>✅ Features:</strong> Cost tracking, latency monitoring, metadata for telemetry</p>
+            </div>
+        </div>
+
+        <!-- Slide 5b: Fallback Logic -->
+        <div class="slide">
+            <h2><span class="emoji">🔄</span>Implementation: Fallback & Retry</h2>
+
+            <div class="demo-box">
+                <h4>Resilient AI Calls with Multi-Provider Support</h4>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">_call_ai</span>(<span class="keyword">self</span>, system_prompt: <span class="keyword">str</span>, user_prompt: <span class="keyword">str</span>) -> Tuple[<span class="keyword">str</span>, Dict]:
+    <span class="string">"""Call AI with automatic fallback"""</span>
+    <span class="keyword">try</span>:
+        <span class="comment"># Try primary provider (OpenAI GPT-5)</span>
+        <span class="keyword">return</span> <span class="keyword">self</span>.primary.complete(system_prompt, user_prompt)
+
+    <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+        <span class="comment"># If primary fails, use fallback (Anthropic Claude)</span>
+        <span class="keyword">if</span> <span class="keyword">self</span>.fallback:
+            <span class="function">print</span>(<span class="string">f"⚠️  Primary failed: {e}"</span>)
+            <span class="function">print</span>(<span class="string">"   Trying fallback provider..."</span>)
+            <span class="keyword">return</span> <span class="keyword">self</span>.fallback.complete(system_prompt, user_prompt)
+
+        <span class="comment"># No fallback available</span>
+        <span class="keyword">raise</span> e
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>Multi-Provider Architecture</h4>
+                <div class="two-column">
+                    <div class="column">
+                        <h4>Primary: OpenAI GPT-5</h4>
+                        <div class="bullet-point">Best quality</div>
+                        <div class="bullet-point">$3/1M input tokens</div>
+                        <div class="bullet-point">$12/1M output tokens</div>
+                    </div>
+                    <div class="column">
+                        <h4>Fallback: Claude Haiku</h4>
+                        <div class="bullet-point">High reliability</div>
+                        <div class="bullet-point">$0.80/1M input tokens</div>
+                        <div class="bullet-point">$4/1M output tokens</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5c: Code Parsing -->
+        <div class="slide">
+            <h2><span class="emoji">📦</span>Implementation: Code Parsing</h2>
+
+            <div class="demo-box">
+                <h4>Extract Code from AI Response</h4>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">_parse_code_blocks</span>(<span class="keyword">self</span>, response: <span class="keyword">str</span>) -> Dict[<span class="keyword">str</span>, <span class="keyword">str</span>]:
+    <span class="string">"""Extract code blocks from markdown response"""</span>
+    files = {}
+
+    <span class="comment"># Regex to match markdown code blocks with optional filename</span>
+    pattern = <span class="string">r'```(?:\w+)?\s*(?:#\s*(.+?)\n)?(.*?)```'</span>
+    matches = re.findall(pattern, response, re.DOTALL)
+
+    <span class="comment"># Extract each code block</span>
+    <span class="keyword">for</span> i, (filename, code) <span class="keyword">in</span> <span class="function">enumerate</span>(matches):
+        filename = filename.strip() <span class="keyword">if</span> filename <span class="keyword">else</span> <span class="string">f"file_{i+1}.py"</span>
+        files[filename] = code.strip()
+
+    <span class="comment"># Fallback: if no code blocks found, treat whole response as code</span>
+    <span class="keyword">if</span> <span class="keyword">not</span> files:
+        files[<span class="string">'main.py'</span>] = response
+
+    <span class="keyword">return</span> files
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>Example AI Response Format</h4>
+                <div class="code-block" style="font-size: 0.95em;">
+Here is your FastAPI application:
+
+<span class="comment"># models.py</span>
+```python
+<span class="keyword">from</span> sqlalchemy <span class="keyword">import</span> Column, Integer, String
+...
+```
+
+<span class="comment"># routes.py</span>
+```python
+<span class="keyword">from</span> fastapi <span class="keyword">import</span> APIRouter
+...
+```
+                </div>
+                <p style="margin-top: 15px;"><strong>Output:</strong> <code>{'models.py': '...', 'routes.py': '...'}</code></p>
+            </div>
+        </div>
+
+        <!-- Slide 5d: Telemetry & Cost Tracking -->
+        <div class="slide">
+            <h2><span class="emoji">📊</span>Implementation: Telemetry</h2>
+
+            <div class="demo-box">
+                <h4>Track Every Generation for Analytics</h4>
+                <div class="code-block">
+<span class="keyword">def</span> <span class="function">_log_telemetry</span>(<span class="keyword">self</span>, operation: <span class="keyword">str</span>, pattern: <span class="keyword">str</span>,
+                     framework: <span class="keyword">str</span>, metadata: Dict, lines: <span class="keyword">int</span>):
+    <span class="string">"""Log usage telemetry for cost tracking"""</span>
+    log = TelemetryLog(
+        timestamp=datetime.now(),
+        operation=operation,           <span class="comment"># 'generate', 'refactor'</span>
+        pattern=pattern,                <span class="comment"># 'rest_api', 'component'</span>
+        framework=framework,            <span class="comment"># 'fastapi', 'react'</span>
+        model=metadata[<span class="string">'model'</span>],         <span class="comment"># 'gpt-5'</span>
+        provider=metadata[<span class="string">'provider'</span>],   <span class="comment"># 'openai'</span>
+        prompt_tokens=metadata[<span class="string">'prompt_tokens'</span>],
+        completion_tokens=metadata[<span class="string">'completion_tokens'</span>],
+        total_tokens=metadata[<span class="string">'total_tokens'</span>],
+        cost_usd=metadata[<span class="string">'cost_usd'</span>],
+        latency_ms=metadata[<span class="string">'latency_ms'</span>],
+        lines_generated=lines
+    )
+    <span class="keyword">self</span>.telemetry.append(log)
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>Analytics Dashboard</h4>
+                <div class="code-block" style="font-size: 0.95em;">
+<span class="keyword">def</span> <span class="function">get_telemetry_stats</span>(<span class="keyword">self</span>) -> Dict:
+    <span class="string">"""Aggregate telemetry into useful metrics"""</span>
+    df = pd.DataFrame([vars(t) <span class="keyword">for</span> t <span class="keyword">in</span> <span class="keyword">self</span>.telemetry])
+
+    <span class="keyword">return</span> {
+        <span class="string">'total_operations'</span>: <span class="function">len</span>(df),
+        <span class="string">'total_cost'</span>: df[<span class="string">'cost_usd'</span>].sum(),
+        <span class="string">'total_tokens'</span>: df[<span class="string">'total_tokens'</span>].sum(),
+        <span class="string">'total_lines'</span>: df[<span class="string">'lines_generated'</span>].sum(),
+        <span class="string">'avg_latency_ms'</span>: df[<span class="string">'latency_ms'</span>].mean(),
+        <span class="string">'by_operation'</span>: df.groupby(<span class="string">'operation'</span>)[<span class="string">'cost_usd'</span>].sum(),
+        <span class="string">'by_pattern'</span>: df.groupby(<span class="string">'pattern'</span>)[<span class="string">'lines_generated'</span>].sum(),
+        <span class="string">'by_framework'</span>: df.groupby(<span class="string">'framework'</span>)[<span class="string">'cost_usd'</span>].sum()
+    }
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <p><strong>✅ Use telemetry for:</strong> Cost budgets, usage reporting, optimization opportunities</p>
+            </div>
+        </div>
+
+        <!-- Slide 6: Demo 1 - REST API -->
+        <div class="slide">
+            <h2><span class="emoji">🔌</span>Demo 1: REST API Generation</h2>
+
+            <div class="demo-box">
+                <h4>1. Define Your API Spec</h4>
+                <div class="code-block">
+api_spec = {
+  <span class="string">"entity"</span>: <span class="string">"Product"</span>,
+  <span class="string">"fields"</span>: [
+    {<span class="string">"name"</span>: <span class="string">"id"</span>, <span class="string">"type"</span>: <span class="string">"int"</span>, <span class="string">"primary_key"</span>: <span class="keyword">True</span>},
+    {<span class="string">"name"</span>: <span class="string">"name"</span>, <span class="string">"type"</span>: <span class="string">"str"</span>, <span class="string">"required"</span>: <span class="keyword">True</span>},
+    {<span class="string">"name"</span>: <span class="string">"price"</span>, <span class="string">"type"</span>: <span class="string">"float"</span>, <span class="string">"required"</span>: <span class="keyword">True</span>},
+    {<span class="string">"name"</span>: <span class="string">"in_stock"</span>, <span class="string">"type"</span>: <span class="string">"bool"</span>, <span class="string">"default"</span>: <span class="keyword">True</span>}
+  ],
+  <span class="string">"auth"</span>: <span class="keyword">True</span>
+}
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>2. Generate Complete API</h4>
+                <div class="code-block">
+<span class="comment"># One function call generates everything</span>
+result = generator.<span class="function">generate_rest_api</span>(
+    spec=api_spec,
+    framework=<span class="string">'fastapi'</span>  <span class="comment"># or 'django', 'flask', 'express'</span>
+)
+
+<span class="comment"># Returns complete, runnable code</span>
+<span class="function">print</span>(result.code)  <span class="comment"># Full FastAPI application</span>
+<span class="function">print</span>(result.files)  <span class="comment"># {'models.py': '...', 'routes.py': '...', ...}</span>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>3. Get Production-Ready Code</h4>
+                <p><strong>Generated:</strong> 6 files, ~200 lines, full CRUD API with:</p>
+                <ul>
+                    <li>✓ SQLAlchemy models + Pydantic schemas</li>
+                    <li>✓ All 5 REST endpoints (GET, POST, PUT, DELETE)</li>
+                    <li>✓ JWT authentication</li>
+                    <li>✓ Input validation & error handling</li>
+                </ul>
+                <p><strong>Cost:</strong> $0.0185 | <strong>Time:</strong> 5.2s</p>
+            </div>
+        </div>
+
+        <!-- Slide 6a: Generated Code Example (models.py) -->
+        <div class="slide">
+            <h2><span class="emoji">📄</span>Generated Code: models.py</h2>
+
+            <div class="demo-box">
+                <h4>AI Generated This Production-Ready Code:</h4>
+                <div class="code-block">
+<span class="keyword">from</span> sqlalchemy <span class="keyword">import</span> Column, Integer, String, Float, Boolean, DateTime
+<span class="keyword">from</span> sqlalchemy.ext.declarative <span class="keyword">import</span> declarative_base
+<span class="keyword">from</span> datetime <span class="keyword">import</span> datetime
+
+Base = declarative_base()
+
+<span class="keyword">class</span> <span class="function">Product</span>(Base):
+    <span class="string">"""Product model for database"""</span>
+    __tablename__ = <span class="string">"products"</span>
+
+    id = Column(Integer, primary_key=<span class="keyword">True</span>, index=<span class="keyword">True</span>)
+    name = Column(String, nullable=<span class="keyword">False</span>, index=<span class="keyword">True</span>)
+    description = Column(String)
+    price = Column(Float, nullable=<span class="keyword">False</span>)
+    in_stock = Column(Boolean, default=<span class="keyword">True</span>)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    <span class="keyword">def</span> <span class="function">__repr__</span>(<span class="keyword">self</span>):
+        <span class="keyword">return</span> <span class="string">f"&lt;Product(id={self.id}, name='{self.name}', price={self.price})&gt;"</span>
+
+
+<span class="comment"># Pydantic schema for validation</span>
+<span class="keyword">from</span> pydantic <span class="keyword">import</span> BaseModel, Field
+
+<span class="keyword">class</span> <span class="function">ProductCreate</span>(BaseModel):
+    <span class="string">"""Schema for creating products"""</span>
+    name: <span class="keyword">str</span> = Field(..., min_length=<span class="string">1</span>, max_length=<span class="string">100</span>)
+    description: <span class="keyword">str</span> = Field(<span class="keyword">None</span>, max_length=<span class="string">500</span>)
+    price: <span class="keyword">float</span> = Field(..., gt=<span class="string">0</span>)
+    in_stock: <span class="keyword">bool</span> = <span class="keyword">True</span>
+
+<span class="keyword">class</span> <span class="function">ProductResponse</span>(ProductCreate):
+    <span class="string">"""Schema for API responses"""</span>
+    id: <span class="keyword">int</span>
+    created_at: datetime
+
+    <span class="keyword">class</span> Config:
+        orm_mode = <span class="keyword">True</span>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <p><strong>✅ Complete with:</strong> Database models, Pydantic schemas, validation, type hints, docstrings</p>
+            </div>
+        </div>
+
+        <!-- Slide 6b: Generated Code Example (routes.py) -->
+        <div class="slide">
+            <h2><span class="emoji">🛣️</span>Generated Code: routes.py</h2>
+
+            <div class="demo-box">
+                <h4>CRUD Endpoints with Error Handling:</h4>
+                <div class="code-block">
+<span class="keyword">from</span> fastapi <span class="keyword">import</span> APIRouter, Depends, HTTPException, status
+<span class="keyword">from</span> sqlalchemy.orm <span class="keyword">import</span> Session
+<span class="keyword">from</span> typing <span class="keyword">import</span> List
+
+router = APIRouter(prefix=<span class="string">"/api/products"</span>, tags=[<span class="string">"products"</span>])
+
+<span class="comment"># GET /api/products - List all products</span>
+@router.<span class="function">get</span>(<span class="string">"/"</span>, response_model=List[ProductResponse])
+<span class="keyword">def</span> <span class="function">list_products</span>(
+    skip: <span class="keyword">int</span> = <span class="string">0</span>,
+    limit: <span class="keyword">int</span> = <span class="string">100</span>,
+    db: Session = Depends(get_db)
+):
+    <span class="string">"""Get all products with pagination"""</span>
+    products = db.query(Product).offset(skip).limit(limit).all()
+    <span class="keyword">return</span> products
+
+<span class="comment"># POST /api/products - Create new product</span>
+@router.<span class="function">post</span>(<span class="string">"/"</span>, response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+<span class="keyword">def</span> <span class="function">create_product</span>(
+    product: ProductCreate,
+    db: Session = Depends(get_db)
+):
+    <span class="string">"""Create a new product"""</span>
+    db_product = Product(**product.dict())
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    <span class="keyword">return</span> db_product
+
+<span class="comment"># GET /api/products/{id} - Get single product</span>
+@router.<span class="function">get</span>(<span class="string">"/{product_id}"</span>, response_model=ProductResponse)
+<span class="keyword">def</span> <span class="function">get_product</span>(product_id: <span class="keyword">int</span>, db: Session = Depends(get_db)):
+    <span class="string">"""Get product by ID"""</span>
+    product = db.query(Product).filter(Product.id == product_id).first()
+    <span class="keyword">if</span> <span class="keyword">not</span> product:
+        <span class="keyword">raise</span> HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=<span class="string">f"Product {product_id} not found"</span>
+        )
+    <span class="keyword">return</span> product
+
+<span class="comment"># PUT /api/products/{id} - Update product</span>
+@router.<span class="function">put</span>(<span class="string">"/{product_id}"</span>, response_model=ProductResponse)
+<span class="keyword">def</span> <span class="function">update_product</span>(
+    product_id: <span class="keyword">int</span>,
+    product: ProductCreate,
+    db: Session = Depends(get_db)
+):
+    <span class="string">"""Update existing product"""</span>
+    db_product = db.query(Product).filter(Product.id == product_id).first()
+    <span class="keyword">if</span> <span class="keyword">not</span> db_product:
+        <span class="keyword">raise</span> HTTPException(status_code=<span class="string">404</span>, detail=<span class="string">"Product not found"</span>)
+
+    <span class="keyword">for</span> key, value <span class="keyword">in</span> product.dict().items():
+        setattr(db_product, key, value)
+
+    db.commit()
+    db.refresh(db_product)
+    <span class="keyword">return</span> db_product
+
+<span class="comment"># DELETE /api/products/{id} - Delete product</span>
+@router.<span class="function">delete</span>(<span class="string">"/{product_id}"</span>, status_code=status.HTTP_204_NO_CONTENT)
+<span class="keyword">def</span> <span class="function">delete_product</span>(product_id: <span class="keyword">int</span>, db: Session = Depends(get_db)):
+    <span class="string">"""Delete product by ID"""</span>
+    product = db.query(Product).filter(Product.id == product_id).first()
+    <span class="keyword">if</span> <span class="keyword">not</span> product:
+        <span class="keyword">raise</span> HTTPException(status_code=<span class="string">404</span>, detail=<span class="string">"Product not found"</span>)
+
+    db.delete(product)
+    db.commit()
+    <span class="keyword">return</span> <span class="keyword">None</span>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <p><strong>✅ Production features:</strong> Pagination, validation, error handling, proper HTTP status codes, OpenAPI docs</p>
+            </div>
+        </div>
+
+        <!-- Slide 7: Demo 2 - React Component -->
+        <div class="slide">
+            <h2><span class="emoji">⚛️</span>Demo 2: React Component</h2>
+
+            <div class="demo-box">
+                <h4>1. Define Component Spec</h4>
+                <div class="code-block">
+component_spec = {
+  <span class="string">"name"</span>: <span class="string">"ProductList"</span>,
+  <span class="string">"props"</span>: [
+    {<span class="string">"name"</span>: <span class="string">"categoryId"</span>, <span class="string">"type"</span>: <span class="string">"string"</span>, <span class="string">"required"</span>: <span class="keyword">True</span>},
+    {<span class="string">"name"</span>: <span class="string">"onProductClick"</span>, <span class="string">"type"</span>: <span class="string">"(id: string) => void"</span>}
+  ],
+  <span class="string">"api_endpoint"</span>: <span class="string">"/api/products"</span>,
+  <span class="string">"styling"</span>: <span class="string">"tailwind"</span>
+}
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>2. Generate React Component</h4>
+                <div class="code-block">
+<span class="comment"># Generate full TypeScript React component</span>
+result = generator.<span class="function">generate_react_component</span>(spec=component_spec)
+
+<span class="comment"># Get component + tests</span>
+<span class="function">print</span>(result.component)  <span class="comment"># ProductList.tsx</span>
+<span class="function">print</span>(result.tests)  <span class="comment"># ProductList.test.tsx</span>
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <h4>3. Generated Code Includes</h4>
+                <ul>
+                    <li>✓ TypeScript interfaces & props</li>
+                    <li>✓ useState/useEffect hooks for data fetching</li>
+                    <li>✓ Loading/error states</li>
+                    <li>✓ Tailwind CSS styling</li>
+                    <li>✓ Complete Jest test suite</li>
+                </ul>
+                <p><strong>Cost:</strong> $0.0124 | <strong>Time:</strong> 3.8s</p>
+            </div>
+        </div>
+
+        <!-- Slide 7a: Generated React Component Code -->
+        <div class="slide">
+            <h2><span class="emoji">⚛️</span>Generated Code: ProductList.tsx</h2>
+
+            <div class="demo-box">
+                <h4>AI Generated This TypeScript React Component:</h4>
+                <div class="code-block">
+<span class="keyword">import</span> React, { useState, useEffect } <span class="keyword">from</span> <span class="string">'react'</span>;
+
+<span class="keyword">interface</span> <span class="function">Product</span> {
+  id: <span class="keyword">string</span>;
+  name: <span class="keyword">string</span>;
+  price: <span class="keyword">number</span>;
+  in_stock: <span class="keyword">boolean</span>;
+}
+
+<span class="keyword">interface</span> <span class="function">ProductListProps</span> {
+  categoryId: <span class="keyword">string</span>;
+  onProductClick?: (id: <span class="keyword">string</span>) => <span class="keyword">void</span>;
+}
+
+<span class="keyword">export</span> <span class="keyword">const</span> <span class="function">ProductList</span>: React.FC&lt;ProductListProps&gt; = ({ categoryId, onProductClick }) => {
+  <span class="keyword">const</span> [products, setProducts] = useState&lt;Product[]&gt;([]);
+  <span class="keyword">const</span> [loading, setLoading] = useState(<span class="keyword">true</span>);
+  <span class="keyword">const</span> [error, setError] = useState&lt;<span class="keyword">string</span> | <span class="keyword">null</span>&gt;(<span class="keyword">null</span>);
+
+  useEffect(() => {
+    <span class="keyword">const</span> <span class="function">fetchProducts</span> = <span class="keyword">async</span> () => {
+      <span class="keyword">try</span> {
+        setLoading(<span class="keyword">true</span>);
+        <span class="keyword">const</span> response = <span class="keyword">await</span> fetch(<span class="string">`/api/products?category=${categoryId}`</span>);
+
+        <span class="keyword">if</span> (!response.ok) {
+          <span class="keyword">throw</span> <span class="keyword">new</span> Error(<span class="string">`HTTP error! status: ${response.status}`</span>);
+        }
+
+        <span class="keyword">const</span> data = <span class="keyword">await</span> response.json();
+        setProducts(data);
+        setError(<span class="keyword">null</span>);
+      } <span class="keyword">catch</span> (err) {
+        setError(err <span class="keyword">instanceof</span> Error ? err.message : <span class="string">'Failed to fetch products'</span>);
+      } <span class="keyword">finally</span> {
+        setLoading(<span class="keyword">false</span>);
+      }
+    };
+
+    fetchProducts();
+  }, [categoryId]);
+
+  <span class="keyword">if</span> (loading) {
+    <span class="keyword">return</span> &lt;div className=<span class="string">"flex justify-center p-8"</span>&gt;&lt;Spinner /&gt;&lt;/div&gt;;
+  }
+
+  <span class="keyword">if</span> (error) {
+    <span class="keyword">return</span> &lt;div className=<span class="string">"text-red-600 p-4"</span>&gt;Error: {error}&lt;/div&gt;;
+  }
+
+  <span class="keyword">return</span> (
+    &lt;div className=<span class="string">"grid grid-cols-1 md:grid-cols-3 gap-4 p-4"</span>&gt;
+      {products.map((product) => (
+        &lt;div
+          key={product.id}
+          onClick={() => onProductClick?.(product.id)}
+          className=<span class="string">"border rounded-lg p-4 hover:shadow-lg cursor-pointer"</span>
+        &gt;
+          &lt;h3 className=<span class="string">"text-lg font-bold"</span>&gt;{product.name}&lt;/h3&gt;
+          &lt;p className=<span class="string">"text-gray-600"</span>&gt;${product.price.toFixed(<span class="string">2</span>)}&lt;/p&gt;
+          &lt;span className={product.in_stock ? <span class="string">"text-green-600"</span> : <span class="string">"text-red-600"</span>}&gt;
+            {product.in_stock ? <span class="string">'In Stock'</span> : <span class="string">'Out of Stock'</span>}
+          &lt;/span&gt;
+        &lt;/div&gt;
+      ))}
+    &lt;/div&gt;
+  );
+};
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <p><strong>✅ Includes:</strong> TypeScript interfaces, React hooks (useState/useEffect), error handling, loading states, Tailwind CSS</p>
+            </div>
+        </div>
+
+        <!-- Slide 7b: Generated React Test Code -->
+        <div class="slide">
+            <h2><span class="emoji">🧪</span>Generated Code: ProductList.test.tsx</h2>
+
+            <div class="demo-box">
+                <h4>Complete Jest Test Suite:</h4>
+                <div class="code-block">
+<span class="keyword">import</span> { render, screen, waitFor } <span class="keyword">from</span> <span class="string">'@testing-library/react'</span>;
+<span class="keyword">import</span> { ProductList } <span class="keyword">from</span> <span class="string">'./ProductList'</span>;
+
+<span class="comment">// Mock fetch API</span>
+global.fetch = jest.fn();
+
+describe(<span class="string">'ProductList'</span>, () => {
+  beforeEach(() => {
+    (fetch <span class="keyword">as</span> jest.Mock).mockClear();
+  });
+
+  it(<span class="string">'renders loading state initially'</span>, () => {
+    (fetch <span class="keyword">as</span> jest.Mock).mockImplementation(() =>
+      <span class="keyword">new</span> Promise(() => {})
+    );
+
+    render(&lt;ProductList categoryId=<span class="string">"1"</span> /&gt;);
+    expect(screen.getByRole(<span class="string">'status'</span>)).toBeInTheDocument();
+  });
+
+  it(<span class="string">'fetches and displays products'</span>, <span class="keyword">async</span> () => {
+    <span class="keyword">const</span> mockProducts = [
+      { id: <span class="string">'1'</span>, name: <span class="string">'Laptop'</span>, price: <span class="string">999.99</span>, in_stock: <span class="keyword">true</span> },
+      { id: <span class="string">'2'</span>, name: <span class="string">'Mouse'</span>, price: <span class="string">29.99</span>, in_stock: <span class="keyword">false</span> }
+    ];
+
+    (fetch <span class="keyword">as</span> jest.Mock).mockResolvedValueOnce({
+      ok: <span class="keyword">true</span>,
+      json: <span class="keyword">async</span> () => mockProducts
+    });
+
+    render(&lt;ProductList categoryId=<span class="string">"electronics"</span> /&gt;);
+
+    <span class="keyword">await</span> waitFor(() => {
+      expect(screen.getByText(<span class="string">'Laptop'</span>)).toBeInTheDocument();
+      expect(screen.getByText(<span class="string">'$999.99'</span>)).toBeInTheDocument();
+    });
+  });
+
+  it(<span class="string">'handles fetch errors'</span>, <span class="keyword">async</span> () => {
+    (fetch <span class="keyword">as</span> jest.Mock).mockRejectedValueOnce(
+      <span class="keyword">new</span> Error(<span class="string">'Network error'</span>)
+    );
+
+    render(&lt;ProductList categoryId=<span class="string">"1"</span> /&gt;);
+
+    <span class="keyword">await</span> waitFor(() => {
+      expect(screen.getByText(<span class="string">/Error: Network error/</span>)).toBeInTheDocument();
+    });
+  });
+
+  it(<span class="string">'calls onProductClick when product is clicked'</span>, <span class="keyword">async</span> () => {
+    <span class="keyword">const</span> mockClick = jest.fn();
+    <span class="keyword">const</span> mockProducts = [
+      { id: <span class="string">'1'</span>, name: <span class="string">'Laptop'</span>, price: <span class="string">999</span>, in_stock: <span class="keyword">true</span> }
+    ];
+
+    (fetch <span class="keyword">as</span> jest.Mock).mockResolvedValueOnce({
+      ok: <span class="keyword">true</span>,
+      json: <span class="keyword">async</span> () => mockProducts
+    });
+
+    render(&lt;ProductList categoryId=<span class="string">"1"</span> onProductClick={mockClick} /&gt;);
+
+    <span class="keyword">await</span> waitFor(() => screen.getByText(<span class="string">'Laptop'</span>));
+
+    screen.getByText(<span class="string">'Laptop'</span>).click();
+    expect(mockClick).toHaveBeenCalledWith(<span class="string">'1'</span>);
+  });
+});
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <p><strong>✅ Complete test coverage:</strong> Loading states, successful fetch, error handling, user interactions</p>
+            </div>
+        </div>
+
+        <!-- Slide 6: Demo 3 - Salesforce Apex -->
+        <div class="slide">
+            <h2><span class="emoji">☁️</span>Demo 3: Salesforce Apex Class</h2>
+
+            <div class="demo-box">
+                <h4>Specification: Opportunity Service</h4>
+                <div class="code-block">
+{
+  <span class="string">"name"</span>: <span class="string">"OpportunityService"</span>,
+  <span class="string">"sobject"</span>: <span class="string">"Opportunity"</span>,
+  <span class="string">"operations"</span>: [<span class="string">"create"</span>, <span class="string">"read"</span>, <span class="string">"update"</span>, <span class="string">"delete"</span>],
+  <span class="string">"trigger"</span>: <span class="keyword">true</span>
+}
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="column">
+                    <h4>OpportunityService.cls</h4>
+                    <div class="bullet-point">with sharing (security)</div>
+                    <div class="bullet-point">Bulk-safe operations</div>
+                    <div class="bullet-point">SOQL best practices</div>
+                    <div class="bullet-point">Governor limit awareness</div>
+                    <div class="bullet-point">Error handling</div>
+                    <div class="bullet-point">DML exception handling</div>
+                </div>
+                <div class="column">
+                    <h4>OpportunityServiceTest.cls</h4>
+                    <div class="bullet-point">@isTest annotation</div>
+                    <div class="bullet-point">Test data factory</div>
+                    <div class="bullet-point">Bulk operation tests (200 records)</div>
+                    <div class="bullet-point">Negative test cases</div>
+                    <div class="bullet-point">System.assert statements</div>
+                    <div class="bullet-point">85% coverage achieved</div>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 20px;">
+                <h4>OpportunityTrigger.trigger + OpportunityTriggerHandler.cls</h4>
+                <p>Trigger framework with before/after insert/update/delete logic, recursion prevention, and handler pattern</p>
+            </div>
+        </div>
+
+        <!-- Slide 8a: Generated Apex Service Class -->
+        <div class="slide">
+            <h2><span class="emoji">☁️</span>Generated Code: OpportunityService.cls</h2>
+
+            <div class="demo-box">
+                <h4>Bulk-Safe Apex Service Class:</h4>
+                <div class="code-block">
+<span class="keyword">public</span> <span class="keyword">with sharing</span> <span class="keyword">class</span> <span class="function">OpportunityService</span> {
+    <span class="string">/**
+     * Create opportunities in bulk (governor limit safe)
+     * @param opportunities List of opportunities to create
+     * @return List of created opportunities with IDs
+     */</span>
+    <span class="keyword">public</span> <span class="keyword">static</span> List&lt;Opportunity&gt; <span class="function">createOpportunities</span>(List&lt;Opportunity&gt; opportunities) {
+        <span class="comment">// Validate input</span>
+        <span class="keyword">if</span> (opportunities == <span class="keyword">null</span> || opportunities.isEmpty()) {
+            <span class="keyword">throw</span> <span class="keyword">new</span> OpportunityServiceException(<span class="string">'Opportunities list cannot be null or empty'</span>);
+        }
+
+        <span class="keyword">try</span> {
+            <span class="comment">// Bulk insert with partial success handling</span>
+            Database.SaveResult[] results = Database.insert(opportunities, <span class="keyword">false</span>);
+
+            <span class="comment">// Process results and log failures</span>
+            List&lt;Opportunity&gt; successfulOps = <span class="keyword">new</span> List&lt;Opportunity&gt;();
+            <span class="keyword">for</span> (Integer i = <span class="string">0</span>; i &lt; results.size(); i++) {
+                <span class="keyword">if</span> (results[i].isSuccess()) {
+                    successfulOps.add(opportunities[i]);
+                } <span class="keyword">else</span> {
+                    <span class="comment">// Log errors</span>
+                    <span class="keyword">for</span> (Database.Error err : results[i].getErrors()) {
+                        System.debug(LoggingLevel.ERROR,
+                            <span class="string">'Error creating opportunity: '</span> + err.getMessage());
+                    }
+                }
+            }
+
+            <span class="keyword">return</span> successfulOps;
+        } <span class="keyword">catch</span> (DmlException e) {
+            <span class="keyword">throw</span> <span class="keyword">new</span> OpportunityServiceException(
+                <span class="string">'Failed to create opportunities: '</span> + e.getMessage()
+            );
+        }
+    }
+
+    <span class="string">/**
+     * Get opportunities by IDs (SOQL optimized)
+     */</span>
+    <span class="keyword">public</span> <span class="keyword">static</span> List&lt;Opportunity&gt; <span class="function">getOpportunitiesByIds</span>(Set&lt;Id&gt; oppIds) {
+        <span class="keyword">if</span> (oppIds == <span class="keyword">null</span> || oppIds.isEmpty()) {
+            <span class="keyword">return</span> <span class="keyword">new</span> List&lt;Opportunity&gt;();
+        }
+
+        <span class="keyword">return</span> [
+            <span class="keyword">SELECT</span> Id, Name, StageName, Amount, CloseDate, AccountId
+            <span class="keyword">FROM</span> Opportunity
+            <span class="keyword">WHERE</span> Id <span class="keyword">IN</span> :oppIds
+            <span class="keyword">WITH SECURITY_ENFORCED</span>
+        ];
+    }
+
+    <span class="string">/**
+     * Update opportunities with partial success handling
+     */</span>
+    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="function">updateOpportunities</span>(List&lt;Opportunity&gt; opportunities) {
+        <span class="keyword">if</span> (opportunities == <span class="keyword">null</span> || opportunities.isEmpty()) {
+            <span class="keyword">return</span>;
+        }
+
+        Database.SaveResult[] results = Database.update(opportunities, <span class="keyword">false</span>);
+
+        <span class="comment">// Handle errors</span>
+        <span class="keyword">for</span> (Database.SaveResult result : results) {
+            <span class="keyword">if</span> (!result.isSuccess()) {
+                <span class="keyword">for</span> (Database.Error err : result.getErrors()) {
+                    System.debug(LoggingLevel.ERROR, err.getMessage());
+                }
+            }
+        }
+    }
+
+    <span class="comment">// Custom exception class</span>
+    <span class="keyword">public</span> <span class="keyword">class</span> <span class="function">OpportunityServiceException</span> <span class="keyword">extends</span> Exception {}
+}
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <p><strong>✅ Production-ready:</strong> Bulk-safe operations, SOQL best practices, error handling, security enforced</p>
+            </div>
+        </div>
+
+        <!-- Slide 8b: Generated Apex Test Class -->
+        <div class="slide">
+            <h2><span class="emoji">🧪</span>Generated Code: OpportunityServiceTest.cls</h2>
+
+            <div class="demo-box">
+                <h4>Comprehensive Test Coverage (85%+):</h4>
+                <div class="code-block">
+@isTest
+<span class="keyword">private</span> <span class="keyword">class</span> <span class="function">OpportunityServiceTest</span> {
+
+    <span class="comment">// Test data factory</span>
+    @TestSetup
+    <span class="keyword">static</span> <span class="keyword">void</span> <span class="function">setupTestData</span>() {
+        Account testAccount = <span class="keyword">new</span> Account(Name = <span class="string">'Test Account'</span>);
+        insert testAccount;
+    }
+
+    @isTest
+    <span class="keyword">static</span> <span class="keyword">void</span> <span class="function">testCreateOpportunities_Success</span>() {
+        <span class="comment">// Arrange</span>
+        Account acc = [<span class="keyword">SELECT</span> Id <span class="keyword">FROM</span> Account <span class="keyword">LIMIT</span> <span class="string">1</span>];
+        List&lt;Opportunity&gt; opportunities = <span class="keyword">new</span> List&lt;Opportunity&gt;{
+            <span class="keyword">new</span> Opportunity(
+                Name = <span class="string">'Test Opp 1'</span>,
+                StageName = <span class="string">'Prospecting'</span>,
+                CloseDate = Date.today().addDays(<span class="string">30</span>),
+                AccountId = acc.Id
+            ),
+            <span class="keyword">new</span> Opportunity(
+                Name = <span class="string">'Test Opp 2'</span>,
+                StageName = <span class="string">'Qualification'</span>,
+                CloseDate = Date.today().addDays(<span class="string">45</span>),
+                AccountId = acc.Id
+            )
+        };
+
+        <span class="comment">// Act</span>
+        Test.startTest();
+        List&lt;Opportunity&gt; results = OpportunityService.createOpportunities(opportunities);
+        Test.stopTest();
+
+        <span class="comment">// Assert</span>
+        System.assertEquals(<span class="string">2</span>, results.size(), <span class="string">'Should create 2 opportunities'</span>);
+        System.assertNotEquals(<span class="keyword">null</span>, results[<span class="string">0</span>].Id, <span class="string">'Opportunity should have ID'</span>);
+    }
+
+    @isTest
+    <span class="keyword">static</span> <span class="keyword">void</span> <span class="function">testCreateOpportunities_BulkOperation</span>() {
+        <span class="comment">// Test with 200 records (bulk safe)</span>
+        Account acc = [<span class="keyword">SELECT</span> Id <span class="keyword">FROM</span> Account <span class="keyword">LIMIT</span> <span class="string">1</span>];
+        List&lt;Opportunity&gt; bulkOpps = <span class="keyword">new</span> List&lt;Opportunity&gt;();
+
+        <span class="keyword">for</span> (Integer i = <span class="string">0</span>; i &lt; <span class="string">200</span>; i++) {
+            bulkOpps.add(<span class="keyword">new</span> Opportunity(
+                Name = <span class="string">'Bulk Opp '</span> + i,
+                StageName = <span class="string">'Prospecting'</span>,
+                CloseDate = Date.today().addDays(<span class="string">30</span>),
+                AccountId = acc.Id
+            ));
+        }
+
+        Test.startTest();
+        List&lt;Opportunity&gt; results = OpportunityService.createOpportunities(bulkOpps);
+        Test.stopTest();
+
+        System.assertEquals(<span class="string">200</span>, results.size(), <span class="string">'Should handle 200 records'</span>);
+    }
+
+    @isTest
+    <span class="keyword">static</span> <span class="keyword">void</span> <span class="function">testCreateOpportunities_NullInput</span>() {
+        <span class="comment">// Negative test</span>
+        <span class="keyword">try</span> {
+            OpportunityService.createOpportunities(<span class="keyword">null</span>);
+            System.assert(<span class="keyword">false</span>, <span class="string">'Should throw exception'</span>);
+        } <span class="keyword">catch</span> (OpportunityService.OpportunityServiceException e) {
+            System.assert(<span class="keyword">true</span>, <span class="string">'Expected exception thrown'</span>);
+        }
+    }
+
+    @isTest
+    <span class="keyword">static</span> <span class="keyword">void</span> <span class="function">testGetOpportunitiesByIds</span>() {
+        Account acc = [<span class="keyword">SELECT</span> Id <span class="keyword">FROM</span> Account <span class="keyword">LIMIT</span> <span class="string">1</span>];
+        Opportunity opp = <span class="keyword">new</span> Opportunity(
+            Name = <span class="string">'Test'</span>,
+            StageName = <span class="string">'Prospecting'</span>,
+            CloseDate = Date.today(),
+            AccountId = acc.Id
+        );
+        insert opp;
+
+        Test.startTest();
+        List&lt;Opportunity&gt; results = OpportunityService.getOpportunitiesByIds(
+            <span class="keyword">new</span> Set&lt;Id&gt;{ opp.Id }
+        );
+        Test.stopTest();
+
+        System.assertEquals(<span class="string">1</span>, results.size());
+        System.assertEquals(opp.Id, results[<span class="string">0</span>].Id);
+    }
+}
+                </div>
+            </div>
+
+            <div class="demo-box">
+                <p><strong>✅ Complete coverage:</strong> Positive tests, bulk operations (200 records), negative tests, assertions</p>
+            </div>
+        </div>
+
+        <!-- Slide 7: Demo 4 - Refactoring -->
+        <div class="slide">
+            <h2><span class="emoji">🔄</span>Demo 4: Legacy Code Refactoring</h2>
+
+            <div class="two-column">
+                <div class="column">
+                    <h4>Before: Legacy Python 2</h4>
+                    <div class="code-block">
+<span class="keyword">def</span> <span class="function">processUserData</span>(userData):
+    results = []
+    <span class="keyword">for</span> user <span class="keyword">in</span> userData:
+        <span class="keyword">if</span> user[<span class="string">1</span>] != <span class="keyword">None</span>:
+            age = <span class="string">2025</span> - <span class="function">int</span>(user[<span class="string">2</span>])
+            <span class="keyword">if</span> age >= <span class="string">18</span>:
+                results.<span class="function">append</span>(
+                    user[<span class="string">0</span>] + <span class="string">" ("</span> +
+                    <span class="function">str</span>(age) + <span class="string">")"</span>
+                )
+    <span class="keyword">return</span> results
+                    </div>
+                    <p style="color: #f5576c; margin-top: 15px;"><strong>Issues:</strong></p>
+                    <div class="bullet-point">Magic indices (user[0], user[1])</div>
+                    <div class="bullet-point">No type hints</div>
+                    <div class="bullet-point">String concatenation</div>
+                    <div class="bullet-point">No error handling</div>
+                </div>
+                <div class="column">
+                    <h4>After: Modern Python 3.10+</h4>
+                    <div class="code-block">
+<span class="keyword">def</span> <span class="function">process_adult_users</span>(
+    users: <span class="function">List</span>[<span class="function">User</span>]
+) -> <span class="function">List</span>[<span class="keyword">str</span>]:
+    <span class="keyword">return</span> [
+        <span class="keyword">f</span><span class="string">"{user.name} ({age})"</span>
+        <span class="keyword">for</span> user <span class="keyword">in</span> users
+        <span class="keyword">if</span> user.email
+        <span class="keyword">and</span> (age := <span class="string">2025</span> - user.birth_year)
+        >= <span class="string">18</span>
+    ]
+                    </div>
+                    <p style="color: #4caf50; margin-top: 15px;"><strong>Improvements:</strong></p>
+                    <div class="bullet-point">Type hints (mypy compatible)</div>
+                    <div class="bullet-point">Dataclass/NamedTuple for User</div>
+                    <div class="bullet-point">List comprehension</div>
+                    <div class="bullet-point">Walrus operator (:=)</div>
+                    <div class="bullet-point">f-strings</div>
+                    <div class="bullet-point">Descriptive naming</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: Supported Frameworks -->
+        <div class="slide">
+            <h2><span class="emoji">🎨</span>Supported Frameworks</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>Frontend</h4>
+                    <div class="framework-badge">React</div>
+                    <div class="framework-badge">Vue 3</div>
+                    <div class="framework-badge">Angular</div>
+                    <div class="framework-badge">Svelte</div>
+                    <div class="framework-badge">LWC</div>
+                    <p style="margin-top: 15px;">TypeScript, hooks, state management, forms, routing</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Backend</h4>
+                    <div class="framework-badge">FastAPI</div>
+                    <div class="framework-badge">Django</div>
+                    <div class="framework-badge">Express</div>
+                    <div class="framework-badge">Flask</div>
+                    <div class="framework-badge">Apex</div>
+                    <p style="margin-top: 15px;">REST APIs, GraphQL, authentication, database ORMs</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Mobile</h4>
+                    <div class="framework-badge">React Native</div>
+                    <div class="framework-badge">Flutter</div>
+                    <p style="margin-top: 15px;">Cross-platform components, navigation, state</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Database</h4>
+                    <div class="framework-badge">SQLAlchemy</div>
+                    <div class="framework-badge">Prisma</div>
+                    <div class="framework-badge">Mongoose</div>
+                    <p style="margin-top: 15px;">Models, migrations, queries, relationships</p>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 30px;">
+                <h4>Easy to Extend</h4>
+                <p>Add new frameworks and patterns by customizing the prompt templates. Team-specific patterns can be stored in a template library.</p>
+            </div>
+        </div>
+
+        <!-- Slide 9: Architecture -->
+        <div class="slide">
+            <h2><span class="emoji">🏗️</span>Production Architecture</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>AI Providers</h4>
+                    <div class="bullet-point">OpenAI GPT-5 (primary)</div>
+                    <div class="bullet-point">Anthropic Claude (fallback)</div>
+                    <div class="bullet-point">Azure OpenAI (enterprise)</div>
+                    <div class="bullet-point">Automatic failover</div>
+                </div>
+                <div class="feature-card">
+                    <h4>Template System</h4>
+                    <div class="bullet-point">Versioned templates (Git)</div>
+                    <div class="bullet-point">Team-specific patterns</div>
+                    <div class="bullet-point">Custom style guides</div>
+                    <div class="bullet-point">Prompt optimization</div>
+                </div>
+                <div class="feature-card">
+                    <h4>Code Generation</h4>
+                    <div class="bullet-point">Parse spec → Build prompt</div>
+                    <div class="bullet-point">Call AI with retry logic</div>
+                    <div class="bullet-point">Extract code blocks</div>
+                    <div class="bullet-point">Format & validate</div>
+                </div>
+                <div class="feature-card">
+                    <h4>Quality Assurance</h4>
+                    <div class="bullet-point">Linting (black, prettier)</div>
+                    <div class="bullet-point">Type checking (mypy, tsc)</div>
+                    <div class="bullet-point">Test execution</div>
+                    <div class="bullet-point">Security scanning</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: Cost Analysis -->
+        <div class="slide">
+            <h2><span class="emoji">💰</span>Cost & ROI</h2>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">$0.0185</div>
+                    <div class="stat-label">Per REST API (200 lines)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$0.001</div>
+                    <div class="stat-label">Per Component (~150 lines)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$0.0124</div>
+                    <div class="stat-label">Per Apex Class + Tests</div>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 40px;">
+                <h4>ROI Example: 10-Developer Team</h4>
+                <div class="two-column">
+                    <div class="column">
+                        <h4 style="color: #f5576c;">Manual Development</h4>
+                        <div class="bullet-point">2 hours/week on boilerplate</div>
+                        <div class="bullet-point">20 hours/week for team</div>
+                        <div class="bullet-point">1,040 hours/year</div>
+                        <div class="bullet-point">At $100/hr: $104,000/year</div>
+                    </div>
+                    <div class="column">
+                        <h4 style="color: #f5576c;">With AI Generator</h4>
+                        <div class="bullet-point">0.6 hours/week (70% reduction)</div>
+                        <div class="bullet-point">6 hours/week for team</div>
+                        <div class="bullet-point">312 hours/year</div>
+                        <div class="bullet-point"><strong>728 hours saved</strong></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-grid" style="margin-top: 30px;">
+                <div class="stat-card" style="background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);">
+                    <div class="stat-label">Value</div>
+                    <div class="stat-number" style="font-size: 2em;">$72,800</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <div class="stat-label">AI Cost</div>
+                    <div class="stat-number" style="font-size: 2em;">$500</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);">
+                    <div class="stat-label">ROI</div>
+                    <div class="stat-number" style="font-size: 2em;">14,460%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: Integration Options -->
+        <div class="slide">
+            <h2><span class="emoji">🔌</span>How to Use It</h2>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>1. CLI Tool</h4>
+                    <div class="code-block" style="font-size: 0.9em;">
+$ codegen api --entity Product --auth
+$ codegen component ProductList --fetch
+$ codegen apex OpportunityService --trigger
+                    </div>
+                    <p style="margin-top: 10px;">Fast, scriptable, CI/CD friendly</p>
+                </div>
+                <div class="feature-card">
+                    <h4>2. IDE Extension</h4>
+                    <p>Right-click menu in VS Code/IntelliJ</p>
+                    <div class="bullet-point">"Generate API for this model"</div>
+                    <div class="bullet-point">"Scaffold component from design"</div>
+                    <div class="bullet-point">"Refactor to modern syntax"</div>
+                </div>
+                <div class="feature-card">
+                    <h4>3. Web Interface</h4>
+                    <p>Visual form-based generator</p>
+                    <div class="bullet-point">Drag-drop schema builder</div>
+                    <div class="bullet-point">Live preview</div>
+                    <div class="bullet-point">Download or deploy</div>
+                </div>
+                <div class="feature-card">
+                    <h4>4. API Service</h4>
+                    <p>REST endpoint for programmatic access</p>
+                    <div class="bullet-point">POST /generate/api</div>
+                    <div class="bullet-point">POST /generate/component</div>
+                    <div class="bullet-point">POST /refactor</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 12: Best Practices -->
+        <div class="slide">
+            <h2><span class="emoji">⭐</span>Best Practices</h2>
+
+            <div class="two-column">
+                <div class="column">
+                    <h4>✅ Do</h4>
+                    <div class="bullet-point">Review generated code before committing</div>
+                    <div class="bullet-point">Customize templates for your team</div>
+                    <div class="bullet-point">Version control your templates</div>
+                    <div class="bullet-point">Run linters on generated code</div>
+                    <div class="bullet-point">Execute generated tests</div>
+                    <div class="bullet-point">Use for repetitive patterns</div>
+                    <div class="bullet-point">Track time savings</div>
+                    <div class="bullet-point">Cache common patterns</div>
+                </div>
+                <div class="column">
+                    <h4>❌ Don't</h4>
+                    <div class="bullet-point">Use for complex business logic</div>
+                    <div class="bullet-point">Skip code review</div>
+                    <div class="bullet-point">Generate without specifications</div>
+                    <div class="bullet-point">Ignore security warnings</div>
+                    <div class="bullet-point">Forget to test generated code</div>
+                    <div class="bullet-point">Over-rely on defaults</div>
+                    <div class="bullet-point">Generate monolithic files</div>
+                    <div class="bullet-point">Ignore cost budgets</div>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 30px;">
+                <h4>Golden Rule</h4>
+                <p style="font-size: 1.3em;">
+                    <strong>Use AI for scaffolding and boilerplate, not for business logic.</strong>
+                    Let AI handle the tedious setup so you can focus on what makes your app unique.
+                </p>
+            </div>
+        </div>
+
+        <!-- Slide 13: Real-World Impact -->
+        <div class="slide">
+            <h2><span class="emoji">🌟</span>Real-World Impact</h2>
+
+            <div class="demo-box">
+                <h4>Case Study: SaaS Startup</h4>
+                <p style="font-size: 1.2em;">8-person engineering team building customer portal</p>
+            </div>
+
+            <div class="two-column">
+                <div class="column">
+                    <h4>Manual Scaffolding</h4>
+                    <div class="bullet-point">2 weeks to scaffold project</div>
+                    <div class="bullet-point">Inconsistent patterns</div>
+                    <div class="bullet-point">Missing tests initially</div>
+                    <div class="bullet-point">Configuration errors</div>
+                    <div class="bullet-point">3 months to MVP</div>
+                </div>
+                <div class="column">
+                    <h4>With AI Generator</h4>
+                    <div class="bullet-point">2 hours to scaffold ⬇️98%</div>
+                    <div class="bullet-point">Consistent patterns everywhere</div>
+                    <div class="bullet-point">Tests included from start</div>
+                    <div class="bullet-point">Config validated automatically</div>
+                    <div class="bullet-point">6 weeks to MVP ⬇️50%</div>
+                </div>
+            </div>
+
+            <div class="stats-grid" style="margin-top: 40px;">
+                <div class="stat-card">
+                    <div class="stat-number">120+</div>
+                    <div class="stat-label">API endpoints generated</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">45</div>
+                    <div class="stat-label">React components scaffolded</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">$89K</div>
+                    <div class="stat-label">Development cost saved</div>
+                </div>
+            </div>
+
+            <p style="text-align: center; font-size: 1.5em; margin-top: 30px;">
+                <span class="highlight">"We shipped in half the time with better code quality"</span>
+            </p>
+        </div>
+
+        <!-- Slide 14: Getting Started -->
+        <div class="slide">
+            <h2><span class="emoji">🚀</span>Getting Started</h2>
+
+            <div class="demo-box">
+                <h4>Quick Start (5 minutes)</h4>
+                <div class="code-block">
+<span class="comment"># 1. Set up API keys</span>
+<span class="keyword">export</span> OPENAI_API_KEY=<span class="string">'your-key'</span>
+<span class="keyword">export</span> ANTHROPIC_API_KEY=<span class="string">'your-key'</span>
+
+<span class="comment"># 2. Run the notebook</span>
+jupyter notebook ai_boilerplate_generator.ipynb
+
+<span class="comment"># 3. Generate your first API</span>
+generator.<span class="function">generate_rest_api</span>(spec, framework=<span class="string">'fastapi'</span>)
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="column">
+                    <h4>Week 1: Pilot</h4>
+                    <div class="bullet-point">Deploy to 2 developers</div>
+                    <div class="bullet-point">Generate 5-10 patterns</div>
+                    <div class="bullet-point">Measure time savings</div>
+                    <div class="bullet-point">Collect feedback</div>
+                </div>
+                <div class="column">
+                    <h4>Week 2-4: Scale</h4>
+                    <div class="bullet-point">Rollout to full team</div>
+                    <div class="bullet-point">Build template library</div>
+                    <div class="bullet-point">Integrate with IDE/CI</div>
+                    <div class="bullet-point">Track metrics</div>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 30px;">
+                <h4>Success Metrics</h4>
+                <div class="bullet-point">Time to scaffold new feature</div>
+                <div class="bullet-point">Pattern consistency score</div>
+                <div class="bullet-point">Developer satisfaction</div>
+                <div class="bullet-point">Cost per 100 lines generated</div>
+            </div>
+        </div>
+
+        <!-- Slide 15: Summary -->
+        <div class="slide">
+            <h2><span class="emoji">✅</span>Summary</h2>
+
+            <div class="two-column">
+                <div class="column">
+                    <h4>What We Covered</h4>
+                    <div class="bullet-point">REST API generation (FastAPI)</div>
+                    <div class="bullet-point">React component scaffolding</div>
+                    <div class="bullet-point">Salesforce Apex classes</div>
+                    <div class="bullet-point">Legacy code refactoring</div>
+                    <div class="bullet-point">Multi-framework support</div>
+                    <div class="bullet-point">Production architecture</div>
+                    <div class="bullet-point">Cost & ROI analysis</div>
+                </div>
+                <div class="column">
+                    <h4>Key Benefits</h4>
+                    <div class="bullet-point">70% less boilerplate time</div>
+                    <div class="bullet-point">10x faster prototyping</div>
+                    <div class="bullet-point">100% pattern consistency</div>
+                    <div class="bullet-point">Built-in best practices</div>
+                    <div class="bullet-point">Instant test coverage</div>
+                    <div class="bullet-point">14,460% ROI</div>
+                    <div class="bullet-point">Team productivity boost</div>
+                </div>
+            </div>
+
+            <div class="demo-box" style="margin-top: 40px; text-align: center;">
+                <h3 style="margin-bottom: 20px;">Try the Jupyter Notebook!</h3>
+                <p style="font-size: 1.3em;">
+                    <strong>ai_boilerplate_generator.ipynb</strong>
+                </p>
+                <p style="margin-top: 15px;">
+                    Generate complete APIs, components, and Apex classes in seconds
+                </p>
+            </div>
+        </div>
+
+        <!-- Slide 16: Q&A -->
+        <div class="slide title-slide">
+            <h1><span class="emoji">❓</span>Questions?</h1>
+            <div style="margin-top: 60px;">
+                <p style="font-size: 1.5em; margin-bottom: 30px;">
+                    AI Boilerplate Generator Demo
+                </p>
+                <p style="font-size: 1.2em; color: #764ba2;">
+                    Salesforce AI Training - Topic B: Code Generation
+                </p>
+            </div>
+            <div class="stats-grid" style="margin-top: 80px;">
+                <div class="stat-card">
+                    <div class="stat-label">Frameworks</div>
+                    <div class="stat-number" style="font-size: 2.5em;">15+</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Time Saved</div>
+                    <div class="stat-number" style="font-size: 2.5em;">70%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">ROI</div>
+                    <div class="stat-number" style="font-size: 2em;">14,460%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">27</span>
+    </div>
+
+    <div class="navigation">
+        <button id="prev-btn" onclick="previousSlide()">← Previous</button>
+        <button id="next-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('total-slides').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (n + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+
+            document.getElementById('current-slide').textContent = currentSlide + 1;
+
+            document.getElementById('prev-btn').disabled = currentSlide === 0;
+            document.getElementById('next-btn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                showSlide(currentSlide + 1);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                showSlide(currentSlide - 1);
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                previousSlide();
+            }
+        });
+
+        showSlide(0);
+    </script>
+</body>
+</html>
