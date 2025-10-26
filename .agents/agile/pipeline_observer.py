@@ -20,7 +20,7 @@ Event Types:
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Set
 from datetime import datetime
 from enum import Enum
 from dataclasses import dataclass, field
@@ -48,6 +48,7 @@ class EventType(Enum):
     STAGE_FAILED = "stage_failed"
     STAGE_SKIPPED = "stage_skipped"
     STAGE_RETRYING = "stage_retrying"
+    STAGE_PROGRESS = "stage_progress"
 
     # Developer events
     DEVELOPER_STARTED = "developer_started"
@@ -73,6 +74,27 @@ class EventType(Enum):
     WORKFLOW_TRIGGERED = "workflow_triggered"
     WORKFLOW_COMPLETED = "workflow_completed"
     WORKFLOW_FAILED = "workflow_failed"
+
+    # Supervisor command events (bidirectional communication)
+    SUPERVISOR_COMMAND_PAUSE = "supervisor_command_pause"
+    SUPERVISOR_COMMAND_RESUME = "supervisor_command_resume"
+    SUPERVISOR_COMMAND_CANCEL = "supervisor_command_cancel"
+    SUPERVISOR_COMMAND_RETRY = "supervisor_command_retry"
+    SUPERVISOR_COMMAND_SKIP = "supervisor_command_skip"
+    SUPERVISOR_COMMAND_OVERRIDE = "supervisor_command_override"
+    SUPERVISOR_COMMAND_FORCE_APPROVAL = "supervisor_command_force_approval"
+    SUPERVISOR_COMMAND_FORCE_REJECTION = "supervisor_command_force_rejection"
+    SUPERVISOR_COMMAND_SELECT_WINNER = "supervisor_command_select_winner"
+    SUPERVISOR_COMMAND_CHANGE_PRIORITY = "supervisor_command_change_priority"
+    SUPERVISOR_COMMAND_ADJUST_TIMEOUT = "supervisor_command_adjust_timeout"
+    SUPERVISOR_COMMAND_REQUEST_STATUS = "supervisor_command_request_status"
+    SUPERVISOR_COMMAND_EMERGENCY_STOP = "supervisor_command_emergency_stop"
+
+    # Agent response events
+    AGENT_COMMAND_ACKNOWLEDGED = "agent_command_acknowledged"
+    AGENT_COMMAND_COMPLETED = "agent_command_completed"
+    AGENT_COMMAND_FAILED = "agent_command_failed"
+    AGENT_STATUS_RESPONSE = "agent_status_response"
 
 
 # ============================================================================
@@ -356,7 +378,8 @@ class StateTrackingObserver(PipelineObserver):
     def __init__(self):
         self.current_card_id: Optional[str] = None
         self.current_stage: Optional[str] = None
-        self.active_developers: List[str] = []
+        # Performance: Use set for O(1) add/remove instead of O(n) list operations
+        self.active_developers: Set[str] = set()
         self.pipeline_status: str = "idle"
         self.recent_errors: List[str] = []
         self.max_errors = 10
@@ -391,14 +414,14 @@ class StateTrackingObserver(PipelineObserver):
             if event.stage_name == self.current_stage:
                 self.current_stage = None
 
-        # Developer state
+        # Developer state (Performance: O(1) set operations instead of O(n) list)
         elif event.event_type == EventType.DEVELOPER_STARTED:
-            if event.developer_name and event.developer_name not in self.active_developers:
-                self.active_developers.append(event.developer_name)
+            if event.developer_name:
+                self.active_developers.add(event.developer_name)
 
         elif event.event_type in [EventType.DEVELOPER_COMPLETED, EventType.DEVELOPER_FAILED]:
-            if event.developer_name and event.developer_name in self.active_developers:
-                self.active_developers.remove(event.developer_name)
+            if event.developer_name:
+                self.active_developers.discard(event.developer_name)  # discard doesn't raise if not found
 
         # Error tracking
         if event.error:
@@ -479,6 +502,144 @@ class NotificationObserver(PipelineObserver):
     def get_notifications(self) -> List[Dict[str, Any]]:
         """Get all notifications"""
         return self.notifications.copy()
+
+
+# ============================================================================
+# SUPERVISOR COMMAND OBSERVER
+# ============================================================================
+
+class SupervisorCommandObserver(PipelineObserver):
+    """
+    Observer that receives and executes supervisor commands
+
+    This observer is attached to the pipeline observable and listens for
+    SUPERVISOR_COMMAND_* events, then routes them to the appropriate stage/agent.
+
+    Each stage implements command handlers that are registered with this observer.
+    When a command event is received, the observer dispatches it to the registered handler.
+    """
+
+    def __init__(self, verbose: bool = True):
+        self.verbose = verbose
+        self.logger = PipelineLogger(verbose=verbose)
+        # Map of (stage_name, command_type) -> handler function
+        self.command_handlers: Dict[tuple, callable] = {}
+        # Command execution history
+        self.command_history: List[Dict[str, Any]] = []
+
+    def register_command_handler(
+        self,
+        stage_name: str,
+        command_type: EventType,
+        handler: callable
+    ) -> None:
+        """
+        Register a command handler for a specific stage and command type
+
+        Args:
+            stage_name: Name of the stage (e.g., "ValidationStage", "ArbitrationStage")
+            command_type: Type of command event to handle
+            handler: Callable that takes (event: PipelineEvent) -> Dict
+        """
+        key = (stage_name, command_type)
+        self.command_handlers[key] = handler
+
+        if self.verbose:
+            self.logger.log(
+                f"Registered command handler: {stage_name} -> {command_type.value}",
+                "DEBUG"
+            )
+
+    def unregister_command_handler(
+        self,
+        stage_name: str,
+        command_type: EventType
+    ) -> None:
+        """Unregister a command handler"""
+        key = (stage_name, command_type)
+        if key in self.command_handlers:
+            del self.command_handlers[key]
+
+            if self.verbose:
+                self.logger.log(
+                    f"Unregistered command handler: {stage_name} -> {command_type.value}",
+                    "DEBUG"
+                )
+
+    def on_event(self, event: PipelineEvent) -> None:
+        """Handle supervisor command events"""
+
+        # Only process supervisor command events
+        if not event.event_type.value.startswith("supervisor_command_"):
+            return
+
+        stage_name = event.stage_name or event.data.get("target_stage")
+
+        if not stage_name:
+            self.logger.log(
+                f"⚠️  Command {event.event_type.value} has no target stage",
+                "WARNING"
+            )
+            return
+
+        # Look up handler
+        key = (stage_name, event.event_type)
+        handler = self.command_handlers.get(key)
+
+        if not handler:
+            self.logger.log(
+                f"⚠️  No handler registered for {stage_name} -> {event.event_type.value}",
+                "WARNING"
+            )
+            return
+
+        # Execute command
+        try:
+            self.logger.log(
+                f"🎯 Executing command: {event.event_type.value} -> {stage_name}",
+                "INFO"
+            )
+
+            result = handler(event)
+
+            # Record command execution
+            self.command_history.append({
+                "timestamp": event.timestamp.isoformat(),
+                "command": event.event_type.value,
+                "stage": stage_name,
+                "card_id": event.card_id,
+                "result": result,
+                "success": True
+            })
+
+            self.logger.log(
+                f"✅ Command executed successfully: {event.event_type.value}",
+                "SUCCESS"
+            )
+
+        except Exception as e:
+            self.logger.log(
+                f"❌ Command execution failed: {event.event_type.value} -> {e}",
+                "ERROR"
+            )
+
+            # Record failure
+            self.command_history.append({
+                "timestamp": event.timestamp.isoformat(),
+                "command": event.event_type.value,
+                "stage": stage_name,
+                "card_id": event.card_id,
+                "error": str(e),
+                "success": False
+            })
+
+    def get_command_history(self) -> List[Dict[str, Any]]:
+        """Get command execution history"""
+        return self.command_history.copy()
+
+    def clear_command_history(self) -> None:
+        """Clear command history"""
+        self.command_history = []
 
 
 # ============================================================================

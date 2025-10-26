@@ -1,0 +1,208 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251024164521580769-artemis-orchestrator-3-8119a71d",
+  "timestamp": "2025-10-24T16:45:21.580989Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "orchestrator",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "medium",
+  "data": {
+    "update_type": "sprint_planning_complete",
+    "task_title": "Create Artemis self-demo with Chart.js visualization",
+    "total_sprints": 6,
+    "total_story_points": 84,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-24",
+        "end_date": "2025-11-07",
+        "features": [
+          {
+            "title": "Integrate Chart.js Visualizations",
+            "description": "Use Chart.js to create visualizations for pipeline metrics, cost tracking, and success rates.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Pipeline metrics are visualized using Chart.js.",
+              "Cost tracking is displayed with appropriate charts.",
+              "Success rates are shown using Chart.js visualizations."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-07",
+        "end_date": "2025-11-21",
+        "features": [
+          {
+            "title": "Display Real-Time Metrics with Chart.js",
+            "description": "Create a real-time dashboard with Chart.js graphs for various metrics.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Real-time data is displayed using line, bar, and area charts.",
+              "Charts update dynamically to reflect current data.",
+              "Graphs are interactive and provide detailed insights."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-21",
+        "end_date": "2025-12-05",
+        "features": [
+          {
+            "title": "Showcase Artemis Features",
+            "description": "Highlight Artemis features such as cost tracking, sandboxing, and learning using charts.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Features are clearly presented with supporting charts.",
+              "Charts accurately represent feature metrics.",
+              "Information is easy to understand and visually engaging."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 6.5
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-05",
+        "end_date": "2025-12-19",
+        "features": [
+          {
+            "title": "Present Real Metrics from Recent Runs",
+            "description": "Include actual data from recent Artemis runs to demonstrate effectiveness.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Real metrics are presented accurately.",
+              "Data is up-to-date and relevant.",
+              "Metrics are integrated seamlessly into the presentation."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 5.3
+          },
+          {
+            "title": "Implement Professional Design",
+            "description": "Design the presentation with a professional gradient background and smooth transitions.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Gradient background is applied consistently across slides.",
+              "Transitions between slides are smooth and professional.",
+              "Overall design is visually appealing and cohesive."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7333333333333333,
+            "priority_score": 4.9
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 5,
+        "start_date": "2025-12-19",
+        "end_date": "2026-01-02",
+        "features": [
+          {
+            "title": "Integrate Supervisor Across Stages",
+            "description": "Visualize supervisor integration across stages using a pie chart.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Pie chart accurately represents supervisor integration.",
+              "Chart is interactive and provides detailed breakdowns.",
+              "Integration data is clearly communicated."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.9
+          },
+          {
+            "title": "Demonstrate Code Quality Metrics",
+            "description": "Use a radar chart to showcase TDD compliance and adherence to SOLID principles.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Radar chart displays code quality metrics.",
+              "TDD compliance and SOLID principles are clearly represented.",
+              "Chart is easy to interpret and visually appealing."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.9
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 6,
+        "start_date": "2026-01-02",
+        "end_date": "2026-01-16",
+        "features": [
+          {
+            "title": "Auto-Advance Slides with Navigation Controls",
+            "description": "Enable slides to auto-advance with user navigation controls for manual progression.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Slides auto-advance after a set duration.",
+              "Users can manually navigate through slides using controls.",
+              "Navigation controls are intuitive and responsive."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.500000000000001
+          },
+          {
+            "title": "Create Standalone HTML Presentation",
+            "description": "Develop a single HTML file with embedded CSS, JavaScript, and Chart.js for the Artemis demo.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "HTML file is standalone with no external dependencies.",
+              "CSS and JavaScript are embedded within the HTML file.",
+              "Chart.js library is included and functional."
+            ],
+            "story_points": 5,
+            "estimated_hours": 10.0,
+            "risk_level": "low",
+            "confidence": 0.7333333333333334,
+            "priority_score": 4.4
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      }
+    ]
+  },
+  "metadata": {}
+}

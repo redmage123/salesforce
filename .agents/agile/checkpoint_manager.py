@@ -32,6 +32,7 @@ from typing import Dict, List, Optional, Any, Set
 from pathlib import Path
 from dataclasses import dataclass, field, asdict
 from enum import Enum
+from debug_mixin import DebugMixin
 
 
 # ============================================================================
@@ -181,7 +182,7 @@ class PipelineCheckpoint:
 # CHECKPOINT MANAGER
 # ============================================================================
 
-class CheckpointManager:
+class CheckpointManager(DebugMixin):
     """
     Manages pipeline checkpoints for crash recovery
 
@@ -196,7 +197,7 @@ class CheckpointManager:
     def __init__(
         self,
         card_id: str,
-        checkpoint_dir: str = "/tmp/artemis_checkpoints",
+        checkpoint_dir: Optional[str] = None,
         enable_llm_cache: bool = True,
         verbose: bool = True
     ):
@@ -205,11 +206,18 @@ class CheckpointManager:
 
         Args:
             card_id: Kanban card ID
-            checkpoint_dir: Directory for checkpoint storage
+            checkpoint_dir: Directory for checkpoint storage (defaults to env var or repo path)
             enable_llm_cache: Enable LLM response caching
             verbose: Enable verbose logging
         """
+        import os
+        DebugMixin.__init__(self, component_name="checkpoint")
         self.card_id = card_id
+
+        # Get checkpoint dir from parameter, env var, or default
+        if checkpoint_dir is None:
+            checkpoint_dir = os.getenv("ARTEMIS_CHECKPOINT_DIR", "../../.artemis_data/checkpoints")
+
         self.checkpoint_dir = Path(checkpoint_dir)
         self.checkpoint_dir.mkdir(exist_ok=True, parents=True)
         self.enable_llm_cache = enable_llm_cache
@@ -221,6 +229,7 @@ class CheckpointManager:
         # LLM response cache (in-memory)
         self.llm_cache: Dict[str, Any] = {}
 
+        self.debug_log("Checkpoint manager initialized", card_id=card_id, checkpoint_dir=str(self.checkpoint_dir))
         if self.verbose:
             print(f"[CheckpointManager] Initialized for card {card_id}")
             print(f"[CheckpointManager] Checkpoint directory: {self.checkpoint_dir}")
@@ -286,6 +295,8 @@ class CheckpointManager:
         if not self.checkpoint:
             raise ValueError("No checkpoint created. Call create_checkpoint() first.")
 
+        self.debug_log("Saving stage checkpoint", stage_name=stage_name, status=status, artifacts_count=len(artifacts or []))
+
         # Calculate duration
         duration = 0.0
         if start_time and end_time:
@@ -307,16 +318,22 @@ class CheckpointManager:
         # Update checkpoint
         self.checkpoint.stage_checkpoints[stage_name] = stage_checkpoint
 
-        if status == "completed":
-            if stage_name not in self.checkpoint.completed_stages:
-                self.checkpoint.completed_stages.append(stage_name)
-                self.checkpoint.stages_completed += 1
-        elif status == "failed":
-            if stage_name not in self.checkpoint.failed_stages:
-                self.checkpoint.failed_stages.append(stage_name)
-        elif status == "skipped":
-            if stage_name not in self.checkpoint.skipped_stages:
-                self.checkpoint.skipped_stages.append(stage_name)
+        # Update stage lists using status mapping
+        status_actions = {
+            "completed": lambda: (
+                self.checkpoint.completed_stages.append(stage_name),
+                setattr(self.checkpoint, 'stages_completed', self.checkpoint.stages_completed + 1)
+            ) if stage_name not in self.checkpoint.completed_stages else None,
+            "failed": lambda: self.checkpoint.failed_stages.append(stage_name)
+            if stage_name not in self.checkpoint.failed_stages else None,
+            "skipped": lambda: self.checkpoint.skipped_stages.append(stage_name)
+            if stage_name not in self.checkpoint.skipped_stages else None,
+        }
+
+        # Execute action for status
+        action = status_actions.get(status)
+        if action:
+            action()
 
         self.checkpoint.total_duration_seconds += duration
         self.checkpoint.updated_at = datetime.now()
@@ -423,7 +440,10 @@ class CheckpointManager:
         Returns:
             Checkpoint if available, None otherwise
         """
+        self.debug_log("Attempting to resume from checkpoint", card_id=self.card_id)
+
         if not self.can_resume():
+            self.debug_log("Cannot resume - no valid checkpoint found")
             if self.verbose:
                 print(f"[CheckpointManager] No checkpoint to resume from")
             return None
@@ -433,6 +453,8 @@ class CheckpointManager:
         self.checkpoint.resume_count += 1
         self.checkpoint.last_resume_time = datetime.now()
         self.checkpoint.updated_at = datetime.now()
+
+        self.debug_log("Resumed from checkpoint", checkpoint_id=self.checkpoint.checkpoint_id, completed_stages=len(self.checkpoint.completed_stages))
 
         # Restore LLM cache
         if self.enable_llm_cache:
@@ -579,6 +601,8 @@ class CheckpointManager:
 
     def clear_checkpoint(self) -> None:
         """Clear checkpoint (delete from disk)"""
+        self.debug_log("Clearing checkpoint", card_id=self.card_id)
+
         checkpoint_file = self._get_checkpoint_file()
 
         if checkpoint_file.exists():
@@ -587,6 +611,7 @@ class CheckpointManager:
         self.checkpoint = None
         self.llm_cache.clear()
 
+        self.debug_log("Checkpoint cleared", card_id=self.card_id)
         if self.verbose:
             print(f"[CheckpointManager] Checkpoint cleared")
 

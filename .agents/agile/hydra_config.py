@@ -32,14 +32,15 @@ class StorageConfig:
     Storage Configuration
 
     Controls where Artemis stores RAG database, checkpoints, and temporary files.
+    Paths are relative to .agents/agile directory unless overridden by env vars.
     """
     rag_db_type: str = "sqlite"  # sqlite or postgres
-    rag_db_path: Optional[str] = "/tmp/rag_db"  # Path for SQLite
+    rag_db_path: Optional[str] = "db"  # Path for SQLite (relative to .agents/agile)
     chromadb_host: Optional[str] = None  # Host for PostgreSQL-backed ChromaDB
     chromadb_port: Optional[int] = None  # Port for PostgreSQL-backed ChromaDB
-    temp_dir: str = "/tmp"
-    checkpoint_dir: str = "/tmp/artemis_checkpoints"
-    state_dir: str = "/tmp/artemis_state"
+    temp_dir: str = "../../.artemis_data/temp"
+    checkpoint_dir: str = "../../.artemis_data/checkpoints"
+    state_dir: str = "../../.artemis_data/state"
 
 
 @dataclass

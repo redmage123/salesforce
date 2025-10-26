@@ -1,0 +1,91 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251025070721850130-artemis-orchestrator-3-1f3f6987",
+  "timestamp": "2025-10-25T07:07:21.850299Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "orchestrator",
+  "message_type": "data_update",
+  "card_id": "card-20251025070656",
+  "priority": "medium",
+  "data": {
+    "update_type": "sprint_planning_complete",
+    "task_title": "Load Pipeline Execution Data",
+    "total_sprints": 3,
+    "total_story_points": 34,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-25",
+        "end_date": "2025-11-08",
+        "features": [
+          {
+            "title": "Optimization Opportunity Identification",
+            "description": "Implement a system to identify potential optimization opportunities in pipeline execution.",
+            "business_value": 10,
+            "acceptance_criteria": [
+              "The system highlights areas with performance bottlenecks.",
+              "Users receive suggestions for potential optimizations.",
+              "The system provides historical comparisons to track improvements."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 7.300000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-08",
+        "end_date": "2025-11-22",
+        "features": [
+          {
+            "title": "Performance Visualization Dashboard",
+            "description": "Create a dashboard to visualize pipeline performance trends.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "The dashboard displays key performance metrics in real-time.",
+              "Users can filter data by time range and pipeline stage.",
+              "Visualizations include graphs and charts for trend analysis."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-22",
+        "end_date": "2025-12-06",
+        "features": [
+          {
+            "title": "Data Analysis Module",
+            "description": "Develop a module to analyze pipeline execution metrics.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "The module can ingest raw execution data.",
+              "The module processes data to extract key metrics.",
+              "The module outputs data in a structured format for further use."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 5.0
+          }
+        ],
+        "total_story_points": 8,
+        "capacity_used": 0.4
+      }
+    ]
+  },
+  "metadata": {}
+}

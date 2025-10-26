@@ -1,0 +1,8 @@
+# Quiet Logging Configuration
+# Minimal logging - errors and critical only
+
+verbose: false
+log_level: ERROR
+log_dir: /var/log/artemis
+max_size_mb: 50
+backup_count: 5

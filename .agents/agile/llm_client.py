@@ -111,24 +111,25 @@ class OpenAIClient(LLMClientInterface):
 
         # Default model
         if model is None:
-            model = "gpt-5"  # Latest GPT-5 model (supports temperature)
+            model = "gpt-4o"  # Latest GPT-4o model (supports temperature)
 
         # Build API call kwargs
         api_kwargs = {
             "model": model,
             "messages": openai_messages,
             "temperature": temperature,
-            "max_tokens": max_tokens
         }
 
-        # Note: o1 reasoning models have different requirements
-        # They don't support temperature and use max_completion_tokens
-        # But GPT-5 supports all standard parameters including temperature
-        if model.startswith("o1"):
-            # o1 models only support temperature=1 (default), so we omit it
-            # o1 models use max_completion_tokens instead of max_tokens
+        # Note: Newer OpenAI models use max_completion_tokens instead of max_tokens
+        # o1 and GPT-5 models don't support custom temperature parameter
+        if model.startswith("o1") or model.startswith("gpt-5"):
+            # These models only support temperature=1 (default), so we omit it
             del api_kwargs["temperature"]
-            api_kwargs["max_completion_tokens"] = api_kwargs.pop("max_tokens")
+            api_kwargs["max_completion_tokens"] = max_tokens
+        else:
+            # Most modern models now use max_completion_tokens
+            # Use max_completion_tokens for all models (GPT-4o, etc.)
+            api_kwargs["max_completion_tokens"] = max_tokens
 
         # Add response_format if specified (for JSON mode)
         if response_format:
@@ -153,6 +154,42 @@ class OpenAIClient(LLMClientInterface):
             provider="openai",
             usage=usage,
             raw_response=response.model_dump()
+        )
+
+    def generate_text(
+        self,
+        messages: Optional[List[LLMMessage]] = None,
+        model: Optional[str] = None,
+        temperature: float = 0.7,
+        max_tokens: int = 4000,
+        response_format: Optional[Dict] = None,
+        system_message: Optional[str] = None,
+        user_message: Optional[str] = None
+    ) -> LLMResponse:
+        """
+        Alias for complete() to match ai_query_service expectations
+
+        Supports two calling conventions:
+        1. messages parameter (List[LLMMessage])
+        2. system_message + user_message parameters (strings)
+        """
+        # Convert system_message/user_message to messages format
+        if messages is None and (system_message or user_message):
+            messages = []
+            if system_message:
+                messages.append(LLMMessage(role="system", content=system_message))
+            if user_message:
+                messages.append(LLMMessage(role="user", content=user_message))
+
+        if not messages:
+            raise ValueError("Either 'messages' or 'system_message'/'user_message' must be provided")
+
+        return self.complete(
+            messages=messages,
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            response_format=response_format
         )
 
     def get_available_models(self) -> List[str]:
@@ -345,6 +382,24 @@ def create_llm_client(
             f"Invalid provider: {provider}",
             context={"provider": provider, "supported": ["openai", "anthropic"]}
         )
+
+
+# Type alias for backwards compatibility - but keep Factory methods accessible
+class LLMClient:
+    """
+    Backwards compatibility wrapper
+
+    Provides both type compatibility (for isinstance checks) and factory methods
+    """
+    @staticmethod
+    def create_from_env() -> LLMClientInterface:
+        """Create LLM client from environment variables"""
+        return LLMClientFactory.create_from_env()
+
+    @staticmethod
+    def create(provider: LLMProvider, api_key: Optional[str] = None) -> LLMClientInterface:
+        """Create LLM client"""
+        return LLMClientFactory.create(provider, api_key)
 
 
 # ============================================================================

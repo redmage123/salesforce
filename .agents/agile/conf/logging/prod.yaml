@@ -1,0 +1,8 @@
+# Production Logging Configuration
+# Standard INFO level logging with larger rotation
+
+verbose: false
+log_level: INFO
+log_dir: /var/log/artemis
+max_size_mb: 100
+backup_count: 10

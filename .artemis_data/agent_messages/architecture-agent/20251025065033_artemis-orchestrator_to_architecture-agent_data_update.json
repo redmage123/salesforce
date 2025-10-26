@@ -1,0 +1,139 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251025065033863509-artemis-orchestrator-2-750465f2",
+  "timestamp": "2025-10-25T06:50:33.863698Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "architecture-agent",
+  "message_type": "data_update",
+  "card_id": "card-20251025064953",
+  "priority": "high",
+  "data": {
+    "update_type": "sprint_plan_complete",
+    "task_title": "Load Pipeline Execution Data",
+    "total_sprints": 5,
+    "total_story_points": 65,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-25",
+        "end_date": "2025-11-08",
+        "features": [
+          {
+            "title": "Data Visualization",
+            "description": "Design a dashboard to visualize pipeline execution metrics and trends.",
+            "business_value": 10,
+            "acceptance_criteria": [
+              "Dashboard displays key metrics and trends clearly.",
+              "Users can customize the dashboard layout.",
+              "Visualizations are updated in real-time with new data."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 7.300000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-08",
+        "end_date": "2025-11-22",
+        "features": [
+          {
+            "title": "Performance Metrics Calculation",
+            "description": "Implement functionality to calculate key performance metrics for the pipeline.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "System calculates metrics such as execution time and success rate.",
+              "Metrics are updated in real-time as new data is ingested.",
+              "Users can view historical performance metrics."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-22",
+        "end_date": "2025-12-06",
+        "features": [
+          {
+            "title": "Data Ingestion",
+            "description": "Develop a module to ingest execution data from the Artemis pipeline.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Data is successfully retrieved from the Artemis pipeline.",
+              "Data ingestion process is logged for audit purposes.",
+              "System handles data ingestion failures gracefully."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.7,
+            "priority_score": 6.5
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-06",
+        "end_date": "2025-12-20",
+        "features": [
+          {
+            "title": "Optimization Recommendations",
+            "description": "Develop a feature to provide recommendations for pipeline optimization.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "System generates recommendations based on performance metrics.",
+              "Recommendations are prioritized by potential impact.",
+              "Users receive notifications for new optimization suggestions."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 6.5
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 5,
+        "start_date": "2025-12-20",
+        "end_date": "2026-01-03",
+        "features": [
+          {
+            "title": "Trend Analysis",
+            "description": "Create a component to analyze trends in pipeline execution data.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "System identifies and displays execution trends over time.",
+              "Users can filter trends by specific metrics.",
+              "Trend analysis results are visualized in an easy-to-understand format."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.7,
+            "priority_score": 6.1000000000000005
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      }
+    ]
+  },
+  "metadata": {}
+}

@@ -10,6 +10,7 @@ Agents can send/receive messages, update shared state, and coordinate actions.
 """
 
 import json
+import os
 import hashlib
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -45,8 +46,14 @@ class AgentMessenger(MessengerInterface):
 
     PROTOCOL_VERSION = "1.0.0"
 
-    def __init__(self, agent_name: str, message_dir: str = "/tmp/agent_messages"):
+    def __init__(self, agent_name: str, message_dir: str = "../../.artemis_data/agent_messages"):
         self.agent_name = agent_name
+
+        # Convert relative path to absolute
+        if not os.path.isabs(message_dir):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            message_dir = os.path.join(script_dir, message_dir)
+
         self.message_dir = Path(message_dir)
         self.message_dir.mkdir(exist_ok=True, parents=True)
 

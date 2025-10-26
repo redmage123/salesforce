@@ -1,0 +1,841 @@
+{
+  "version": "1.0.0",
+  "description": "Comprehensive skills registry for all Artemis agents",
+  "last_updated": "2025-10-24",
+  "agents": {
+    "code_review_agent": {
+      "class_name": "CodeReviewAgent",
+      "file": "code_review_agent.py",
+      "description": "Comprehensive Security & Quality Analysis Agent",
+      "primary_responsibilities": [
+        "Code quality analysis and anti-pattern detection",
+        "Security vulnerability assessment (OWASP Top 10)",
+        "GDPR compliance verification",
+        "Accessibility compliance (WCAG 2.1 AA)",
+        "Generate detailed review reports with actionable feedback"
+      ],
+      "skills": {
+        "security_analysis": {
+          "description": "Identifies security vulnerabilities following OWASP Top 10",
+          "techniques": [
+            "SQL injection detection",
+            "XSS vulnerability scanning",
+            "Authentication and session management review",
+            "Sensitive data exposure checks",
+            "XML external entities (XXE) detection",
+            "Broken access control identification",
+            "Security misconfiguration detection",
+            "Insecure deserialization checks",
+            "Component vulnerability assessment",
+            "Insufficient logging and monitoring detection"
+          ]
+        },
+        "code_quality": {
+          "description": "Analyzes code for maintainability and best practices",
+          "techniques": [
+            "Anti-pattern detection (god classes, nested loops, nested conditionals)",
+            "SOLID principles compliance checking",
+            "Design pattern identification and recommendations",
+            "Code complexity analysis",
+            "DRY principle enforcement",
+            "Method and class size verification",
+            "Comment quality assessment"
+          ]
+        },
+        "gdpr_compliance": {
+          "description": "Verifies GDPR compliance for data handling",
+          "techniques": [
+            "Personal data identification",
+            "Data minimization verification",
+            "Consent mechanism review",
+            "Right to erasure implementation",
+            "Data portability checks",
+            "Privacy by design assessment"
+          ]
+        },
+        "accessibility_compliance": {
+          "description": "Checks WCAG 2.1 AA accessibility standards",
+          "techniques": [
+            "Semantic HTML verification",
+            "ARIA attributes validation",
+            "Keyboard navigation support",
+            "Screen reader compatibility",
+            "Color contrast checking",
+            "Alternative text for images",
+            "Form labeling verification"
+          ]
+        }
+      },
+      "llm_capabilities": [
+        "Intelligent code pattern recognition",
+        "Context-aware security analysis",
+        "Natural language feedback generation"
+      ],
+      "integrations": [
+        "PromptManager (RAG-based prompts)",
+        "AIQueryService (centralized LLM queries)",
+        "ReviewRequestBuilder"
+      ]
+    },
+    "supervisor_agent": {
+      "class_name": "SupervisorAgent",
+      "file": "supervisor_agent.py",
+      "description": "LLM-powered intelligent supervisor for coordinating Artemis stages",
+      "primary_responsibilities": [
+        "Stage orchestration and workflow management",
+        "Intelligent decision-making for stage transitions",
+        "Failure recovery and retry coordination",
+        "Context-aware stage parameter configuration",
+        "Learning from past executions"
+      ],
+      "skills": {
+        "workflow_orchestration": {
+          "description": "Coordinates multi-stage Artemis pipeline execution",
+          "techniques": [
+            "Dynamic stage ordering based on dependencies",
+            "Parallel stage execution when possible",
+            "Stage input/output validation",
+            "Checkpoint management integration",
+            "State machine coordination"
+          ]
+        },
+        "intelligent_decision_making": {
+          "description": "Uses LLM to make context-aware decisions",
+          "techniques": [
+            "Stage skipping based on context analysis",
+            "Retry strategy selection",
+            "Parameter tuning based on historical data",
+            "Failure root cause analysis",
+            "Alternative path suggestion"
+          ]
+        },
+        "learning_and_adaptation": {
+          "description": "Learns from execution history to improve decisions",
+          "techniques": [
+            "Success/failure pattern recognition",
+            "Configuration optimization",
+            "Anomaly detection in stage execution",
+            "Performance trend analysis"
+          ]
+        },
+        "observer_pattern": {
+          "description": "Monitors and reacts to stage events",
+          "techniques": [
+            "Real-time event broadcasting",
+            "Stage lifecycle tracking",
+            "Error propagation handling",
+            "Metric collection and aggregation"
+          ]
+        }
+      },
+      "llm_capabilities": [
+        "Natural language reasoning about workflow state",
+        "Context-aware failure diagnosis",
+        "Intelligent retry strategy generation"
+      ],
+      "integrations": [
+        "PipelineObservable (event system)",
+        "CheckpointManager",
+        "ArtemisStateMachine",
+        "AIQueryService",
+        "KnowledgeGraph"
+      ]
+    },
+    "standalone_developer_agent": {
+      "class_name": "StandaloneDeveloperAgent",
+      "file": "standalone_developer_agent.py",
+      "description": "Conservative or Aggressive developer persona for code implementation",
+      "primary_responsibilities": [
+        "Implement features based on Architecture Decision Records (ADRs)",
+        "Follow comprehensive coding standards (20+ languages)",
+        "Generate production-ready code with tests",
+        "Apply SOLID principles and design patterns",
+        "Respond to code review feedback"
+      ],
+      "skills": {
+        "code_generation": {
+          "description": "Generates high-quality, production-ready code",
+          "techniques": [
+            "Multi-language support (Python, C, C++, Rust, Java, Groovy, Go, JS, TS, Ruby, Swift, Objective-C, Kotlin, C#, Scala, Haskell, Erlang, SQL, GraphQL, Forth)",
+            "Custom exception wrapper generation",
+            "SOLID principles enforcement",
+            "Design pattern application (Factory, Builder, Strategy, Observer, etc.)",
+            "Functional programming patterns (map/filter/reduce, comprehensions)",
+            "Memoization and performance optimization",
+            "Explicit documentation generation"
+          ]
+        },
+        "anti_pattern_avoidance": {
+          "description": "Avoids common code anti-patterns",
+          "techniques": [
+            "No nested loops (use comprehensions/functional patterns)",
+            "No nested conditionals",
+            "No if-elif chains (use rule-based or pattern matching)",
+            "No god classes (enforce method size limits)",
+            "No magic numbers (use configuration classes)",
+            "No mutable global state"
+          ]
+        },
+        "test_generation": {
+          "description": "Generates comprehensive test suites",
+          "techniques": [
+            "Unit tests (85%+ coverage target)",
+            "Property-based testing",
+            "Test fixture creation",
+            "Mock/stub generation",
+            "Edge case identification"
+          ]
+        },
+        "architectural_patterns": {
+          "description": "Applies architectural best practices",
+          "techniques": [
+            "Dependency Injection",
+            "Repository Pattern",
+            "Service Layer",
+            "Command Query Separation (CQS)",
+            "Event Sourcing",
+            "Hexagonal/Clean Architecture"
+          ]
+        }
+      },
+      "developer_personas": {
+        "conservative": {
+          "characteristics": [
+            "Stability and reliability over clever tricks",
+            "Proven patterns over experimental approaches",
+            "Comprehensive testing and error handling",
+            "Production-ready code (no TODOs or placeholders)"
+          ]
+        },
+        "aggressive": {
+          "characteristics": [
+            "Innovation and modern approaches",
+            "Performance and scalability as first-class concerns",
+            "Latest language features and design patterns",
+            "Production-ready, cutting-edge code"
+          ]
+        }
+      },
+      "llm_capabilities": [
+        "Natural language to code translation",
+        "Context-aware implementation decisions",
+        "Code review feedback incorporation"
+      ],
+      "integrations": [
+        "PromptManager (RAG-based prompts)",
+        "AIQueryService"
+      ]
+    },
+    "requirements_parser_agent": {
+      "class_name": "RequirementsParserAgent",
+      "file": "requirements_parser_agent.py",
+      "description": "Parses and structures project requirements documents",
+      "primary_responsibilities": [
+        "Parse natural language requirements",
+        "Extract functional and non-functional requirements",
+        "Identify dependencies and constraints",
+        "Structure requirements into machine-readable format",
+        "Validate requirement completeness and clarity"
+      ],
+      "skills": {
+        "document_parsing": {
+          "description": "Extracts structured data from requirements documents",
+          "techniques": [
+            "Natural language understanding",
+            "Entity extraction",
+            "Relationship identification",
+            "Ambiguity detection",
+            "Completeness verification"
+          ]
+        },
+        "requirement_classification": {
+          "description": "Categorizes requirements by type and priority",
+          "techniques": [
+            "Functional vs non-functional classification",
+            "Priority assignment (MoSCoW: Must/Should/Could/Won't)",
+            "Complexity estimation",
+            "Dependency mapping",
+            "Risk assessment"
+          ]
+        },
+        "validation": {
+          "description": "Validates requirement quality and consistency",
+          "techniques": [
+            "Completeness checking",
+            "Consistency verification",
+            "Testability assessment",
+            "Conflict detection",
+            "Traceability matrix generation"
+          ]
+        }
+      },
+      "llm_capabilities": [
+        "Natural language understanding",
+        "Semantic requirement extraction",
+        "Dependency inference"
+      ],
+      "integrations": [
+        "DocumentReader",
+        "KnowledgeGraph (for requirement relationships)",
+        "RAGAgent"
+      ]
+    },
+    "retrospective_agent": {
+      "class_name": "RetrospectiveAgent",
+      "file": "retrospective_agent.py",
+      "description": "Conducts sprint retrospectives and generates improvement insights",
+      "primary_responsibilities": [
+        "Analyze sprint execution metrics",
+        "Identify what went well and what needs improvement",
+        "Generate actionable recommendations",
+        "Track improvement over time",
+        "Facilitate continuous improvement culture"
+      ],
+      "skills": {
+        "metric_analysis": {
+          "description": "Analyzes sprint metrics for insights",
+          "techniques": [
+            "Velocity trend analysis",
+            "Story point accuracy assessment",
+            "Cycle time analysis",
+            "Defect rate tracking",
+            "Code review feedback analysis",
+            "Test coverage trends"
+          ]
+        },
+        "root_cause_analysis": {
+          "description": "Identifies root causes of issues",
+          "techniques": [
+            "Five Whys technique",
+            "Fishbone diagram generation",
+            "Pattern recognition in failures",
+            "Bottleneck identification",
+            "Dependency analysis"
+          ]
+        },
+        "recommendation_generation": {
+          "description": "Generates actionable improvement recommendations",
+          "techniques": [
+            "Best practice identification",
+            "Process optimization suggestions",
+            "Tool and technique recommendations",
+            "Training need identification",
+            "Priority ranking of improvements"
+          ]
+        },
+        "continuous_improvement": {
+          "description": "Tracks improvement actions over time",
+          "techniques": [
+            "Action item tracking",
+            "Improvement impact measurement",
+            "Retrospective on retrospectives",
+            "Success pattern recognition",
+            "Team health assessment"
+          ]
+        }
+      },
+      "llm_capabilities": [
+        "Natural language insight generation",
+        "Pattern recognition in qualitative feedback",
+        "Context-aware recommendation generation"
+      ],
+      "integrations": [
+        "PromptManager",
+        "AIQueryService",
+        "KanbanManager (for sprint data)",
+        "KnowledgeGraph (for historical patterns)"
+      ]
+    },
+    "project_analysis_agent": {
+      "class_name": "ProjectAnalysisAgent",
+      "file": "project_analysis_agent.py",
+      "description": "Analyzes project structure and generates insights",
+      "primary_responsibilities": [
+        "Codebase structure analysis",
+        "Dependency mapping",
+        "Technical debt identification",
+        "Architecture documentation generation",
+        "Component relationship visualization"
+      ],
+      "skills": {
+        "codebase_analysis": {
+          "description": "Analyzes project structure and components",
+          "techniques": [
+            "File system traversal",
+            "Import/dependency parsing",
+            "Module relationship mapping",
+            "Dead code detection",
+            "Circular dependency identification"
+          ]
+        },
+        "architecture_analysis": {
+          "description": "Understands and documents system architecture",
+          "techniques": [
+            "Layer identification (presentation, business, data)",
+            "Design pattern detection",
+            "Architectural style classification",
+            "Component diagram generation",
+            "Data flow analysis"
+          ]
+        },
+        "technical_debt_assessment": {
+          "description": "Identifies and quantifies technical debt",
+          "techniques": [
+            "Code complexity metrics (cyclomatic, cognitive)",
+            "Code duplication detection",
+            "Outdated dependency identification",
+            "Test coverage gaps",
+            "Documentation completeness",
+            "Security vulnerability scanning"
+          ]
+        },
+        "knowledge_extraction": {
+          "description": "Extracts knowledge from codebase for RAG",
+          "techniques": [
+            "API documentation extraction",
+            "Design decision mining from code/comments",
+            "Component capability cataloging",
+            "Example usage extraction",
+            "Best practice identification"
+          ]
+        }
+      },
+      "llm_capabilities": [
+        "Natural language architecture documentation",
+        "Intelligent technical debt prioritization",
+        "Context-aware refactoring suggestions"
+      ],
+      "integrations": [
+        "KnowledgeGraph (for project structure)",
+        "RAGAgent (for documentation storage)",
+        "CodeReviewAgent (for quality insights)"
+      ]
+    },
+    "rag_agent": {
+      "class_name": "RAGAgent",
+      "file": "rag_agent.py",
+      "description": "Retrieval-Augmented Generation for knowledge management",
+      "primary_responsibilities": [
+        "Store and retrieve project artifacts (prompts, docs, code)",
+        "Semantic search across project knowledge",
+        "Context retrieval for LLM queries",
+        "Version management for stored artifacts",
+        "Knowledge graph integration"
+      ],
+      "skills": {
+        "artifact_storage": {
+          "description": "Stores various types of project artifacts",
+          "techniques": [
+            "Document chunking and embedding",
+            "Metadata tagging",
+            "Version tracking",
+            "Collection management (prompts, code, docs)",
+            "Duplicate detection"
+          ]
+        },
+        "semantic_search": {
+          "description": "Retrieves relevant artifacts using semantic similarity",
+          "techniques": [
+            "Vector similarity search",
+            "Hybrid search (keyword + semantic)",
+            "Contextual ranking",
+            "Relevance scoring",
+            "Multi-document retrieval"
+          ]
+        },
+        "context_augmentation": {
+          "description": "Augments LLM queries with relevant context",
+          "techniques": [
+            "Query expansion",
+            "Context window optimization",
+            "Relevance filtering",
+            "Citation generation",
+            "Confidence scoring"
+          ]
+        },
+        "knowledge_graph_integration": {
+          "description": "Integrates with knowledge graph for structured knowledge",
+          "techniques": [
+            "Entity linking",
+            "Relationship traversal",
+            "Graph-enhanced retrieval",
+            "Hybrid vector + graph search"
+          ]
+        }
+      },
+      "backend": "ChromaDB (vector database)",
+      "embedding_models": [
+        "OpenAI text-embedding-ada-002",
+        "Anthropic embeddings (if available)"
+      ],
+      "integrations": [
+        "KnowledgeGraph",
+        "PromptManager",
+        "All other agents (for context retrieval)"
+      ]
+    },
+    "config_agent": {
+      "class_name": "ConfigAgent",
+      "file": "config_agent.py",
+      "description": "Manages Hydra-based configuration for Artemis",
+      "primary_responsibilities": [
+        "Load and validate Hydra configurations",
+        "Provide type-safe configuration access",
+        "Support configuration composition and overrides",
+        "Manage environment-specific configurations",
+        "Configuration schema validation"
+      ],
+      "skills": {
+        "configuration_management": {
+          "description": "Manages complex hierarchical configurations",
+          "techniques": [
+            "YAML configuration loading",
+            "Configuration composition",
+            "Override management",
+            "Environment variable interpolation",
+            "Structured config with type checking"
+          ]
+        },
+        "validation": {
+          "description": "Validates configuration correctness",
+          "techniques": [
+            "Schema validation",
+            "Type checking",
+            "Required field verification",
+            "Range and constraint checking",
+            "Cross-field validation"
+          ]
+        },
+        "configuration_access": {
+          "description": "Provides convenient configuration access patterns",
+          "techniques": [
+            "Dot notation access",
+            "Type-safe getters",
+            "Default value handling",
+            "Configuration freezing (immutability)",
+            "Configuration serialization"
+          ]
+        }
+      },
+      "backend": "Hydra (Facebook/Meta configuration framework)",
+      "integrations": [
+        "All Artemis components (provides configuration)"
+      ]
+    },
+    "planning_poker": {
+      "class_name": "PlanningPoker",
+      "file": "planning_poker.py",
+      "description": "Agile planning poker for story point estimation",
+      "primary_responsibilities": [
+        "Facilitate story point estimation using planning poker",
+        "Collect votes from multiple developer personas",
+        "Achieve consensus through discussion rounds",
+        "Assess risk based on estimates and confidence",
+        "Generate estimation reports"
+      ],
+      "skills": {
+        "estimation_facilitation": {
+          "description": "Facilitates multi-agent estimation sessions",
+          "techniques": [
+            "Parallel vote collection (ThreadPoolExecutor)",
+            "Fibonacci sequence enforcement",
+            "Discussion round management",
+            "Consensus building",
+            "Timeout handling"
+          ]
+        },
+        "risk_assessment": {
+          "description": "Assesses risk based on estimates",
+          "techniques": [
+            "Story point variance analysis",
+            "Confidence level aggregation",
+            "Risk level classification (low/medium/high)",
+            "Complexity estimation",
+            "Uncertainty quantification"
+          ]
+        },
+        "agent_coordination": {
+          "description": "Coordinates multiple developer agent personas",
+          "techniques": [
+            "Concurrent LLM API calls",
+            "Vote aggregation",
+            "Discussion synthesis",
+            "Persona-specific prompting",
+            "Reasoning extraction"
+          ]
+        },
+        "performance_optimization": {
+          "description": "Optimized for speed and efficiency",
+          "techniques": [
+            "Parallel LLM calls (3x speedup)",
+            "Functional programming (no nested loops)",
+            "Configuration-driven behavior",
+            "Memoization for repeated calculations",
+            "Observer pattern for event broadcasting"
+          ]
+        }
+      },
+      "llm_capabilities": [
+        "Multi-agent vote generation",
+        "Natural language reasoning about complexity",
+        "Consensus-building discussion"
+      ],
+      "integrations": [
+        "Observer Pattern (PipelineObservable)",
+        "AIQueryService",
+        "StandaloneDeveloperAgent (multiple personas)"
+      ]
+    },
+    "knowledge_graph": {
+      "class_name": "KnowledgeGraph",
+      "file": "knowledge_graph.py",
+      "description": "GraphQL-based knowledge graph for project relationships",
+      "primary_responsibilities": [
+        "Store and query project entities and relationships",
+        "Provide graph-based knowledge retrieval",
+        "Support complex relationship traversals",
+        "Integrate with RAG for hybrid retrieval",
+        "Maintain project ontology"
+      ],
+      "skills": {
+        "graph_modeling": {
+          "description": "Models project knowledge as a graph",
+          "techniques": [
+            "Entity-relationship modeling",
+            "Schema definition (GraphQL)",
+            "Node and edge typing",
+            "Property management",
+            "Graph evolution (schema updates)"
+          ]
+        },
+        "graph_querying": {
+          "description": "Queries knowledge using GraphQL",
+          "techniques": [
+            "GraphQL query execution",
+            "Relationship traversal",
+            "Path finding",
+            "Subgraph extraction",
+            "Aggregation queries"
+          ]
+        },
+        "knowledge_integration": {
+          "description": "Integrates with other knowledge sources",
+          "techniques": [
+            "RAG integration (hybrid vector + graph)",
+            "Code analysis integration",
+            "Requirements traceability",
+            "Dependency mapping",
+            "Impact analysis"
+          ]
+        },
+        "inference": {
+          "description": "Infers implicit knowledge from explicit relationships",
+          "techniques": [
+            "Transitive relationship inference",
+            "Pattern-based rule application",
+            "Confidence propagation",
+            "Missing link prediction",
+            "Anomaly detection"
+          ]
+        }
+      },
+      "backend": "GraphQL with custom resolvers",
+      "integrations": [
+        "RAGAgent (hybrid retrieval)",
+        "SupervisorAgent (for context)",
+        "ProjectAnalysisAgent (for structure)",
+        "RequirementsParserAgent (for traceability)"
+      ]
+    },
+    "ai_query_service": {
+      "class_name": "AIQueryService",
+      "file": "ai_query_service.py",
+      "description": "Centralized service for all LLM interactions with intelligent routing",
+      "primary_responsibilities": [
+        "Route queries to appropriate LLM based on task type",
+        "Optimize token usage and costs",
+        "Cache responses for identical queries",
+        "Handle rate limiting and retries",
+        "Provide unified interface for all agents"
+      ],
+      "skills": {
+        "intelligent_routing": {
+          "description": "Routes queries to optimal LLM based on task",
+          "techniques": [
+            "Task type classification",
+            "Model capability matching",
+            "Cost optimization",
+            "Latency optimization",
+            "Quality-cost tradeoff balancing"
+          ]
+        },
+        "query_optimization": {
+          "description": "Optimizes LLM queries for efficiency",
+          "techniques": [
+            "Prompt compression",
+            "Context window optimization",
+            "Response caching",
+            "Batch processing",
+            "Token budget management"
+          ]
+        },
+        "resilience": {
+          "description": "Handles LLM API failures gracefully",
+          "techniques": [
+            "Exponential backoff retry",
+            "Circuit breaker pattern",
+            "Fallback provider switching",
+            "Rate limit handling",
+            "Timeout management"
+          ]
+        },
+        "observability": {
+          "description": "Provides visibility into LLM usage",
+          "techniques": [
+            "Token usage tracking",
+            "Cost monitoring",
+            "Latency metrics",
+            "Success/failure rates",
+            "Query analytics"
+          ]
+        }
+      },
+      "supported_query_types": [
+        "CODE_GENERATION",
+        "CODE_REVIEW",
+        "PLANNING_POKER",
+        "REQUIREMENTS_PARSING",
+        "RETROSPECTIVE",
+        "ANALYSIS",
+        "GENERAL"
+      ],
+      "integrations": [
+        "All agents (centralized LLM access)"
+      ]
+    }
+  },
+  "cross_cutting_concerns": {
+    "checkpoint_manager": {
+      "file": "checkpoint_manager.py",
+      "description": "Manages execution checkpoints for resume capability",
+      "skills": [
+        "State serialization and deserialization",
+        "Checkpoint validation",
+        "Recovery from interruptions",
+        "Incremental checkpoint updates"
+      ]
+    },
+    "artemis_state_machine": {
+      "file": "artemis_state_machine.py",
+      "description": "State machine for Artemis pipeline workflow",
+      "skills": [
+        "State transition management",
+        "Guard condition evaluation",
+        "Action execution on transitions",
+        "State persistence"
+      ]
+    },
+    "pipeline_observer": {
+      "file": "pipeline_observer.py",
+      "description": "Observer pattern implementation for stage monitoring",
+      "skills": [
+        "Event broadcasting",
+        "Observer registration/deregistration",
+        "Event filtering",
+        "Asynchronous notification"
+      ]
+    },
+    "cost_tracker": {
+      "file": "cost_tracker.py",
+      "description": "Tracks LLM API costs across all agents",
+      "skills": [
+        "Token usage tracking",
+        "Cost calculation by provider/model",
+        "Budget limit enforcement",
+        "Cost reporting and analytics"
+      ]
+    },
+    "git_manager": {
+      "file": "git_manager.py",
+      "description": "Git operations for version control integration",
+      "skills": [
+        "Branch creation and management",
+        "Commit and push operations",
+        "Merge conflict detection",
+        "Branch comparison"
+      ]
+    },
+    "kanban_manager": {
+      "file": "kanban_manager.py",
+      "description": "Kanban board management for task tracking",
+      "skills": [
+        "Card CRUD operations",
+        "Column transitions",
+        "Sprint management",
+        "Burndown chart data generation"
+      ]
+    }
+  },
+  "stage_coordinators": {
+    "description": "High-level stage classes that orchestrate agent workflows",
+    "stages": [
+      {
+        "name": "RequirementsStage",
+        "file": "requirements_stage.py",
+        "agents_used": ["RequirementsParserAgent", "DocumentReader"],
+        "description": "Parses and structures project requirements"
+      },
+      {
+        "name": "SprintPlanningStage",
+        "file": "sprint_planning_stage.py",
+        "agents_used": ["PlanningPoker", "StandaloneDeveloperAgent"],
+        "description": "Conducts sprint planning with estimation"
+      },
+      {
+        "name": "ProjectReviewStage",
+        "file": "project_review_stage.py",
+        "agents_used": ["ProjectAnalysisAgent", "RAGAgent"],
+        "description": "Analyzes project structure and generates insights"
+      },
+      {
+        "name": "UIUXStage",
+        "file": "uiux_stage.py",
+        "agents_used": ["WCAGEvaluator", "GDPREvaluator"],
+        "description": "Evaluates UI/UX for accessibility and privacy"
+      },
+      {
+        "name": "CodeReviewStage",
+        "file": "code_review_stage.py",
+        "agents_used": ["CodeReviewAgent"],
+        "description": "Performs comprehensive code review"
+      },
+      {
+        "name": "ArbitrationStage",
+        "file": "arbitration_stage.py",
+        "agents_used": ["SupervisorAgent"],
+        "description": "Arbitrates conflicts between developer implementations"
+      }
+    ]
+  },
+  "skills_taxonomy": {
+    "categories": [
+      "code_generation",
+      "code_analysis",
+      "security_analysis",
+      "quality_assurance",
+      "project_management",
+      "knowledge_management",
+      "configuration_management",
+      "workflow_orchestration",
+      "natural_language_processing",
+      "graph_analysis",
+      "estimation",
+      "retrospective_analysis"
+    ],
+    "skill_levels": {
+      "expert": "Primary capability, core to agent's purpose",
+      "proficient": "Secondary capability, supporting role",
+      "basic": "Auxiliary capability, limited use"
+    }
+  }
+}

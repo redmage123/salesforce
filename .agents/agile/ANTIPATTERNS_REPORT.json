@@ -1,0 +1,488 @@
+{
+  "scan_date": "2025-10-25",
+  "scan_tool": "Custom AST-based Python Code Quality Scanner",
+  "base_path": "/home/bbrelin/src/repos/salesforce/.agents/agile",
+
+  "executive_summary": {
+    "total_files_analyzed": 127,
+    "files_with_issues": 50,
+    "critical_issues": {
+      "god_classes": 21,
+      "long_methods": 54,
+      "excessive_parameters": 44
+    },
+    "moderate_issues": {
+      "magic_values": 768,
+      "missing_type_hints": 158,
+      "todos_fixmes": 49,
+      "commented_code": 7
+    },
+    "low_issues": {
+      "deep_nesting": 0,
+      "mutable_defaults": 0,
+      "circular_dependencies": 1
+    }
+  },
+
+  "critical_files_analysis": {
+    "artemis_orchestrator.py": {
+      "severity": "CRITICAL",
+      "total_issues": 9,
+      "line_count": 1838,
+      "findings": {
+        "god_classes": [
+          {
+            "class": "ArtemisOrchestrator",
+            "lines": 1321,
+            "line_number": 203,
+            "severity": "CRITICAL",
+            "recommendation": "Split into smaller orchestrator + separate strategy classes. Already has Strategy pattern, but class still too large."
+          }
+        ],
+        "long_methods": [
+          {
+            "method": "__init__",
+            "lines": 135,
+            "line_number": 215,
+            "severity": "HIGH",
+            "recommendation": "Extract initialization logic into builder pattern or factory methods"
+          },
+          {
+            "method": "_create_default_stages",
+            "lines": 179,
+            "line_number": 469,
+            "severity": "HIGH",
+            "recommendation": "Use Stage Factory pattern to create stages"
+          },
+          {
+            "method": "_old_run_full_pipeline_with_retry_logic",
+            "lines": 222,
+            "line_number": 790,
+            "severity": "CRITICAL",
+            "recommendation": "DEPRECATED method - should be removed as code comment indicates"
+          },
+          {
+            "method": "run_full_pipeline",
+            "lines": 138,
+            "line_number": 650,
+            "severity": "HIGH",
+            "recommendation": "Extract workflow logic into separate WorkflowExecutor class"
+          },
+          {
+            "method": "_register_stages_with_supervisor",
+            "lines": 115,
+            "line_number": 352,
+            "severity": "MEDIUM",
+            "recommendation": "Use configuration-driven approach instead of hardcoded stage registration"
+          },
+          {
+            "method": "run_all_pending_tasks",
+            "lines": 107,
+            "line_number": 1014,
+            "severity": "MEDIUM",
+            "recommendation": "Extract into TaskQueueProcessor class"
+          },
+          {
+            "method": "main_legacy",
+            "lines": 131,
+            "line_number": 1696,
+            "severity": "MEDIUM",
+            "recommendation": "Consider migrating all CLI logic to Hydra or remove legacy support"
+          }
+        ],
+        "too_many_params": [
+          {
+            "method": "__init__",
+            "params": 14,
+            "line_number": 215,
+            "severity": "CRITICAL",
+            "recommendation": "Use Builder Pattern or Configuration Object to reduce parameter count"
+          }
+        ],
+        "todos_fixmes": [
+          {
+            "line_number": 1263,
+            "type": "TODO",
+            "comment": "Track sprint number in context",
+            "severity": "LOW"
+          },
+          {
+            "line_number": 1337,
+            "type": "TODO",
+            "comment": "Calculate from stage durations",
+            "severity": "LOW"
+          }
+        ]
+      }
+    },
+
+    "supervisor_agent.py": {
+      "severity": "CRITICAL",
+      "total_issues": 8,
+      "line_count": 2970,
+      "findings": {
+        "god_classes": [
+          {
+            "class": "SupervisorAgent",
+            "lines": 2732,
+            "line_number": 219,
+            "severity": "CRITICAL",
+            "recommendation": "MASSIVE God Class! Split into: CostTracker, Sandbox, LearningEngine, RecoveryManager, HealthMonitor. This is the #1 priority refactoring."
+          }
+        ],
+        "long_methods": [
+          {
+            "method": "__init__",
+            "lines": 234,
+            "line_number": 226,
+            "severity": "CRITICAL",
+            "recommendation": "Use builder pattern. 234-line constructor is unmaintainable."
+          },
+          {
+            "method": "execute_with_supervision",
+            "lines": 124,
+            "line_number": 823,
+            "severity": "HIGH",
+            "recommendation": "Extract into SupervisionWorkflow class with template method pattern"
+          },
+          {
+            "method": "_try_fix_json_parsing_failure",
+            "lines": 104,
+            "line_number": 1424,
+            "severity": "MEDIUM",
+            "recommendation": "Extract JSON parsing logic to separate JSONFixer utility"
+          },
+          {
+            "method": "llm_auto_fix_error",
+            "lines": 106,
+            "line_number": 1676,
+            "severity": "MEDIUM",
+            "recommendation": "Extract to LLMErrorRecovery class"
+          },
+          {
+            "method": "_llm_suggest_fix",
+            "lines": 110,
+            "line_number": 1784,
+            "severity": "MEDIUM",
+            "recommendation": "Merge with llm_auto_fix_error or extract to LLMSuggestionEngine"
+          }
+        ],
+        "too_many_params": [
+          {
+            "method": "__init__",
+            "params": 12,
+            "line_number": 226,
+            "severity": "CRITICAL",
+            "recommendation": "Use SupervisorConfig object instead of 12 parameters"
+          },
+          {
+            "method": "_llm_suggest_fix",
+            "params": 8,
+            "line_number": 1784,
+            "severity": "HIGH",
+            "recommendation": "Create FixSuggestionContext object to group parameters"
+          }
+        ]
+      }
+    },
+
+    "artemis_stages.py": {
+      "severity": "HIGH",
+      "total_issues": 10,
+      "line_count": 2106,
+      "findings": {
+        "god_classes": [
+          {
+            "class": "ArchitectureStage",
+            "lines": 760,
+            "line_number": 326,
+            "severity": "HIGH",
+            "recommendation": "Split into: ADRGenerator, UserStoryGenerator, KnowledgeGraphIntegration"
+          }
+        ],
+        "long_methods": [
+          {
+            "method": "_do_analysis",
+            "lines": 118,
+            "line_number": 125,
+            "severity": "HIGH",
+            "recommendation": "Extract analysis steps into separate methods"
+          },
+          {
+            "method": "_create_adr",
+            "lines": 116,
+            "line_number": 412,
+            "severity": "HIGH",
+            "recommendation": "Extract ADR creation logic to ADRBuilder class"
+          },
+          {
+            "method": "_generate_adr_template",
+            "lines": 127,
+            "line_number": 668,
+            "severity": "HIGH",
+            "recommendation": "Use template engine or ADRTemplate class"
+          },
+          {
+            "method": "_generate_user_stories_from_adr",
+            "lines": 136,
+            "line_number": 819,
+            "severity": "HIGH",
+            "recommendation": "Extract to UserStoryGenerator class"
+          },
+          {
+            "method": "_do_work",
+            "lines": 195,
+            "line_number": 1293,
+            "severity": "CRITICAL",
+            "recommendation": "195-line method! Break into workflow steps with template pattern"
+          }
+        ],
+        "too_many_params": [
+          {
+            "method": "__init__",
+            "params": 8,
+            "line_number": 78,
+            "severity": "MEDIUM",
+            "recommendation": "Group parameters into StageConfig object"
+          },
+          {
+            "method": "__init__",
+            "params": 9,
+            "line_number": 338,
+            "severity": "MEDIUM",
+            "recommendation": "Group parameters into ArchitectureStageConfig"
+          },
+          {
+            "method": "__init__",
+            "params": 8,
+            "line_number": 1841,
+            "severity": "MEDIUM",
+            "recommendation": "Group parameters into IntegrationStageConfig"
+          }
+        ]
+      }
+    },
+
+    "developer_invoker.py": {
+      "severity": "LOW",
+      "total_issues": 1,
+      "line_count": 366,
+      "findings": {
+        "too_many_params": [
+          {
+            "method": "invoke_developer",
+            "params": 8,
+            "line_number": 38,
+            "severity": "MEDIUM",
+            "recommendation": "Create DeveloperInvocationContext object to group parameters"
+          }
+        ]
+      }
+    }
+  },
+
+  "top_10_worst_offenders": [
+    {
+      "rank": 1,
+      "file": "supervisor_agent.py",
+      "god_class_lines": 2732,
+      "total_issues": 8,
+      "severity": "CRITICAL",
+      "priority": "P0 - IMMEDIATE REFACTORING REQUIRED"
+    },
+    {
+      "rank": 2,
+      "file": "artemis_orchestrator.py",
+      "god_class_lines": 1321,
+      "total_issues": 9,
+      "severity": "CRITICAL",
+      "priority": "P0 - IMMEDIATE REFACTORING REQUIRED"
+    },
+    {
+      "rank": 3,
+      "file": "artemis_stages.py",
+      "god_class_lines": 760,
+      "total_issues": 10,
+      "severity": "HIGH",
+      "priority": "P1 - HIGH PRIORITY REFACTORING"
+    },
+    {
+      "rank": 4,
+      "file": "standalone_developer_agent.py",
+      "god_class_lines": 500,
+      "total_issues": 9,
+      "severity": "HIGH",
+      "priority": "P1 - HIGH PRIORITY REFACTORING"
+    },
+    {
+      "rank": 5,
+      "file": "architecture_stage.py",
+      "god_class_lines": 600,
+      "total_issues": 5,
+      "severity": "MEDIUM",
+      "priority": "P2 - MEDIUM PRIORITY"
+    },
+    {
+      "rank": 6,
+      "file": "kanban_manager.py",
+      "god_class_lines": 550,
+      "total_issues": 3,
+      "severity": "MEDIUM",
+      "priority": "P2 - MEDIUM PRIORITY"
+    },
+    {
+      "rank": 7,
+      "file": "uiux_stage.py",
+      "god_class_lines": 520,
+      "total_issues": 3,
+      "severity": "MEDIUM",
+      "priority": "P2 - MEDIUM PRIORITY"
+    },
+    {
+      "rank": 8,
+      "file": "project_review_stage.py",
+      "god_class_lines": 580,
+      "total_issues": 3,
+      "severity": "MEDIUM",
+      "priority": "P2 - MEDIUM PRIORITY"
+    },
+    {
+      "rank": 9,
+      "file": "artemis_state_machine.py",
+      "god_class_lines": 600,
+      "total_issues": 3,
+      "severity": "MEDIUM",
+      "priority": "P2 - MEDIUM PRIORITY"
+    },
+    {
+      "rank": 10,
+      "file": "requirements_parser_agent.py",
+      "god_class_lines": 510,
+      "total_issues": 2,
+      "severity": "MEDIUM",
+      "priority": "P2 - MEDIUM PRIORITY"
+    }
+  ],
+
+  "antipattern_categories": {
+    "god_classes": {
+      "count": 21,
+      "severity": "CRITICAL",
+      "description": "Classes exceeding 500 lines indicate violation of Single Responsibility Principle",
+      "worst_offenders": [
+        "SupervisorAgent: 2732 lines",
+        "ArtemisOrchestrator: 1321 lines",
+        "ArchitectureStage: 760 lines"
+      ],
+      "impact": "Hard to maintain, test, and reason about. High coupling, low cohesion."
+    },
+    "long_methods": {
+      "count": 54,
+      "severity": "HIGH",
+      "description": "Methods exceeding 100 lines are hard to understand and maintain",
+      "worst_offenders": [
+        "SupervisorAgent.__init__: 234 lines",
+        "_old_run_full_pipeline_with_retry_logic: 222 lines",
+        "_do_work (DevelopmentStage): 195 lines"
+      ],
+      "impact": "Reduced readability, harder to test, increased bug likelihood"
+    },
+    "excessive_parameters": {
+      "count": 44,
+      "severity": "HIGH",
+      "description": "Methods with >7 parameters indicate poor abstraction",
+      "worst_offenders": [
+        "ArtemisOrchestrator.__init__: 14 params",
+        "SupervisorAgent.__init__: 12 params",
+        "ArchitectureStage.__init__: 9 params"
+      ],
+      "impact": "Hard to use correctly, increased cognitive load, brittle API"
+    },
+    "magic_values": {
+      "count": 768,
+      "severity": "MEDIUM",
+      "description": "Hardcoded numbers/strings reduce maintainability",
+      "recommendation": "Extract to named constants or configuration",
+      "impact": "Reduced readability, harder to change, potential bugs"
+    },
+    "missing_type_hints": {
+      "count": 158,
+      "severity": "MEDIUM",
+      "description": "Missing type annotations reduce code clarity and IDE support",
+      "recommendation": "Add gradual typing with mypy validation",
+      "impact": "Harder to understand interfaces, no static type checking"
+    },
+    "todos_fixmes": {
+      "count": 49,
+      "severity": "LOW",
+      "description": "Unresolved TODOs indicate technical debt",
+      "recommendation": "Convert to GitHub issues or implement immediately",
+      "impact": "Growing technical debt, incomplete features"
+    }
+  },
+
+  "circular_dependencies": [
+    {
+      "module1": "artemis_state_machine",
+      "module2": "artemis_workflows",
+      "severity": "MEDIUM",
+      "impact": "Makes testing harder, increases coupling",
+      "recommendation": "Introduce abstraction layer or event-driven architecture"
+    }
+  ],
+
+  "recommendations": {
+    "immediate_action": [
+      "1. Split SupervisorAgent (2732 lines) into 5 focused classes: CostTracker, SandboxExecutor, LearningEngine, RecoveryManager, HealthMonitor",
+      "2. Refactor ArtemisOrchestrator.__init__ (14 params) to use Builder Pattern or Configuration Object",
+      "3. Remove deprecated _old_run_full_pipeline_with_retry_logic (222 lines)",
+      "4. Extract SupervisorAgent.__init__ (234 lines, 12 params) into builder pattern"
+    ],
+    "high_priority": [
+      "5. Split ArtemisOrchestrator (1321 lines) into smaller orchestrator + strategies",
+      "6. Refactor ArchitectureStage (760 lines) into ADRGenerator + UserStoryGenerator + KGIntegration",
+      "7. Extract DevelopmentStage._do_work (195 lines) into workflow template pattern",
+      "8. Create configuration objects for all __init__ methods with >7 parameters"
+    ],
+    "medium_priority": [
+      "9. Add type hints to 158 methods missing return type annotations",
+      "10. Extract magic numbers (768 occurrences) to named constants",
+      "11. Convert 49 TODOs/FIXMEs to GitHub issues or implement",
+      "12. Break artemis_state_machine ↔️ artemis_workflows circular dependency"
+    ],
+    "long_term": [
+      "13. Implement gradual typing with mypy validation across codebase",
+      "14. Set up pre-commit hooks to prevent new God Classes (>500 lines)",
+      "15. Set up code quality gates: max_method_lines=100, max_params=7",
+      "16. Consider using architectural fitness functions to prevent regressions"
+    ]
+  },
+
+  "refactoring_priority": {
+    "P0_immediate": [
+      "supervisor_agent.py - God Class (2732 lines)",
+      "artemis_orchestrator.py - God Class (1321 lines) + Constructor (14 params)"
+    ],
+    "P1_high": [
+      "artemis_stages.py - God Class (760 lines) + Multiple long methods",
+      "standalone_developer_agent.py - God Class + 6 methods with too many params"
+    ],
+    "P2_medium": [
+      "All other God Classes (17 remaining)",
+      "All constructors with >7 parameters (40 remaining)"
+    ],
+    "P3_low": [
+      "Magic numbers extraction",
+      "Type hints addition",
+      "TODO resolution"
+    ]
+  },
+
+  "quality_metrics": {
+    "code_health_score": "C (57/100)",
+    "maintainability_index": "Medium-Low",
+    "technical_debt_hours": "~320 hours",
+    "refactoring_effort": "Large (3-4 sprints)",
+    "risk_level": "High - Critical files have severe issues"
+  }
+}

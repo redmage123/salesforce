@@ -11,6 +11,8 @@ Usage:
 
 from prompt_manager import PromptManager, create_default_prompts
 from rag_agent import RAGAgent
+# Import shared coding standards (DRY principle)
+from coding_standards import CODING_STANDARDS_ALL_LANGUAGES
 
 
 def create_all_artemis_prompts(prompt_manager: PromptManager):
@@ -70,7 +72,7 @@ def create_all_artemis_prompts(prompt_manager: PromptManager):
 6. Would a junior developer understand this in 6 months?
 
 If any answer is NO, revise your implementation.""",
-        system_message="""You are {developer_name}, an aggressive/innovative software developer focused on modern patterns and performance.
+        system_message=f"""You are {{developer_name}}, an aggressive/innovative software developer focused on modern patterns and performance.
 
 Your core principles:
 - Innovation and modern approaches over legacy patterns
@@ -78,6 +80,8 @@ Your core principles:
 - Latest language features and design patterns
 - SOLID principles with emphasis on extensibility
 - Production-ready, cutting-edge code
+
+{CODING_STANDARDS_ALL_LANGUAGES}
 
 You MUST respond with valid JSON only - no explanations, no markdown, just pure JSON.""",
         user_template="""Implement the following task using modern, innovative approaches:
@@ -291,7 +295,7 @@ Return a structured recovery workflow.""",
 5. Would a developer know exactly what to fix?
 
 If NO to any, improve your review.""",
-        system_message="""You are an expert code reviewer combining security, performance, and architecture expertise.
+        system_message=f"""You are an expert code reviewer combining security, performance, and architecture expertise across ALL programming languages and database systems.
 
 Your goal: Provide actionable feedback that improves code quality, security, and performance.
 
@@ -301,6 +305,17 @@ Review criteria:
 - Performance and scalability
 - Test coverage and quality
 - Code clarity and maintainability
+- Language/database-specific best practices
+
+{CODING_STANDARDS_ALL_LANGUAGES}
+
+**REVIEW FOCUS:**
+When reviewing code, ensure it follows the language-specific and database-specific best practices above.
+Check for:
+- Proper use of language-unique features (not just Python patterns translated)
+- Database-specific optimizations (PostgreSQL JSONB, SQL Server columnstore, MongoDB aggregation pipeline, etc.)
+- NoSQL data modeling patterns appropriate to the database type
+- Security best practices specific to the technology (parameterized queries, prepared statements, etc.)
 
 Be specific, actionable, and prioritize by severity.""",
         user_template="""Review this code implementation:
@@ -1042,13 +1057,19 @@ Keep response to 220 words.""",
 7. Is the response ≤ 180 words?
 
 If #4 is YES or others are NO, revise.""",
-        system_message="""You are the Quality Gate Reviewer. Your goal is to ensure each stage meets definition-of-done and compliance before advancing.
+        system_message=f"""You are the Quality Gate Reviewer. Your goal is to ensure each stage meets definition-of-done and compliance before advancing.
 
-Knowledge: DoD checklists, SOC2/GDPR basics, security and privacy reviews, release readiness.
+Knowledge: DoD checklists, SOC2/GDPR basics, security and privacy reviews, release readiness, ALL programming languages and database systems.
 
 Tone: Checklist-oriented, non-negotiable gates.
 
-IMPORTANT: Do NOT pass with open critical issues. Require evidence links.""",
+IMPORTANT: Do NOT pass with open critical issues. Require evidence links.
+
+{CODING_STANDARDS_ALL_LANGUAGES}
+
+**VALIDATION FOCUS:**
+When validating code quality gates, ensure implementations follow language-specific and database-specific best practices.
+Verify that security vulnerabilities specific to the technology stack are addressed (SQL injection in PostgreSQL vs MongoDB injection, etc.).""",
         user_template="""Review quality gate for:
 
 **Gate:** {gate_name}
@@ -1074,14 +1095,171 @@ Keep response to 180 words.""",
         version="1.0"
     )
 
+    # ========================================================================
+    # REQUIREMENTS AGENT - STRUCTURED SPECIFICATION EXTRACTION
+    # ========================================================================
+
+    prompt_manager.store_prompt(
+        name="requirements_structured_extraction",
+        category="requirements_parser",
+        perspectives=[
+            "Requirements Engineer extracting SRS-compliant structured specifications",
+            "Security Analyst identifying privacy/compliance constraints (GDPR, CCPA, OWASP)",
+            "System Architect mapping functional/non-functional requirements to data entities and integrations"
+        ],
+        success_metrics=[
+            "Output is valid JSON/YAML matching exact schema",
+            "All required fields present (run_id, correlation_id, artifact_id, domain_context, objectives, functional_requirements, actors, data_entities, acceptance_criteria)",
+            "At least 3 functional_requirements and 3 acceptance_criteria",
+            "NFRs include performance, security, observability defaults",
+            "At least 1 risk with likelihood/impact/mitigation",
+            "Evidence cites source fragments from user input",
+            "Output ≤ 800 tokens"
+        ],
+        context_layers={
+            "role": "Requirements Agent - transform free-form input to machine-validated spec",
+            "knowledge_base": "SRS, NFRs, multi-tenant SaaS, privacy/security, OpenAPI, data entities, integrations",
+            "tone": "Clarifying, precise, schema-first",
+            "output_constraint": "Single top-level object, ≤ 800 tokens, JSON or YAML",
+            "validation": "Validate against schema; repair once if invalid; refuse if still invalid"
+        },
+        task_breakdown=[
+            "Parse user free-form text and identify domain context",
+            "Extract 1-10 objectives (business goals)",
+            "Extract 3-50 functional requirements (imperative statements)",
+            "Infer or extract non-functional requirements (performance, availability, security, privacy, reliability, observability, cost)",
+            "Identify actors with roles and auth methods",
+            "Extract data entities with attributes (name, type, pii, required)",
+            "Identify integrations (API, webhook, queue, OAuth, DB) with direction",
+            "List constraints, assumptions, risks (with likelihood/impact/mitigation)",
+            "Define 3+ testable acceptance criteria",
+            "Add milestones with exit criteria if mentioned",
+            "Cite evidence fragments from user input",
+            "List open questions for missing critical info",
+            "Validate output against schema; repair if invalid; refuse if still broken"
+        ],
+        self_critique="""Before responding, validate your output:
+1. Is the JSON/YAML syntactically valid?
+2. Are all required fields present? (run_id, correlation_id, artifact_id, format, domain_context, objectives, functional_requirements, actors, data_entities, acceptance_criteria)
+3. Are there at least 3 functional_requirements?
+4. Are there at least 3 acceptance_criteria?
+5. Do NFRs include performance, security, observability defaults?
+6. Is there at least 1 risk with likelihood, impact, mitigation?
+7. Does evidence cite source fragments?
+8. Is output ≤ 800 tokens?
+9. Can Architecture Agent consume this without clarification?
+
+If any answer is NO, repair your output. If still invalid after repair, return Refuse.""",
+        system_message="""You are the Requirements Agent. Your goal is to transform free-form user input into a concise, unambiguous, and machine-validated requirements artifact in JSON or YAML, suitable for direct consumption by the Architecture Agent.
+
+**Knowledge Base:** Software requirements specification (SRS) basics, non-functional requirements (NFRs), multi-tenant SaaS patterns, privacy/security constraints, acceptance criteria, assumptions/risks, OpenAPI capability placeholders, data entities, and integration touchpoints.
+
+**Tone & Style:** Clarifying, precise, schema-first. Ask pointed questions only if critical fields are missing; otherwise infer with clearly marked assumptions.
+
+**Constraints:**
+- Always output a single top-level object matching the schema below
+- Include run_id, correlation_id, and artifact_id
+- Cite source fragments when summarizing: {source_id: "user", snippet: "..."}
+- If information is missing, fill with assumptions[] and open_questions[]
+- Validate against schema; if invalid, repair once; if still invalid, return Refuse with reason and required fields
+- Keep final artifact ≤ 800 tokens
+- Formats: json or yaml; honor user preference if stated, else default to json
+
+**Output Schema:**
+{
+  "run_id": "string",
+  "correlation_id": "string",
+  "artifact_id": "string",
+  "format": "json" | "yaml",
+  "domain_context": "string",
+  "objectives": ["string"], // 1-10
+  "functional_requirements": ["string"], // 3-50 imperative statements
+  "non_functional_requirements": {
+    "performance": { "p95_latency_ms": number, "throughput_rps": number },
+    "availability_slo_pct": number,
+    "security": ["string"], // e.g., OWASP, encryption-at-rest, TLS1.2+
+    "privacy_compliance": ["string"], // e.g., GDPR, CCPA, data residency
+    "reliability": ["string"], // e.g., retries, idempotency
+    "observability": ["string"], // e.g., logs, metrics, traces
+    "cost_constraints": ["string"] // e.g., target <$X/mo
+  },
+  "actors": [{ "name": "string", "roles": ["string"], "auth": ["string"] }],
+  "data_entities": [{
+    "name": "string",
+    "attributes": [{
+      "name": "string",
+      "type": "string",
+      "pii": boolean,
+      "required": boolean
+    }]
+  }],
+  "integrations": [{
+    "name": "string",
+    "type": "api"|"webhook"|"queue"|"oauth"|"db",
+    "direction": "inbound"|"outbound"|"bidirectional",
+    "notes": "string"
+  }],
+  "constraints": ["string"], // hard limits, tech constraints
+  "assumptions": ["string"],
+  "risks": [{
+    "item": "string",
+    "likelihood": "L"|"M"|"H",
+    "impact": "L"|"M"|"H",
+    "mitigation": "string"
+  }],
+  "acceptance_criteria": ["string"], // testable
+  "milestones": [{
+    "name": "string",
+    "due": "string",
+    "exit_criteria": ["string"]
+  }],
+  "evidence": [{ "source_id": "user", "snippet": "string" }],
+  "open_questions": ["string"]
+}
+
+**NFR Defaults (if user omits):**
+- p95_latency_ms: 400
+- availability_slo_pct: 99.9
+- security: ["TLS1.2+", "encryption-at-rest", "OWASP top 10 mitigations"]
+- observability: ["structured logs", "metrics", "traces"]""",
+        user_template="""You will receive free-form user requirements. Produce a single JSON or YAML document that conforms to the Output Schema.
+
+**Inputs:**
+- run_id: {run_id}
+- correlation_id: {correlation_id}
+- output_format: {output_format}
+- user_free_form_text:
+
+{user_requirements}
+
+**Instructions:**
+1. Default to JSON unless user asks for YAML
+2. Extract explicit requirements from text
+3. When inferring, add an assumptions[] entry
+4. Populate non_functional_requirements with best-effort defaults if omitted:
+   - p95_latency_ms=400
+   - availability_slo_pct=99.9
+   - security=["TLS1.2+","encryption-at-rest","OWASP top 10 mitigations"]
+   - observability=["structured logs","metrics","traces"]
+5. Include at least 3 functional_requirements and 3 acceptance_criteria
+6. Add at least 1 risk with likelihood/impact/mitigation
+7. Validate result against schema
+8. If invalid, repair once
+9. If still invalid, return: {{"result": "Refuse", "reason": "...", "missing_fields": ["..."]}}
+
+**Output:** Only the final JSON/YAML artifact (no prose), ≤ 800 tokens.""",
+        tags=["requirements", "srs", "nfr", "schema-validation", "architecture-input"],
+        version="1.0"
+    )
+
     print(f"\n✅ Created {len(prompt_manager.rag.ARTIFACT_TYPES)} prompt categories")
     print("✅ All Artemis prompts initialized with DEPTH framework!")
-    print(f"✅ Added 11 new agent prompts (Orchestrator, Supervisor, Architecture, Project Review, UI/UX, Validator, Testing x2, Sprint, Quality Gate)")
+    print(f"✅ Added 12 new agent prompts (Orchestrator, Supervisor, Architecture, Project Review, UI/UX, Validator, Testing x2, Sprint, Quality Gate, Requirements)")
 
 
 if __name__ == "__main__":
     # Initialize RAG and PromptManager
-    rag = RAGAgent(db_path="/tmp/rag_db", verbose=True)
+    rag = RAGAgent(db_path="db", verbose=True)
     pm = PromptManager(rag, verbose=True)
 
     # Create default prompts (includes conservative developer)

@@ -1,0 +1,8154 @@
+{
+  "scan_date": "2025-10-25",
+  "base_path": "/home/bbrelin/src/repos/salesforce/.agents/agile",
+  "summary": {
+    "total_files": 127,
+    "total_god_classes": 21,
+    "total_long_methods": 54,
+    "total_parameter_issues": 44,
+    "total_deep_nesting": 0,
+    "total_magic_values": 768,
+    "total_mutable_defaults": 0,
+    "total_missing_type_hints": 158,
+    "total_todos": 49,
+    "total_commented_code": 7,
+    "files_with_issues": 50,
+    "top_offenders": [
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_stages.py",
+        "total_issues": 10,
+        "god_classes": 1,
+        "long_methods": 6,
+        "parameter_issues": 3,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_stages_original_backup.py",
+        "total_issues": 10,
+        "god_classes": 1,
+        "long_methods": 6,
+        "parameter_issues": 3,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_orchestrator.py",
+        "total_issues": 9,
+        "god_classes": 1,
+        "long_methods": 7,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/standalone_developer_agent.py",
+        "total_issues": 9,
+        "god_classes": 1,
+        "long_methods": 2,
+        "parameter_issues": 6,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/supervisor_agent.py",
+        "total_issues": 8,
+        "god_classes": 1,
+        "long_methods": 5,
+        "parameter_issues": 2,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stages/architecture_stage.py",
+        "total_issues": 5,
+        "god_classes": 1,
+        "long_methods": 3,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/project_review_stage.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 0,
+        "parameter_issues": 2,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/uiux_stage_original_backup.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 2,
+        "parameter_issues": 0,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/kanban_manager.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/project_review_stage_original_backup.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 0,
+        "parameter_issues": 2,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/uiux_stage.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_state_machine.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 2,
+        "parameter_issues": 0,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/maven_manager.py",
+        "total_issues": 2,
+        "god_classes": 0,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/requirements_parser_agent.py",
+        "total_issues": 2,
+        "god_classes": 1,
+        "long_methods": 1,
+        "parameter_issues": 0,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/messenger_interface.py",
+        "total_issues": 2,
+        "god_classes": 0,
+        "long_methods": 0,
+        "parameter_issues": 2,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/sprint_planning_stage.py",
+        "total_issues": 2,
+        "god_classes": 1,
+        "long_methods": 0,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/code_review_agent.py",
+        "total_issues": 2,
+        "god_classes": 1,
+        "long_methods": 1,
+        "parameter_issues": 0,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/requirements_stage.py",
+        "total_issues": 2,
+        "god_classes": 0,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/planning_poker.py",
+        "total_issues": 2,
+        "god_classes": 0,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/code_review_stage.py",
+        "total_issues": 2,
+        "god_classes": 0,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      }
+    ]
+  },
+  "priority_files": [
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_orchestrator.py",
+      "god_classes": [
+        {
+          "class": "ArtemisOrchestrator",
+          "lines": 1321,
+          "line_number": 203
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "__init__",
+          "lines": 135,
+          "line_number": 215
+        },
+        {
+          "method": "_register_stages_with_supervisor",
+          "lines": 115,
+          "line_number": 352
+        },
+        {
+          "method": "_create_default_stages",
+          "lines": 179,
+          "line_number": 469
+        },
+        {
+          "method": "run_full_pipeline",
+          "lines": 138,
+          "line_number": 650
+        },
+        {
+          "method": "_old_run_full_pipeline_with_retry_logic",
+          "lines": 222,
+          "line_number": 790
+        },
+        {
+          "method": "run_all_pending_tasks",
+          "lines": 107,
+          "line_number": 1014
+        },
+        {
+          "method": "main_legacy",
+          "lines": 131,
+          "line_number": 1696
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 14,
+          "line_number": 215
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 5,
+          "line_number": 122,
+          "type": "number"
+        },
+        {
+          "value": 13,
+          "line_number": 123,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 124,
+          "type": "number"
+        },
+        {
+          "value": 8,
+          "line_number": 125,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 127,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 135,
+          "type": "number"
+        },
+        {
+          "value": 6,
+          "line_number": 141,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 143,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 179,
+          "type": "number"
+        },
+        {
+          "value": 200.0,
+          "line_number": 299,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "display_workflow_status",
+          "line_number": 1531,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "list_active_workflows",
+          "line_number": 1598,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main_legacy",
+          "line_number": 1696,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [
+        {
+          "line_number": 538,
+          "type": "NOTE",
+          "comment": "RequirementsParsingStage already integrated with AIQueryService"
+        },
+        {
+          "line_number": 604,
+          "type": "NOTE",
+          "comment": "Arbitration stage is added dynamically in the pipeline strategy"
+        },
+        {
+          "line_number": 1263,
+          "type": "TODO",
+          "comment": "Track sprint number in context"
+        },
+        {
+          "line_number": 1337,
+          "type": "TODO",
+          "comment": "Calculate from stage durations"
+        },
+        {
+          "line_number": 1833,
+          "type": "XXX",
+          "comment": "or --config-name"
+        },
+        {
+          "line_number": 1836,
+          "type": "XXX",
+          "comment": "--full"
+        }
+      ],
+      "commented_code": [
+        {
+          "line_number": 605,
+          "line": "# if multiple developers were invoked"
+        }
+      ],
+      "line_count": 1838,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/supervisor_agent.py",
+      "god_classes": [
+        {
+          "class": "SupervisorAgent",
+          "lines": 2732,
+          "line_number": 219
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "__init__",
+          "lines": 234,
+          "line_number": 226
+        },
+        {
+          "method": "execute_with_supervision",
+          "lines": 124,
+          "line_number": 823
+        },
+        {
+          "method": "_try_fix_json_parsing_failure",
+          "lines": 104,
+          "line_number": 1424
+        },
+        {
+          "method": "llm_auto_fix_error",
+          "lines": 106,
+          "line_number": 1676
+        },
+        {
+          "method": "_llm_suggest_fix",
+          "lines": 110,
+          "line_number": 1784
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 12,
+          "line_number": 226
+        },
+        {
+          "method": "_llm_suggest_fix",
+          "params": 8,
+          "line_number": 1784
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 300.0,
+          "line_number": 213,
+          "type": "number"
+        },
+        {
+          "value": 300.0,
+          "line_number": 215,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 266,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 267,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 276,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 277,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 413,
+          "type": "number"
+        },
+        {
+          "value": 512,
+          "line_number": 414,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 415,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 740,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "watchdog_loop",
+          "line_number": 2692,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "execute",
+          "line_number": 2989,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 3036,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_stages.py",
+      "god_classes": [
+        {
+          "class": "ArchitectureStage",
+          "lines": 760,
+          "line_number": 326
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "_do_analysis",
+          "lines": 118,
+          "line_number": 125
+        },
+        {
+          "method": "_create_adr",
+          "lines": 116,
+          "line_number": 412
+        },
+        {
+          "method": "_generate_adr_template",
+          "lines": 127,
+          "line_number": 668
+        },
+        {
+          "method": "_generate_user_stories_from_adr",
+          "lines": 136,
+          "line_number": 819
+        },
+        {
+          "method": "_do_work",
+          "lines": 195,
+          "line_number": 1293
+        },
+        {
+          "method": "_do_work",
+          "lines": 109,
+          "line_number": 1880
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 78
+        },
+        {
+          "method": "__init__",
+          "params": 9,
+          "line_number": 338
+        },
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 1841
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 96,
+          "type": "number"
+        },
+        {
+          "value": 40,
+          "line_number": 149,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 157,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 171,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 198,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 205,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 215,
+          "type": "number"
+        },
+        {
+          "value": 15,
+          "line_number": 365,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 432,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 440,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [
+        {
+          "line_number": 1075,
+          "type": "NOTE",
+          "comment": "Task should already exist from requirements stage"
+        },
+        {
+          "line_number": 1662,
+          "type": "TODO",
+          "comment": "AgentMessenger doesn't have register_handler method yet"
+        }
+      ],
+      "commented_code": [
+        {
+          "line_number": 1663,
+          "line": "# if self.messenger and hasattr(self.messenger, 'register_handler'):"
+        }
+      ],
+      "line_count": 2106,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/developer_invoker.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "invoke_developer",
+          "params": 8,
+          "line_number": 38
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 366,
+      "skipped": false
+    }
+  ],
+  "all_reports": [
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_orchestrator.py",
+      "god_classes": [
+        {
+          "class": "ArtemisOrchestrator",
+          "lines": 1321,
+          "line_number": 203
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "__init__",
+          "lines": 135,
+          "line_number": 215
+        },
+        {
+          "method": "_register_stages_with_supervisor",
+          "lines": 115,
+          "line_number": 352
+        },
+        {
+          "method": "_create_default_stages",
+          "lines": 179,
+          "line_number": 469
+        },
+        {
+          "method": "run_full_pipeline",
+          "lines": 138,
+          "line_number": 650
+        },
+        {
+          "method": "_old_run_full_pipeline_with_retry_logic",
+          "lines": 222,
+          "line_number": 790
+        },
+        {
+          "method": "run_all_pending_tasks",
+          "lines": 107,
+          "line_number": 1014
+        },
+        {
+          "method": "main_legacy",
+          "lines": 131,
+          "line_number": 1696
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 14,
+          "line_number": 215
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 5,
+          "line_number": 122,
+          "type": "number"
+        },
+        {
+          "value": 13,
+          "line_number": 123,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 124,
+          "type": "number"
+        },
+        {
+          "value": 8,
+          "line_number": 125,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 127,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 135,
+          "type": "number"
+        },
+        {
+          "value": 6,
+          "line_number": 141,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 143,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 179,
+          "type": "number"
+        },
+        {
+          "value": 200.0,
+          "line_number": 299,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "display_workflow_status",
+          "line_number": 1531,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "list_active_workflows",
+          "line_number": 1598,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main_legacy",
+          "line_number": 1696,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [
+        {
+          "line_number": 538,
+          "type": "NOTE",
+          "comment": "RequirementsParsingStage already integrated with AIQueryService"
+        },
+        {
+          "line_number": 604,
+          "type": "NOTE",
+          "comment": "Arbitration stage is added dynamically in the pipeline strategy"
+        },
+        {
+          "line_number": 1263,
+          "type": "TODO",
+          "comment": "Track sprint number in context"
+        },
+        {
+          "line_number": 1337,
+          "type": "TODO",
+          "comment": "Calculate from stage durations"
+        },
+        {
+          "line_number": 1833,
+          "type": "XXX",
+          "comment": "or --config-name"
+        },
+        {
+          "line_number": 1836,
+          "type": "XXX",
+          "comment": "--full"
+        }
+      ],
+      "commented_code": [
+        {
+          "line_number": 605,
+          "line": "# if multiple developers were invoked"
+        }
+      ],
+      "line_count": 1838,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/supervisor_agent.py",
+      "god_classes": [
+        {
+          "class": "SupervisorAgent",
+          "lines": 2732,
+          "line_number": 219
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "__init__",
+          "lines": 234,
+          "line_number": 226
+        },
+        {
+          "method": "execute_with_supervision",
+          "lines": 124,
+          "line_number": 823
+        },
+        {
+          "method": "_try_fix_json_parsing_failure",
+          "lines": 104,
+          "line_number": 1424
+        },
+        {
+          "method": "llm_auto_fix_error",
+          "lines": 106,
+          "line_number": 1676
+        },
+        {
+          "method": "_llm_suggest_fix",
+          "lines": 110,
+          "line_number": 1784
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 12,
+          "line_number": 226
+        },
+        {
+          "method": "_llm_suggest_fix",
+          "params": 8,
+          "line_number": 1784
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 300.0,
+          "line_number": 213,
+          "type": "number"
+        },
+        {
+          "value": 300.0,
+          "line_number": 215,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 266,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 267,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 276,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 277,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 413,
+          "type": "number"
+        },
+        {
+          "value": 512,
+          "line_number": 414,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 415,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 740,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "watchdog_loop",
+          "line_number": 2692,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "execute",
+          "line_number": 2989,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 3036,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_stages.py",
+      "god_classes": [
+        {
+          "class": "ArchitectureStage",
+          "lines": 760,
+          "line_number": 326
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "_do_analysis",
+          "lines": 118,
+          "line_number": 125
+        },
+        {
+          "method": "_create_adr",
+          "lines": 116,
+          "line_number": 412
+        },
+        {
+          "method": "_generate_adr_template",
+          "lines": 127,
+          "line_number": 668
+        },
+        {
+          "method": "_generate_user_stories_from_adr",
+          "lines": 136,
+          "line_number": 819
+        },
+        {
+          "method": "_do_work",
+          "lines": 195,
+          "line_number": 1293
+        },
+        {
+          "method": "_do_work",
+          "lines": 109,
+          "line_number": 1880
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 78
+        },
+        {
+          "method": "__init__",
+          "params": 9,
+          "line_number": 338
+        },
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 1841
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 96,
+          "type": "number"
+        },
+        {
+          "value": 40,
+          "line_number": 149,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 157,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 171,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 198,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 205,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 215,
+          "type": "number"
+        },
+        {
+          "value": 15,
+          "line_number": 365,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 432,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 440,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [
+        {
+          "line_number": 1075,
+          "type": "NOTE",
+          "comment": "Task should already exist from requirements stage"
+        },
+        {
+          "line_number": 1662,
+          "type": "TODO",
+          "comment": "AgentMessenger doesn't have register_handler method yet"
+        }
+      ],
+      "commented_code": [
+        {
+          "line_number": 1663,
+          "line": "# if self.messenger and hasattr(self.messenger, 'register_handler'):"
+        }
+      ],
+      "line_count": 2106,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/developer_invoker.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "invoke_developer",
+          "params": 8,
+          "line_number": 38
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 366,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/redis_client.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 6379,
+          "line_number": 37,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 41,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 42,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 341,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 365,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/pipeline_persistence.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 70,
+          "line_number": 258,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 281,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 282,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 300,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "mark_pipeline_started",
+          "line_number": 71,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "mark_stage_started",
+          "line_number": 79,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "mark_stage_completed",
+          "line_number": 99,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "mark_stage_failed",
+          "line_number": 120,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "mark_pipeline_completed",
+          "line_number": 142,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "mark_pipeline_failed",
+          "line_number": 151,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "mark_pipeline_paused",
+          "line_number": 160,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "save_developer_results",
+          "line_number": 167,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "update_metrics",
+          "line_number": 175,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 302,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_logger.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 1024,
+          "line_number": 39,
+          "type": "number"
+        },
+        {
+          "value": 1024,
+          "line_number": 39,
+          "type": "number"
+        },
+        {
+          "value": 1024,
+          "line_number": 67,
+          "type": "number"
+        },
+        {
+          "value": 1024,
+          "line_number": 67,
+          "type": "number"
+        },
+        {
+          "value": 493,
+          "line_number": 85,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "debug",
+          "line_number": 138,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "info",
+          "line_number": 142,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "warning",
+          "line_number": 146,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "error",
+          "line_number": 150,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "critical",
+          "line_number": 154,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "log",
+          "line_number": 158,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "setup_logging",
+          "line_number": 220,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 247,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/pipeline_observer.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 784,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/redis_pipeline_tracker.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 86400,
+          "line_number": 120,
+          "type": "number"
+        },
+        {
+          "value": 86400,
+          "line_number": 178,
+          "type": "number"
+        },
+        {
+          "value": 86400,
+          "line_number": 192,
+          "type": "number"
+        },
+        {
+          "value": 86400,
+          "line_number": 247,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 412,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 422,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 441,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "subscribe_to_pipeline",
+          "line_number": 366,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 472,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/bundler_manager.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 300,
+          "line_number": 252,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 292,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 301,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 345,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 387,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 413,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 439,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 462,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 489,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 529,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 641,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/git_manager.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 50,
+          "line_number": 180,
+          "type": "number"
+        },
+        {
+          "value": 7,
+          "line_number": 200,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "log",
+          "line_number": 41,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "log_operation",
+          "line_number": 62,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "save_operations_log",
+          "line_number": 301,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main",
+          "line_number": 326,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 372,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/project_review_stage.py",
+      "god_classes": [
+        {
+          "class": "ProjectReviewStage",
+          "lines": 665,
+          "line_number": 26
+        }
+      ],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 10,
+          "line_number": 37
+        },
+        {
+          "method": "_handle_rejection",
+          "params": 9,
+          "line_number": 504
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 47,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 68,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 91,
+          "type": "number"
+        },
+        {
+          "value": 0.25,
+          "line_number": 92,
+          "type": "number"
+        },
+        {
+          "value": 0.2,
+          "line_number": 93,
+          "type": "number"
+        },
+        {
+          "value": 0.15,
+          "line_number": 94,
+          "type": "number"
+        },
+        {
+          "value": 0.1,
+          "line_number": 95,
+          "type": "number"
+        },
+        {
+          "value": 0.95,
+          "line_number": 98,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 99,
+          "type": "number"
+        },
+        {
+          "value": 0.5,
+          "line_number": 100,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 692,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/import_huggingface_examples.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "main",
+          "lines": 113,
+          "line_number": 478
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 70,
+          "line_number": 37,
+          "type": "number"
+        },
+        {
+          "value": 500,
+          "line_number": 132,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 219,
+          "type": "number"
+        },
+        {
+          "value": 10000,
+          "line_number": 307,
+          "type": "number"
+        },
+        {
+          "value": 200,
+          "line_number": 397,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 408,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 412,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 426,
+          "type": "number"
+        },
+        {
+          "value": 500,
+          "line_number": 429,
+          "type": "number"
+        },
+        {
+          "value": 3000,
+          "line_number": 429,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "main",
+          "line_number": 478,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 596,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/maven_manager.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "build",
+          "lines": 106,
+          "line_number": 303
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "build",
+          "params": 8,
+          "line_number": 303
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 600,
+          "line_number": 311,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 415,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 510,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 525,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 583,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 585,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 596,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 605,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 607,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 615,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 648,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/npm_manager.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 600,
+          "line_number": 202,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 245,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 330,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 362,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 422,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 423,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 503,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/requirements_parser_agent.py",
+      "god_classes": [
+        {
+          "class": "RequirementsParserAgent",
+          "lines": 903,
+          "line_number": 56
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "_parse_with_prompt_manager",
+          "lines": 109,
+          "line_number": 284
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 8,
+          "line_number": 296,
+          "type": "number"
+        },
+        {
+          "value": 8,
+          "line_number": 297,
+          "type": "number"
+        },
+        {
+          "value": 10000,
+          "line_number": 315,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 327,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 333,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 334,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 357,
+          "type": "number"
+        },
+        {
+          "value": 200,
+          "line_number": 371,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 417,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 544,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "log",
+          "line_number": 956,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main",
+          "line_number": 962,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [
+        {
+          "line_number": 488,
+          "type": "TODO",
+          "comment": "Convert from LLM output if needed"
+        },
+        {
+          "line_number": 489,
+          "type": "TODO",
+          "comment": "Convert from data_entities"
+        },
+        {
+          "line_number": 490,
+          "type": "TODO",
+          "comment": "Convert from integrations"
+        }
+      ],
+      "commented_code": [],
+      "line_count": 1003,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/wcag_evaluator.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 50,
+          "line_number": 110,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 139,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 322,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 384,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/build_manager_base.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 300,
+          "line_number": 220,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 273,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 274,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 285,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 416,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_utilities.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 46,
+          "type": "number"
+        },
+        {
+          "value": 60.0,
+          "line_number": 47,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "retry_with_backoff",
+          "line_number": 174,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 647,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/preflight_validator.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 4000,
+          "line_number": 229,
+          "type": "number"
+        },
+        {
+          "value": 0.1,
+          "line_number": 230,
+          "type": "number"
+        },
+        {
+          "value": 9,
+          "line_number": 237,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 239,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 241,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 265,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 267,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 271,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 314,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "print_report",
+          "line_number": 263,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 346,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_stage_interface.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "log",
+          "line_number": 66,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 69,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/build_system_exceptions.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 226,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/intelligent_router.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 0.8,
+          "line_number": 132,
+          "type": "number"
+        },
+        {
+          "value": 0.8,
+          "line_number": 132,
+          "type": "number"
+        },
+        {
+          "value": 0.6,
+          "line_number": 133,
+          "type": "number"
+        },
+        {
+          "value": 0.6,
+          "line_number": 133,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 228,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 232,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 291,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 292,
+          "type": "number"
+        },
+        {
+          "value": 8,
+          "line_number": 294,
+          "type": "number"
+        },
+        {
+          "value": 8,
+          "line_number": 316,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "log_routing_decision",
+          "line_number": 450,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 485,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/llm_client.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "generate_text",
+          "params": 8,
+          "line_number": 159
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 0.7,
+          "line_number": 62,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 63,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 101,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 102,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 163,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 164,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 235,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 236,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 418,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 439,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [
+        {
+          "line_number": 123,
+          "type": "NOTE",
+          "comment": "Newer OpenAI models use max_completion_tokens instead of max_tokens"
+        },
+        {
+          "line_number": 257,
+          "type": "NOTE",
+          "comment": "Anthropic doesn't support response_format parameter"
+        }
+      ],
+      "commented_code": [],
+      "line_count": 466,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/java_ecosystem_integration.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 600,
+          "line_number": 259,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 292,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 412,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 414,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 419,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 427,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 429,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 436,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 444,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 446,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "build",
+          "line_number": 255,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "run_tests",
+          "line_number": 288,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 455,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/code_review_agent_original_backup.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 80,
+          "line_number": 107,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 109,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 292,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 293,
+          "type": "number"
+        },
+        {
+          "value": 7,
+          "line_number": 327,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 329,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 332,
+          "type": "number"
+        },
+        {
+          "value": 200,
+          "line_number": 362,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 455,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 517,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "main",
+          "line_number": 495,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 529,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/gradle_manager.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "build",
+          "lines": 102,
+          "line_number": 402
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 30,
+          "line_number": 259,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 320,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 321,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 333,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 334,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 370,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 408,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 510,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 585,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 587,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 641,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_stages_compat.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 36,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/update_rag_storage.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "replacement",
+          "line_number": 49,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "update_file",
+          "line_number": 66,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main",
+          "line_number": 97,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [
+        {
+          "line_number": 58,
+          "line": "# artifact_type=\"...\" -> stage_name=\"...\""
+        }
+      ],
+      "line_count": 115,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_workflows.py",
+      "god_classes": [
+        {
+          "class": "WorkflowBuilder",
+          "lines": 610,
+          "line_number": 551
+        }
+      ],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 83,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 98,
+          "type": "number"
+        },
+        {
+          "value": 1024,
+          "line_number": 142,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 142,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 207,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 266,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 286,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 293,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 313,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 358,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [
+        {
+          "line_number": 113,
+          "type": "TODO",
+          "comment": "Clear other caches (RAG, LLM, etc.)"
+        },
+        {
+          "line_number": 160,
+          "type": "TODO",
+          "comment": "Implement actual network retry"
+        },
+        {
+          "line_number": 225,
+          "type": "TODO",
+          "comment": "Implement security patch logic"
+        },
+        {
+          "line_number": 344,
+          "type": "TODO",
+          "comment": "Implement actual LLM retry"
+        },
+        {
+          "line_number": 370,
+          "type": "TODO",
+          "comment": "Implement response validation"
+        },
+        {
+          "line_number": 387,
+          "type": "TODO",
+          "comment": "Trigger architecture stage re-run"
+        },
+        {
+          "line_number": 397,
+          "type": "TODO",
+          "comment": "Send revision request to developer agents"
+        },
+        {
+          "line_number": 407,
+          "type": "TODO",
+          "comment": "Implement conflict resolution (prefer Developer A, B, or manual merge)"
+        },
+        {
+          "line_number": 415,
+          "type": "TODO",
+          "comment": "Trigger validation stage re-run"
+        },
+        {
+          "line_number": 447,
+          "type": "TODO",
+          "comment": "Implement intelligent merge logic"
+        },
+        {
+          "line_number": 455,
+          "type": "TODO",
+          "comment": "Restart messenger"
+        },
+        {
+          "line_number": 483,
+          "type": "TODO",
+          "comment": "Implement state restoration"
+        },
+        {
+          "line_number": 494,
+          "type": "TODO",
+          "comment": "Trigger RAG rebuild"
+        },
+        {
+          "line_number": 526,
+          "type": "TODO",
+          "comment": "Implement file lock release"
+        }
+      ],
+      "commented_code": [],
+      "line_count": 1162,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/knowledge_graph_factory.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 122,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/messenger_interface.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "send_error",
+          "params": 8,
+          "line_number": 161
+        },
+        {
+          "method": "send_error",
+          "params": 8,
+          "line_number": 335
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "update_shared_state",
+          "line_number": 189,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "register_agent",
+          "line_number": 213,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cleanup",
+          "line_number": 224,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "update_shared_state",
+          "line_number": 360,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "register_agent",
+          "line_number": 371,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cleanup",
+          "line_number": 375,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 382,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/sprint_planning_stage.py",
+      "god_classes": [
+        {
+          "class": "SprintPlanningStage",
+          "lines": 644,
+          "line_number": 46
+        }
+      ],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 11,
+          "line_number": 61
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 20,
+          "line_number": 94,
+          "type": "number"
+        },
+        {
+          "value": 20.0,
+          "line_number": 130,
+          "type": "number"
+        },
+        {
+          "value": 14,
+          "line_number": 131,
+          "type": "number"
+        },
+        {
+          "value": 0.4,
+          "line_number": 134,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 135,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 136,
+          "type": "number"
+        },
+        {
+          "value": 20.0,
+          "line_number": 139,
+          "type": "number"
+        },
+        {
+          "value": 14,
+          "line_number": 140,
+          "type": "number"
+        },
+        {
+          "value": 0.4,
+          "line_number": 143,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 144,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 691,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/code_review_agent.py",
+      "god_classes": [
+        {
+          "class": "CodeReviewAgent",
+          "lines": 687,
+          "line_number": 58
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "review_implementation",
+          "lines": 127,
+          "line_number": 140
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 80,
+          "line_number": 163,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 165,
+          "type": "number"
+        },
+        {
+          "value": 0.2,
+          "line_number": 197,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 198,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 421,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 447,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 448,
+          "type": "number"
+        },
+        {
+          "value": 7,
+          "line_number": 497,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 499,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 502,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "main",
+          "line_number": 748,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 782,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/checkpoint_manager.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "save_stage_checkpoint",
+          "params": 9,
+          "line_number": 268
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 16,
+          "line_number": 583,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 619,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/uiux_stage_original_backup.py",
+      "god_classes": [
+        {
+          "class": "UIUXStage",
+          "lines": 573,
+          "line_number": 26
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "_evaluate_uiux",
+          "lines": 206,
+          "line_number": 86
+        },
+        {
+          "method": "_evaluate_developer_uiux",
+          "lines": 110,
+          "line_number": 298
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 25,
+          "line_number": 67,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 112,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 140,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 148,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 150,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 229,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 232,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 234,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 240,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 243,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [
+        {
+          "line_number": 368,
+          "type": "TODO",
+          "comment": "integrate Playwright testing)"
+        },
+        {
+          "line_number": 376,
+          "type": "TODO",
+          "comment": "integrate Lighthouse)"
+        },
+        {
+          "line_number": 388,
+          "type": "TODO",
+          "comment": "design system validation)"
+        }
+      ],
+      "commented_code": [],
+      "line_count": 600,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/kanban_manager.py",
+      "god_classes": [
+        {
+          "class": "KanbanBoard",
+          "lines": 919,
+          "line_number": 205
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "create_card",
+          "lines": 108,
+          "line_number": 324
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "create_card",
+          "params": 10,
+          "line_number": 324
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 60,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 123,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 123,
+          "type": "number"
+        },
+        {
+          "value": 8,
+          "line_number": 123,
+          "type": "number"
+        },
+        {
+          "value": 13,
+          "line_number": 123,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 332,
+          "type": "number"
+        },
+        {
+          "value": 3600,
+          "line_number": 498,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 724,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 730,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 735,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "main",
+          "line_number": 1127,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [
+        {
+          "line_number": 1085,
+          "type": "NOTE",
+          "comment": "We only include cards that are not blocked"
+        }
+      ],
+      "commented_code": [],
+      "line_count": 1189,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/persistence_store.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 30,
+          "line_number": 84,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 279,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 408,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 475,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 524,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "save_pipeline_state",
+          "line_number": 59,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "save_stage_checkpoint",
+          "line_number": 69,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cleanup_old_states",
+          "line_number": 84,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "save_pipeline_state",
+          "line_number": 170,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "save_stage_checkpoint",
+          "line_number": 222,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cleanup_old_states",
+          "line_number": 279,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "close",
+          "line_number": 326,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "save_pipeline_state",
+          "line_number": 355,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "save_stage_checkpoint",
+          "line_number": 371,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cleanup_old_states",
+          "line_number": 408,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 526,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/output_storage.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 493,
+          "line_number": 73,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 366,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 371,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/cargo_manager.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 600,
+          "line_number": 237,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 280,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 321,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 353,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 382,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 411,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 428,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 467,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 468,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 549,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/coding_standards.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 784,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/fix_imports.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 44,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_status.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 70,
+          "line_number": 197,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 199,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 224,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 226,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 242,
+          "type": "number"
+        },
+        {
+          "value": 40,
+          "line_number": 268,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 275,
+          "type": "number"
+        },
+        {
+          "value": 3600,
+          "line_number": 277,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 278,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 279,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "display_status",
+          "line_number": 159,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "list_active_workflows",
+          "line_number": 286,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main",
+          "line_number": 317,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 375,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/code_example_types.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 23,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/requirements_models.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "to_yaml",
+          "line_number": 182,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "to_json",
+          "line_number": 196,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 311,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/requirements_stage.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "_do_requirements_parsing",
+          "lines": 127,
+          "line_number": 129
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 59
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 30,
+          "line_number": 90,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 152,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 177,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 190,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 202,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 215,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 422,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/build_manager_factory.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "register_build_manager",
+          "line_number": 300,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "decorator",
+          "line_number": 312,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 316,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/redis_rate_limiter.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 60,
+          "line_number": 116,
+          "type": "number"
+        },
+        {
+          "value": 20000,
+          "line_number": 208,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 209,
+          "type": "number"
+        },
+        {
+          "value": 100000,
+          "line_number": 209,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 210,
+          "type": "number"
+        },
+        {
+          "value": 10000,
+          "line_number": 210,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 233,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 250,
+          "type": "number"
+        },
+        {
+          "value": 10000,
+          "line_number": 250,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 251,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 334,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_cli.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "main",
+          "lines": 119,
+          "line_number": 364
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 70,
+          "line_number": 29,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 31,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 58,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 60,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 77,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 79,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 104,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 106,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 151,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 153,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "cmd_init_prompts",
+          "line_number": 27,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cmd_test_config",
+          "line_number": 75,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cmd_run",
+          "line_number": 102,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cmd_cleanup",
+          "line_number": 149,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cmd_status",
+          "line_number": 202,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cmd_prompts",
+          "line_number": 275,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main",
+          "line_number": 364,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 488,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/arbitration_stage.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "_do_work",
+          "lines": 116,
+          "line_number": 79
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 30,
+          "line_number": 112,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 122,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 235,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 236,
+          "type": "number"
+        },
+        {
+          "value": 15,
+          "line_number": 239,
+          "type": "number"
+        },
+        {
+          "value": 50.0,
+          "line_number": 249,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 300,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/circuit_breaker.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 5,
+          "line_number": 44,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 45,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 425,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 427,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 430,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 430,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 442,
+          "type": "number"
+        },
+        {
+          "value": 0.5,
+          "line_number": 457,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 459,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 461,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "reset",
+          "line_number": 244,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "reset_all",
+          "line_number": 342,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "reset_all_circuit_breakers",
+          "line_number": 399,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "unreliable_service",
+          "line_number": 438,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 476,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/retrospective_agent.py",
+      "god_classes": [
+        {
+          "class": "RetrospectiveAgent",
+          "lines": 613,
+          "line_number": 105
+        }
+      ],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 102,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 118,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 266,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 271,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 275,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 308,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 313,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 326,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 500,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 539,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 719,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stage_notifications.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "notify",
+          "line_number": 53,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "stage_lifecycle",
+          "line_number": 82,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "notify_progress",
+          "line_number": 121,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "notify_on_completion",
+          "line_number": 145,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "wrapper",
+          "line_number": 171,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 213,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/sprint_models.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 0.95,
+          "line_number": 174,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 179,
+          "type": "number"
+        },
+        {
+          "value": 14,
+          "line_number": 210,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 390,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/poetry_manager.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 300,
+          "line_number": 212,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 250,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 293,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 333,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 371,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 397,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 423,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 454,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 541,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/document_reader.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 80,
+          "line_number": 399,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 404,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "log",
+          "line_number": 378,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main",
+          "line_number": 384,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 410,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/cost_tracker.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "track_call",
+          "params": 8,
+          "line_number": 170
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 2.5,
+          "line_number": 56,
+          "type": "number"
+        },
+        {
+          "value": 0.15,
+          "line_number": 57,
+          "type": "number"
+        },
+        {
+          "value": 0.6,
+          "line_number": 57,
+          "type": "number"
+        },
+        {
+          "value": 30.0,
+          "line_number": 58,
+          "type": "number"
+        },
+        {
+          "value": 30.0,
+          "line_number": 59,
+          "type": "number"
+        },
+        {
+          "value": 60.0,
+          "line_number": 59,
+          "type": "number"
+        },
+        {
+          "value": 0.5,
+          "line_number": 60,
+          "type": "number"
+        },
+        {
+          "value": 1.5,
+          "line_number": 60,
+          "type": "number"
+        },
+        {
+          "value": 3.0,
+          "line_number": 63,
+          "type": "number"
+        },
+        {
+          "value": 15.0,
+          "line_number": 63,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "cleanup_old_records",
+          "line_number": 348,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 440,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/sprint_planning_stage_original_backup.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 10,
+          "line_number": 35
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 20.0,
+          "line_number": 44,
+          "type": "number"
+        },
+        {
+          "value": 14,
+          "line_number": 45,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 66,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 111,
+          "type": "number"
+        },
+        {
+          "value": 15,
+          "line_number": 124,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 147,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 157,
+          "type": "number"
+        },
+        {
+          "value": 75,
+          "line_number": 161,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 165,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 169,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 455,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/project_review_stage_original_backup.py",
+      "god_classes": [
+        {
+          "class": "ProjectReviewStage",
+          "lines": 617,
+          "line_number": 25
+        }
+      ],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 9,
+          "line_number": 36
+        },
+        {
+          "method": "_handle_rejection",
+          "params": 9,
+          "line_number": 462
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 45,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 65,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 78,
+          "type": "number"
+        },
+        {
+          "value": 0.25,
+          "line_number": 79,
+          "type": "number"
+        },
+        {
+          "value": 0.2,
+          "line_number": 80,
+          "type": "number"
+        },
+        {
+          "value": 0.15,
+          "line_number": 81,
+          "type": "number"
+        },
+        {
+          "value": 0.1,
+          "line_number": 82,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 110,
+          "type": "number"
+        },
+        {
+          "value": 15,
+          "line_number": 132,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 145,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 643,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/go_mod_manager.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 600,
+          "line_number": 256,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 310,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 344,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 370,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 393,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 416,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 439,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 462,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 479,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 612,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_checkpoint_manager_refactored.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 8,
+          "line_number": 244,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 576,
+          "type": "number"
+        },
+        {
+          "value": 10.5,
+          "line_number": 579,
+          "type": "number"
+        },
+        {
+          "value": 5.3,
+          "line_number": 582,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 587,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/retrospective_agent_original_backup.py",
+      "god_classes": [
+        {
+          "class": "RetrospectiveAgent",
+          "lines": 579,
+          "line_number": 65
+        }
+      ],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 78,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 221,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 226,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 230,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 263,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 268,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 281,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 443,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 482,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 484,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 645,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/workflow_status_tracker.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "start_workflow",
+          "line_number": 52,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "complete_workflow",
+          "line_number": 58,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "fail_workflow",
+          "line_number": 66,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "start_stage",
+          "line_number": 74,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "complete_stage",
+          "line_number": 91,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "fail_stage",
+          "line_number": 100,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "skip_stage",
+          "line_number": 110,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "update_stage_progress",
+          "line_number": 120,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "track_workflow",
+          "line_number": 133,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "track_stage",
+          "line_number": 144,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 216,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/prompt_manager.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "store_prompt",
+          "params": 14,
+          "line_number": 110
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 5,
+          "line_number": 256,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 424,
+          "type": "number"
+        },
+        {
+          "value": 8,
+          "line_number": 474,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 635,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 637,
+          "type": "number"
+        },
+        {
+          "value": 500,
+          "line_number": 641,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "update_performance",
+          "line_number": 451,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "create_default_prompts",
+          "line_number": 525,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 642,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/redis_metrics.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 2592000,
+          "line_number": 101,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 248,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 350,
+          "type": "number"
+        },
+        {
+          "value": 120.5,
+          "line_number": 353,
+          "type": "number"
+        },
+        {
+          "value": 0.15,
+          "line_number": 355,
+          "type": "number"
+        },
+        {
+          "value": 0.05,
+          "line_number": 355,
+          "type": "number"
+        },
+        {
+          "value": 500,
+          "line_number": 366,
+          "type": "number"
+        },
+        {
+          "value": 0.05,
+          "line_number": 367,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 382,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 392,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/repo_cleanup.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 1024,
+          "line_number": 212,
+          "type": "number"
+        },
+        {
+          "value": 1024,
+          "line_number": 212,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 217,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 219,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 227,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "log",
+          "line_number": 73,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "save_report",
+          "line_number": 231,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main",
+          "line_number": 244,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 291,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/messenger_factory.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 60,
+          "line_number": 247,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 299,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "register_messenger",
+          "line_number": 53,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 301,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/bdd_validation_stage.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 30,
+          "line_number": 51,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 101,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 107,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 113,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 167,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 279,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/universal_build_system.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 0.3,
+          "line_number": 263,
+          "type": "number"
+        },
+        {
+          "value": 0.4,
+          "line_number": 263,
+          "type": "number"
+        },
+        {
+          "value": 0.9,
+          "line_number": 320,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 512,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 514,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 523,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 540,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 542,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 549,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "get_build_manager",
+          "line_number": 433,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 553,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/rag_agent.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "get_recommendations",
+          "lines": 101,
+          "line_number": 275
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 5,
+          "line_number": 204,
+          "type": "number"
+        },
+        {
+          "value": 0.85,
+          "line_number": 265,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 272,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 347,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 353,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 368,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 381,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 438,
+          "type": "number"
+        },
+        {
+          "value": 0.8,
+          "line_number": 438,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 439,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "log",
+          "line_number": 95,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 577,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/standalone_developer_agent.py",
+      "god_classes": [
+        {
+          "class": "StandaloneDeveloperAgent",
+          "lines": 1213,
+          "line_number": 49
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "execute",
+          "lines": 184,
+          "line_number": 133
+        },
+        {
+          "method": "_build_execution_prompt",
+          "lines": 130,
+          "line_number": 583
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 56
+        },
+        {
+          "method": "execute",
+          "params": 9,
+          "line_number": 133
+        },
+        {
+          "method": "_build_execution_prompt",
+          "params": 9,
+          "line_number": 583
+        },
+        {
+          "method": "_red_phase_generate_tests",
+          "params": 8,
+          "line_number": 869
+        },
+        {
+          "method": "_green_phase_implement",
+          "params": 11,
+          "line_number": 925
+        },
+        {
+          "method": "_generate_tdd_solution_report",
+          "params": 8,
+          "line_number": 1191
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 344,
+          "type": "number"
+        },
+        {
+          "value": 500,
+          "line_number": 434,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 610,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 613,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 617,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 621,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 623,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 641,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 643,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 739,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [
+        {
+          "line_number": 821,
+          "type": "NOTE",
+          "comment": "_query_kg_for_implementation_patterns() has been removed"
+        }
+      ],
+      "commented_code": [],
+      "line_count": 1297,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/code_analysis_scanner.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 500,
+          "line_number": 48,
+          "type": "number"
+        },
+        {
+          "value": 7,
+          "line_number": 71,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 102,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 181,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 291,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 366,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "visit_ClassDef",
+          "line_number": 43,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "visit_FunctionDef",
+          "line_number": 57,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "visit_AsyncFunctionDef",
+          "line_number": 111,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "visit_Constant",
+          "line_number": 115,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main",
+          "line_number": 296,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [
+        {
+          "line_number": 201,
+          "type": "TODO",
+          "comment": "|FIXME|HACK|XXX|NOTE)\\b:?\\s*(.*)', re.IGNORECASE)"
+        }
+      ],
+      "commented_code": [],
+      "line_count": 372,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/reasoning_strategies.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 219,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 220,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 461,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 592,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 594,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 596,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 598,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 599,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/rabbitmq_messenger.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "send_error",
+          "params": 8,
+          "line_number": 370
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 8,
+          "line_number": 131,
+          "type": "number"
+        },
+        {
+          "value": 9,
+          "line_number": 178,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 178,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 178,
+          "type": "number"
+        },
+        {
+          "value": 0.1,
+          "line_number": 239,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 499,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "start_consuming",
+          "line_number": 299,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "on_message",
+          "line_number": 309,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "update_shared_state",
+          "line_number": 395,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "register_agent",
+          "line_number": 441,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cleanup",
+          "line_number": 467,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 519,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/hydra_config.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 8000,
+          "line_number": 24,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 25,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 53,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 80,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "register_configs",
+          "line_number": 113,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 134,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/generate_skills.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "generate_skill_file",
+          "lines": 141,
+          "line_number": 239
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "main",
+          "line_number": 383,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 400,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/planning_poker.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "estimate_feature",
+          "lines": 104,
+          "line_number": 172
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 116
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 40,
+          "line_number": 47,
+          "type": "number"
+        },
+        {
+          "value": 0.1,
+          "line_number": 49,
+          "type": "number"
+        },
+        {
+          "value": 0.2,
+          "line_number": 50,
+          "type": "number"
+        },
+        {
+          "value": 13,
+          "line_number": 51,
+          "type": "number"
+        },
+        {
+          "value": 8,
+          "line_number": 52,
+          "type": "number"
+        },
+        {
+          "value": 0.6,
+          "line_number": 53,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 54,
+          "type": "number"
+        },
+        {
+          "value": 0.5,
+          "line_number": 55,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 56,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 63,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 580,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/supervisor_learning.py",
+      "god_classes": [
+        {
+          "class": "SupervisorLearningEngine",
+          "lines": 606,
+          "line_number": 67
+        }
+      ],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 2000,
+          "line_number": 219,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 219,
+          "type": "number"
+        },
+        {
+          "value": 500,
+          "line_number": 422,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 497,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 632,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 680,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 716,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 718,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/agent_messenger.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "send_error",
+          "params": 8,
+          "line_number": 316
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 8,
+          "line_number": 70,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 255,
+          "type": "number"
+        },
+        {
+          "value": 7,
+          "line_number": 457,
+          "type": "number"
+        },
+        {
+          "value": 7,
+          "line_number": 479,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 514,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 563,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "update_shared_state",
+          "line_number": 341,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "register_agent",
+          "line_number": 400,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "send_heartbeat",
+          "line_number": 439,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cleanup_old_messages",
+          "line_number": 457,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "cleanup",
+          "line_number": 472,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "send_update",
+          "line_number": 493,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "send_notification",
+          "line_number": 499,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "send_error",
+          "line_number": 505,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 565,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/config_validator_refactored.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 5,
+          "line_number": 485,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 616,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 618,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 656,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 658,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 677,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 740,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/bdd_test_generation_stage.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 38
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 20,
+          "line_number": 53,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 108,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 114,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 125,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 218,
+          "type": "number"
+        },
+        {
+          "value": 3000,
+          "line_number": 219,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 229,
+          "type": "number"
+        },
+        {
+          "value": 3000,
+          "line_number": 230,
+          "type": "number"
+        },
+        {
+          "value": 9,
+          "line_number": 236,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 240,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 264,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/supervised_agent_mixin.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 65,
+          "type": "number"
+        },
+        {
+          "value": 15,
+          "line_number": 250,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "supervised_execution",
+          "line_number": 204,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 296,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_constants.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 5,
+          "line_number": 47,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 48,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 52,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 53,
+          "type": "number"
+        },
+        {
+          "value": 3600,
+          "line_number": 56,
+          "type": "number"
+        },
+        {
+          "value": 1800,
+          "line_number": 57,
+          "type": "number"
+        },
+        {
+          "value": 3600,
+          "line_number": 60,
+          "type": "number"
+        },
+        {
+          "value": 14400,
+          "line_number": 61,
+          "type": "number"
+        },
+        {
+          "value": 8000,
+          "line_number": 66,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 67,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "validate_config",
+          "line_number": 288,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 347,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/config_agent.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 233,
+          "type": "number"
+        },
+        {
+          "value": 6,
+          "line_number": 279,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 279,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 287,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 289,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 349,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 425,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/review_request_builder.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 500,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/reasoning_integration.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 42,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 43,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 49,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 52,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 53,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 117,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 118,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 521,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 522,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 531,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 630,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/protected_components.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 54,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 55,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 153,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 154,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 155,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 241,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 242,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 392,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "store_artifact",
+          "line_number": 86,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "query_similar",
+          "line_number": 97,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "delete_artifact",
+          "line_number": 108,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "complete",
+          "line_number": 171,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "generate_text",
+          "line_number": 188,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "add_node",
+          "line_number": 283,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "query",
+          "line_number": 294,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "reset_all_circuit_breakers",
+          "line_number": 332,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [
+        {
+          "line_number": 12,
+          "line": "# rag = RAGAgent(db_path=\"db\")"
+        },
+        {
+          "line_number": 15,
+          "line": "# rag = ProtectedRAGAgent(db_path=\"db\")"
+        }
+      ],
+      "line_count": 401,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/code_review_stage.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "_do_code_review",
+          "lines": 191,
+          "line_number": 105
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 10,
+          "line_number": 42
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 20,
+          "line_number": 76,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 130,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 158,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 166,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 168,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 261,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 264,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 266,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 272,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 461,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/dotnet_manager.py",
+      "god_classes": [
+        {
+          "class": "DotNetManager",
+          "lines": 511,
+          "line_number": 88
+        }
+      ],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 600,
+          "line_number": 306,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 359,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 400,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 431,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 488,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 528,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 550,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 591,
+          "type": "number"
+        },
+        {
+          "value": 4,
+          "line_number": 592,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 691,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/java_web_framework_detector.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 307,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 681,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 683,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 718,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 719,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/split_stages_script.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "main",
+          "lines": 116,
+          "line_number": 53
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "create_stage_file",
+          "line_number": 37,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main",
+          "line_number": 53,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 173,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/pipeline_strategies.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "execute",
+          "lines": 108,
+          "line_number": 371
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 4,
+          "line_number": 360,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 798,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/uiux_stage.py",
+      "god_classes": [
+        {
+          "class": "UIUXStage",
+          "lines": 820,
+          "line_number": 112
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "_evaluate_developer_uiux",
+          "lines": 104,
+          "line_number": 477
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 9,
+          "line_number": 132
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 25,
+          "line_number": 165,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 205,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 207,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 208,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 210,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 212,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 216,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 218,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 219,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 221,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 933,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_exceptions.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 434,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/sprint_config_accessor.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 0.001,
+          "line_number": 39,
+          "type": "number"
+        },
+        {
+          "value": 0.001,
+          "line_number": 58,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 228,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/code_examples_database.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 96,
+          "line_number": 91,
+          "type": "number"
+        },
+        {
+          "value": 94,
+          "line_number": 186,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 398,
+          "type": "number"
+        },
+        {
+          "value": 96,
+          "line_number": 536,
+          "type": "number"
+        },
+        {
+          "value": 93,
+          "line_number": 648,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 824,
+          "type": "number"
+        },
+        {
+          "value": 96,
+          "line_number": 1157,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 1175,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/workflow_handlers.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 78,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 95,
+          "type": "number"
+        },
+        {
+          "value": 1024,
+          "line_number": 140,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 140,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 211,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 274,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 296,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 303,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 324,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 375,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "register",
+          "line_number": 668,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [
+        {
+          "line_number": 160,
+          "type": "TODO",
+          "comment": "Implement actual network retry"
+        },
+        {
+          "line_number": 231,
+          "type": "TODO",
+          "comment": "Implement security patch logic"
+        },
+        {
+          "line_number": 359,
+          "type": "TODO",
+          "comment": "Implement actual LLM retry"
+        },
+        {
+          "line_number": 389,
+          "type": "TODO",
+          "comment": "Implement response validation"
+        },
+        {
+          "line_number": 407,
+          "type": "TODO",
+          "comment": "Trigger architecture stage re-run"
+        },
+        {
+          "line_number": 417,
+          "type": "TODO",
+          "comment": "Send revision request to developer agents"
+        },
+        {
+          "line_number": 427,
+          "type": "TODO",
+          "comment": "Implement conflict resolution"
+        },
+        {
+          "line_number": 436,
+          "type": "TODO",
+          "comment": "Trigger validation stage re-run"
+        },
+        {
+          "line_number": 470,
+          "type": "TODO",
+          "comment": "Implement intelligent merge logic"
+        },
+        {
+          "line_number": 479,
+          "type": "TODO",
+          "comment": "Restart messenger"
+        },
+        {
+          "line_number": 511,
+          "type": "TODO",
+          "comment": "Implement state restoration"
+        },
+        {
+          "line_number": 523,
+          "type": "TODO",
+          "comment": "Trigger RAG rebuild"
+        },
+        {
+          "line_number": 558,
+          "type": "TODO",
+          "comment": "Implement file lock release"
+        }
+      ],
+      "commented_code": [],
+      "line_count": 821,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/knowledge_graph.py",
+      "god_classes": [
+        {
+          "class": "KnowledgeGraph",
+          "lines": 812,
+          "line_number": 110
+        }
+      ],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "add_function",
+          "params": 8,
+          "line_number": 260
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 7687,
+          "line_number": 122,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 669,
+          "type": "number"
+        },
+        {
+          "value": 7687,
+          "line_number": 928,
+          "type": "number"
+        },
+        {
+          "value": 250,
+          "line_number": 934,
+          "type": "number"
+        },
+        {
+          "value": 180,
+          "line_number": 935,
+          "type": "number"
+        },
+        {
+          "value": 320,
+          "line_number": 936,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 946,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "query",
+          "line_number": 157,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 969,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_services.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 60,
+          "line_number": 33,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "log",
+          "line_number": 131,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "info",
+          "line_number": 139,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "warning",
+          "line_number": 143,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "error",
+          "line_number": 147,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "debug",
+          "line_number": 151,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "write_json",
+          "line_number": 171,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "write_text",
+          "line_number": 184,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "ensure_directory",
+          "line_number": 190,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 193,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/config_validator.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 70,
+          "line_number": 69,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 71,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 377,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 478,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 480,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 499,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 534,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_chat_agent.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 6,
+          "line_number": 173,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 211,
+          "type": "number"
+        },
+        {
+          "value": 500,
+          "line_number": 211,
+          "type": "number"
+        },
+        {
+          "value": 0.5,
+          "line_number": 227,
+          "type": "number"
+        },
+        {
+          "value": 75,
+          "line_number": 320,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 322,
+          "type": "number"
+        },
+        {
+          "value": 25,
+          "line_number": 324,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 382,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 382,
+          "type": "number"
+        },
+        {
+          "value": 0.8,
+          "line_number": 420,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 460,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/spring_boot_analyzer.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 200,
+          "line_number": 300,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 582,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 584,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 598,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 619,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [
+        {
+          "line_number": 308,
+          "type": "XXX",
+          "comment": ""
+        }
+      ],
+      "commented_code": [],
+      "line_count": 620,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/rag_storage_helper.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [
+        {
+          "line_number": 222,
+          "line": "# results = {\"main.py\": True, \"test_main.py\": True, \"README.md\": True}"
+        }
+      ],
+      "line_count": 278,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/populate_code_examples.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 95,
+          "line_number": 155,
+          "type": "number"
+        },
+        {
+          "value": 92,
+          "line_number": 332,
+          "type": "number"
+        },
+        {
+          "value": 94,
+          "line_number": 497,
+          "type": "number"
+        },
+        {
+          "value": 94,
+          "line_number": 720,
+          "type": "number"
+        },
+        {
+          "value": 96,
+          "line_number": 990,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 1224,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 1480,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 1482,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "main",
+          "line_number": 1441,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 1490,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/bdd_scenario_generation_stage.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 37
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 20,
+          "line_number": 52,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 99,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 109,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 118,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 183,
+          "type": "number"
+        },
+        {
+          "value": 2000,
+          "line_number": 184,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 194,
+          "type": "number"
+        },
+        {
+          "value": 2000,
+          "line_number": 195,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 242,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/developer_arbitrator.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 0.25,
+          "line_number": 58,
+          "type": "number"
+        },
+        {
+          "value": 0.2,
+          "line_number": 59,
+          "type": "number"
+        },
+        {
+          "value": 0.15,
+          "line_number": 60,
+          "type": "number"
+        },
+        {
+          "value": 0.15,
+          "line_number": 61,
+          "type": "number"
+        },
+        {
+          "value": 0.1,
+          "line_number": 62,
+          "type": "number"
+        },
+        {
+          "value": 0.05,
+          "line_number": 63,
+          "type": "number"
+        },
+        {
+          "value": 0.05,
+          "line_number": 64,
+          "type": "number"
+        },
+        {
+          "value": 0.05,
+          "line_number": 65,
+          "type": "number"
+        },
+        {
+          "value": 0.01,
+          "line_number": 79,
+          "type": "number"
+        },
+        {
+          "value": 50.0,
+          "line_number": 142,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 355,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_state_machine_refactored.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 3,
+          "line_number": 580,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "current_state",
+          "line_number": 1030,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 1098,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_orchestrator_protected.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "create_protected_orchestrator",
+          "lines": 156,
+          "line_number": 38
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "create_protected_orchestrator",
+          "params": 14,
+          "line_number": 38
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 200.0,
+          "line_number": 148,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 246,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 248,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 262,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "patch_main_with_protection",
+          "line_number": 279,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "protected_main",
+          "line_number": 288,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 338,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/ai_query_service.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 820
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 50,
+          "line_number": 195,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 211,
+          "type": "number"
+        },
+        {
+          "value": 200,
+          "line_number": 249,
+          "type": "number"
+        },
+        {
+          "value": 2000,
+          "line_number": 300,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 315,
+          "type": "number"
+        },
+        {
+          "value": 3000,
+          "line_number": 351,
+          "type": "number"
+        },
+        {
+          "value": 1500,
+          "line_number": 411,
+          "type": "number"
+        },
+        {
+          "value": 1200,
+          "line_number": 534,
+          "type": "number"
+        },
+        {
+          "value": 800,
+          "line_number": 602,
+          "type": "number"
+        },
+        {
+          "value": 0.015,
+          "line_number": 684,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "record_query",
+          "line_number": 638,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "print_dashboard",
+          "line_number": 757,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "print_metrics_dashboard",
+          "line_number": 1187,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "clear_cache",
+          "line_number": 1191,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "generate_text",
+          "line_number": 1266,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 1286,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/sandbox_executor.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 300,
+          "line_number": 31,
+          "type": "number"
+        },
+        {
+          "value": 512,
+          "line_number": 32,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 36,
+          "type": "number"
+        },
+        {
+          "value": 1024,
+          "line_number": 170,
+          "type": "number"
+        },
+        {
+          "value": 1024,
+          "line_number": 170,
+          "type": "number"
+        },
+        {
+          "value": 1024,
+          "line_number": 177,
+          "type": "number"
+        },
+        {
+          "value": 1024,
+          "line_number": 177,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 262,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 299,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 484,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "set_limits",
+          "line_number": 161,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 535,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/project_analysis_agent.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 20,
+          "line_number": 108,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 358,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 366,
+          "type": "number"
+        },
+        {
+          "value": 2000,
+          "line_number": 367,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 379,
+          "type": "number"
+        },
+        {
+          "value": 2000,
+          "line_number": 380,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 462,
+          "type": "number"
+        },
+        {
+          "value": 7,
+          "line_number": 514,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 516,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 518,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 813,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/composer_manager.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 300,
+          "line_number": 234,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 278,
+          "type": "number"
+        },
+        {
+          "value": 120,
+          "line_number": 318,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 360,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 386,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 423,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 446,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 475,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 495,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 512,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 653,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/gdpr_evaluator.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 391,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/analyze_exception_handling.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 80,
+          "line_number": 189,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 191,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "visit_ClassDef",
+          "line_number": 33,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "visit_FunctionDef",
+          "line_number": 40,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "visit_ExceptHandler",
+          "line_number": 75,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main",
+          "line_number": 148,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [
+        {
+          "line_number": 82,
+          "line": "# except Exception:"
+        }
+      ],
+      "line_count": 208,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/llm_cache.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 604800,
+          "line_number": 29,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 254,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 255,
+          "type": "number"
+        },
+        {
+          "value": 604800,
+          "line_number": 333,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 383,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 388,
+          "type": "number"
+        },
+        {
+          "value": 0.01,
+          "line_number": 406,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 414,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_stages_original_backup.py",
+      "god_classes": [
+        {
+          "class": "ArchitectureStage",
+          "lines": 760,
+          "line_number": 326
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "_do_analysis",
+          "lines": 118,
+          "line_number": 125
+        },
+        {
+          "method": "_create_adr",
+          "lines": 116,
+          "line_number": 412
+        },
+        {
+          "method": "_generate_adr_template",
+          "lines": 127,
+          "line_number": 668
+        },
+        {
+          "method": "_generate_user_stories_from_adr",
+          "lines": 136,
+          "line_number": 819
+        },
+        {
+          "method": "_do_work",
+          "lines": 176,
+          "line_number": 1293
+        },
+        {
+          "method": "_do_work",
+          "lines": 102,
+          "line_number": 1820
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 78
+        },
+        {
+          "method": "__init__",
+          "params": 9,
+          "line_number": 338
+        },
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 1781
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 96,
+          "type": "number"
+        },
+        {
+          "value": 40,
+          "line_number": 149,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 157,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 171,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 198,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 205,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 215,
+          "type": "number"
+        },
+        {
+          "value": 15,
+          "line_number": 365,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 432,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 440,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [
+        {
+          "line_number": 1075,
+          "type": "NOTE",
+          "comment": "Task should already exist from requirements stage"
+        }
+      ],
+      "commented_code": [],
+      "line_count": 2039,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/cmake_manager.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 120,
+          "line_number": 233,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 286,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 326,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 376,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 441,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_state_machine.py",
+      "god_classes": [
+        {
+          "class": "ArtemisStateMachine",
+          "lines": 840,
+          "line_number": 258
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "execute_workflow",
+          "lines": 102,
+          "line_number": 539
+        },
+        {
+          "method": "_generate_workflow_with_llm",
+          "lines": 115,
+          "line_number": 791
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 60.0,
+          "line_number": 236,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 238,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 503,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 735,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 856,
+          "type": "number"
+        },
+        {
+          "value": 1500,
+          "line_number": 857,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 1117,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/initialize_artemis_prompts.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "create_all_artemis_prompts",
+          "lines": 1239,
+          "line_number": 18
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 70,
+          "line_number": 23,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 25,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 1271,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 1273,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "create_all_artemis_prompts",
+          "line_number": 18,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 1278,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stages/validation_stage.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 94,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 136,
+          "type": "number"
+        },
+        {
+          "value": 98,
+          "line_number": 143,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 146,
+          "type": "number"
+        },
+        {
+          "value": 40,
+          "line_number": 146,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 156,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 170,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 232,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stages/testing_stage.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 95,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 125,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 130,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 131,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 134,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 142,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 146,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 178,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stages/integration_stage.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "_do_work",
+          "lines": 106,
+          "line_number": 117
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 78
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 96,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 130,
+          "type": "number"
+        },
+        {
+          "value": 40,
+          "line_number": 146,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 151,
+          "type": "number"
+        },
+        {
+          "value": 75,
+          "line_number": 159,
+          "type": "number"
+        },
+        {
+          "value": 75,
+          "line_number": 177,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 193,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 197,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 233,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stages/architecture_stage.py",
+      "god_classes": [
+        {
+          "class": "ArchitectureStage",
+          "lines": 768,
+          "line_number": 66
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "_create_adr",
+          "lines": 120,
+          "line_number": 152
+        },
+        {
+          "method": "_generate_adr_template",
+          "lines": 127,
+          "line_number": 412
+        },
+        {
+          "method": "_generate_user_stories_from_adr",
+          "lines": 136,
+          "line_number": 563
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 9,
+          "line_number": 78
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 105,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 172,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 180,
+          "type": "number"
+        },
+        {
+          "value": 65,
+          "line_number": 186,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 192,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 203,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 218,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 232,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 238,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 246,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [
+        {
+          "line_number": 823,
+          "type": "NOTE",
+          "comment": "Task should already exist from requirements stage"
+        }
+      ],
+      "commented_code": [],
+      "line_count": 841,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stages/__init__.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 26,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stages/project_analysis_stage.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "_do_analysis",
+          "lines": 118,
+          "line_number": 135
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 88
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 106,
+          "type": "number"
+        },
+        {
+          "value": 40,
+          "line_number": 159,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 167,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 181,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 208,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 215,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 225,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 338,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stages/development_stage.py",
+      "god_classes": [],
+      "long_methods": [
+        {
+          "method": "_do_work",
+          "lines": 176,
+          "line_number": 115
+        }
+      ],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 95,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 132,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 134,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 135,
+          "type": "number"
+        },
+        {
+          "value": 20,
+          "line_number": 141,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 146,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 158,
+          "type": "number"
+        },
+        {
+          "value": 65,
+          "line_number": 183,
+          "type": "number"
+        },
+        {
+          "value": 80,
+          "line_number": 216,
+          "type": "number"
+        },
+        {
+          "value": 90,
+          "line_number": 224,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 439,
+      "skipped": false
+    },
+    {
+      "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stages/dependency_validation_stage.py",
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 91,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 118,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 122,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 126,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 132,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 136,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 140,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 163,
+          "type": "number"
+        },
+        {
+          "value": 8,
+          "line_number": 163,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": [],
+      "line_count": 215,
+      "skipped": false
+    }
+  ]
+}

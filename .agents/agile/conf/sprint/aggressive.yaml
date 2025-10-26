@@ -1,0 +1,33 @@
+# Sprint Planning Configuration - Aggressive/Fast-Moving Team
+# For teams that can handle higher velocity and tighter deadlines
+
+# @package _group_
+defaults:
+  - standard  # Inherit from standard
+
+# Override specific values for aggressive teams
+sprint_planning:
+  team_velocity: 30.0  # Higher velocity
+  sprint_duration_days: 7  # 1-week sprints
+
+  priority_weights:
+    business_value: 0.7  # Even more focus on business value
+    story_points: 0.15
+    risk: 0.15
+
+project_review:
+  thresholds:
+    approval: 7.0  # Lower bar for approval
+    conditional_approval: 5.0
+    rejection: 5.0
+
+  max_iterations: 2  # Fewer iterations
+
+retrospective:
+  thresholds:
+    velocity:
+      excellent: 95.0  # Higher expectations
+      acceptable: 80.0
+    test_quality:
+      excellent: 98.0
+      acceptable: 90.0

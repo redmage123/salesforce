@@ -69,8 +69,15 @@ class ArtemisStatusQuery:
     def __init__(self, verbose: bool = False):
         self.verbose = verbose
         self.kanban = KanbanBoard()
-        self.status_dir = Path("/tmp/artemis_status")
-        self.status_dir.mkdir(exist_ok=True)
+
+        # Get status directory from env or use default
+        status_dir = os.getenv("ARTEMIS_STATUS_DIR", "../../.artemis_data/status")
+        if not os.path.isabs(status_dir):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            status_dir = os.path.join(script_dir, status_dir)
+
+        self.status_dir = Path(status_dir)
+        self.status_dir.mkdir(exist_ok=True, parents=True)
 
     def get_workflow_status(self, card_id: str) -> WorkflowInfo:
         """

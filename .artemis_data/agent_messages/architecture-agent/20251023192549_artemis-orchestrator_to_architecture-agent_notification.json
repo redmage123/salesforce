@@ -1,0 +1,34 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251023192549182990-artemis-orchestrator-1-3075e528",
+  "timestamp": "2025-10-23T19:25:49.183302Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "all",
+  "message_type": "notification",
+  "card_id": "card-20251023065355",
+  "priority": "medium",
+  "data": {
+    "notification_type": "pipeline_started",
+    "card_title": "Create Artemis self-demo with Chart.js visualization",
+    "workflow_plan": {
+      "complexity": "medium",
+      "task_type": "feature",
+      "stages": [
+        "project_analysis",
+        "architecture",
+        "dependencies",
+        "development",
+        "code_review",
+        "validation",
+        "arbitration",
+        "integration",
+        "testing"
+      ],
+      "parallel_developers": 2,
+      "skip_stages": [],
+      "execution_strategy": "parallel",
+      "reasoning": []
+    }
+  },
+  "metadata": {}
+}

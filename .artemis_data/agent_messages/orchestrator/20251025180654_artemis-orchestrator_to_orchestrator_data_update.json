@@ -1,0 +1,217 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251025180654146070-artemis-orchestrator-3-740b92d1",
+  "timestamp": "2025-10-25T18:06:54.146313Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "orchestrator",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "medium",
+  "data": {
+    "update_type": "sprint_planning_complete",
+    "task_title": "Create Artemis self-demo with Chart.js visualization",
+    "total_sprints": 7,
+    "total_story_points": 94,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-25",
+        "end_date": "2025-11-08",
+        "features": [
+          {
+            "title": "Integrate Chart.js Visualizations",
+            "description": "Use Chart.js to create various data visualizations such as line, bar, area, pie, and radar charts.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Pipeline metrics are visualized using Chart.js.",
+              "Cost tracking and success rates are displayed with appropriate charts.",
+              "Interactive elements and animations are included in charts."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-08",
+        "end_date": "2025-11-22",
+        "features": [
+          {
+            "title": "Live Metrics Dashboard",
+            "description": "Create a real-time dashboard with Chart.js graphs to display live metrics.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "LLM cost over time is shown using a line chart.",
+              "Stage completion rates are displayed with a bar chart.",
+              "Success rate trends are visualized with an area chart."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.7,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-22",
+        "end_date": "2025-12-06",
+        "features": [
+          {
+            "title": "Showcase Artemis Features",
+            "description": "Highlight Artemis capabilities including pipeline stages, cost tracking, and integration.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Include a HERO slide explaining Artemis as an Autonomous AI Development System.",
+              "Visualize an 8-stage pipeline using Chart.js.",
+              "Demonstrate cost tracking, sandboxing, and learning features with charts."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.65,
+            "priority_score": 6.5
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-06",
+        "end_date": "2025-12-20",
+        "features": [
+          {
+            "title": "Display Real Metrics from Recent Runs",
+            "description": "Showcase real metrics from recent Artemis runs to demonstrate effectiveness.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Actual data from recent runs is used in visualizations.",
+              "Metrics are clearly presented and easy to understand.",
+              "Data is up-to-date and relevant to the presentation."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6833333333333333,
+            "priority_score": 6.5
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 5,
+        "start_date": "2025-12-20",
+        "end_date": "2026-01-03",
+        "features": [
+          {
+            "title": "Code Quality Metrics Display",
+            "description": "Display code quality metrics such as TDD compliance and SOLID principles using a radar chart.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Radar chart displays TDD compliance and SOLID principles.",
+              "Metrics are accurate and based on recent data.",
+              "Chart is interactive and visually engaging."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 5.700000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 6,
+        "start_date": "2026-01-03",
+        "end_date": "2026-01-17",
+        "features": [
+          {
+            "title": "Create Standalone HTML Presentation",
+            "description": "Develop a single HTML file that includes embedded CSS, JavaScript, and Chart.js for visualization.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "HTML file is standalone with no external dependencies.",
+              "CSS and JavaScript are embedded within the HTML file.",
+              "Chart.js library is included for data visualization."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 5.3
+          },
+          {
+            "title": "Supervisor Integration Visualization",
+            "description": "Show integration of supervisor across stages using a pie chart.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Pie chart accurately represents supervisor integration.",
+              "Data is clearly labeled and easy to interpret.",
+              "Chart is interactive and visually appealing."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.9
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 7,
+        "start_date": "2026-01-17",
+        "end_date": "2026-01-31",
+        "features": [
+          {
+            "title": "Auto-Advance and Navigation Controls",
+            "description": "Enable slides to auto-advance with user navigation controls for manual progression.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Slides auto-advance after a set duration.",
+              "Users can manually navigate through slides using controls.",
+              "Navigation controls are intuitive and responsive."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.500000000000001
+          },
+          {
+            "title": "Implement Professional Design",
+            "description": "Design the presentation with a professional gradient background and smooth transitions.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Gradient background is applied consistently across slides.",
+              "Transitions between slides are smooth and professional.",
+              "Overall design is visually impressive and cohesive."
+            ],
+            "story_points": 5,
+            "estimated_hours": 10.0,
+            "risk_level": "low",
+            "confidence": 0.7333333333333333,
+            "priority_score": 4.000000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      }
+    ]
+  },
+  "metadata": {}
+}

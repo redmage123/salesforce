@@ -61,6 +61,10 @@ class RAGException(ArtemisException):
     pass
 
 
+# Alias for compatibility with AIQueryService
+RAGError = RAGException
+
+
 class RAGQueryError(RAGException):
     """Error querying RAG database"""
     pass
@@ -102,6 +106,10 @@ class RedisCacheError(RedisException):
 class LLMException(ArtemisException):
     """Base exception for LLM-related errors"""
     pass
+
+
+# Alias for compatibility with AIQueryService
+LLMError = LLMException
 
 
 class LLMClientError(LLMException):
@@ -178,6 +186,45 @@ class CodeReviewFeedbackError(CodeReviewException):
 
 
 # ============================================================================
+# REQUIREMENTS PARSING EXCEPTIONS
+# ============================================================================
+
+class RequirementsException(ArtemisException):
+    """Base exception for requirements parsing errors"""
+    pass
+
+
+class RequirementsFileError(RequirementsException):
+    """Error reading requirements file"""
+    pass
+
+
+class RequirementsParsingError(RequirementsException):
+    """Error parsing requirements content"""
+    pass
+
+
+class RequirementsValidationError(RequirementsException):
+    """Requirements validation failed"""
+    pass
+
+
+class RequirementsExportError(RequirementsException):
+    """Error exporting requirements to YAML/JSON"""
+    pass
+
+
+class UnsupportedDocumentFormatError(RequirementsException):
+    """Document format not supported"""
+    pass
+
+
+class DocumentReadError(RequirementsException):
+    """Error reading document content"""
+    pass
+
+
+# ============================================================================
 # PIPELINE / ORCHESTRATION EXCEPTIONS
 # ============================================================================
 
@@ -203,6 +250,25 @@ class PipelineConfigurationError(PipelineException):
 
 class ConfigurationError(ArtemisException):
     """Base exception for configuration errors (API keys, env vars, etc.)"""
+    pass
+
+
+# ============================================================================
+# KNOWLEDGE GRAPH EXCEPTIONS
+# ============================================================================
+
+class KnowledgeGraphError(ArtemisException):
+    """Base class for Knowledge Graph errors"""
+    pass
+
+
+class KGQueryError(KnowledgeGraphError):
+    """Error executing Knowledge Graph query"""
+    pass
+
+
+class KGConnectionError(KnowledgeGraphError):
+    """Error connecting to Knowledge Graph database"""
     pass
 
 
@@ -274,17 +340,71 @@ class DependencyAnalysisError(ProjectAnalysisException):
 
 
 # ============================================================================
+# SPRINT WORKFLOW EXCEPTIONS
+# ============================================================================
+
+class SprintException(ArtemisException):
+    """Base exception for sprint workflow errors"""
+    pass
+
+
+class SprintPlanningError(SprintException):
+    """Error during sprint planning"""
+    pass
+
+
+class FeatureExtractionError(SprintException):
+    """Error extracting or parsing features"""
+    pass
+
+
+class PlanningPokerError(SprintException):
+    """Error during Planning Poker estimation"""
+    pass
+
+
+class SprintAllocationError(SprintException):
+    """Error allocating features to sprints"""
+    pass
+
+
+class ProjectReviewError(SprintException):
+    """Error during project review"""
+    pass
+
+
+class RetrospectiveError(SprintException):
+    """Error during sprint retrospective"""
+    pass
+
+
+class UIUXEvaluationError(SprintException):
+    """Error during UI/UX evaluation"""
+    pass
+
+
+class WCAGEvaluationError(UIUXEvaluationError):
+    """Error during WCAG accessibility evaluation"""
+    pass
+
+
+class GDPREvaluationError(UIUXEvaluationError):
+    """Error during GDPR compliance evaluation"""
+    pass
+
+
+# ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
 
-def wrap_exception(
+def create_wrapped_exception(
     exception: Exception,
     artemis_exception_class: type[ArtemisException],
     message: str,
     context: Optional[Dict[str, Any]] = None
 ) -> ArtemisException:
     """
-    Wrap a generic exception in an Artemis-specific exception
+    Wrap a generic exception in an Artemis-specific exception (utility function)
 
     Args:
         exception: Original exception
@@ -299,7 +419,7 @@ def wrap_exception(
         try:
             some_operation()
         except Exception as e:
-            raise wrap_exception(
+            raise create_wrapped_exception(
                 e,
                 RAGQueryError,
                 "Failed to query RAG database",
@@ -311,3 +431,37 @@ def wrap_exception(
         context=context,
         original_exception=exception
     )
+
+
+# Decorator factory version for use with @wrap_exception syntax
+def wrap_exception(artemis_exception_class: type[ArtemisException], message: str):
+    """
+    Decorator factory to wrap exceptions raised in a function
+
+    Usage:
+        @wrap_exception(PipelineStageError, "Stage execution failed")
+        def execute(self, card, context):
+            # ... function code
+
+    Args:
+        artemis_exception_class: The Artemis exception class to wrap with
+        message: Human-readable error message
+
+    Returns:
+        Decorator function that wraps exceptions
+    """
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except ArtemisException:
+                # Pattern #10: Early return - don't wrap Artemis exceptions
+                raise
+            except Exception as e:
+                # Wrap non-Artemis exceptions
+                raise artemis_exception_class(
+                    message=f"{message}: {str(e)}",
+                    original_exception=e
+                )
+        return wrapper
+    return decorator

@@ -1,0 +1,17 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251024135808485559-artemis-orchestrator-4-8f43d28d",
+  "timestamp": "2025-10-24T13:58:08.485671Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "orchestrator",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "high",
+  "data": {
+    "update_type": "project_approved",
+    "status": "APPROVED",
+    "score": 6.0,
+    "ready_for_development": true
+  },
+  "metadata": {}
+}

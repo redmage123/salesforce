@@ -1,0 +1,8 @@
+{
+  "workflow": "quality_driven",
+  "implementation_files": [
+    "/home/bbrelin/src/repos/salesforce/.agents/agile/../../.artemis_data/developer_output/developer-b/artemis_demo_chartjs.html"
+  ],
+  "success": true,
+  "output_dir": "/home/bbrelin/src/repos/salesforce/.agents/agile/../../.artemis_data/developer_output/developer-b"
+}

@@ -213,7 +213,10 @@ class SupervisorLearningEngine:
 
         try:
             # Query LLM (this is the key learning step!)
-            response = self.llm_client.chat(prompt)
+            # Convert string prompt to message format
+            from llm_client import LLMMessage
+            messages = [LLMMessage(role="user", content=prompt)]
+            response = self.llm_client.complete(messages, max_tokens=2000, temperature=0.7)
 
             # Parse LLM response into workflow steps
             workflow_steps = self._parse_llm_response(response.content)

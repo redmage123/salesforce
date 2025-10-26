@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artemis Demo</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+        }
+        .slide {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 1s ease;
+        }
+        .hidden {
+            display: none;
+        }
+        nav {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        button {
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide" id="hero">
+        <h1>What is Artemis?</h1>
+        <p>The Autonomous AI Development System</p>
+    </div>
+    <div class="slide hidden" id="pipeline">
+        <canvas id="pipelineChart"></canvas>
+    </div>
+    <div class="slide hidden" id="features">
+        <canvas id="featuresChart"></canvas>
+    </div>
+    <div class="slide hidden" id="liveMetrics">
+        <canvas id="llmCostChart"></canvas>
+        <canvas id="stageCompletionChart"></canvas>
+        <canvas id="successRateChart"></canvas>
+    </div>
+    <div class="slide hidden" id="integration">
+        <canvas id="integrationChart"></canvas>
+    </div>
+    <div class="slide hidden" id="codeQuality">
+        <canvas id="codeQualityChart"></canvas>
+    </div>
+    <div class="slide hidden" id="results">
+        <p>Real metrics from recent runs</p>
+    </div>
+    <nav>
+        <button onclick="previousSlide()">Previous</button>
+        <button onclick="nextSlide()">Next</button>
+    </nav>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        let currentSlide = 0;
+
+        function showSlide(index) {
+            slides[currentSlide].classList.add('hidden');
+            slides[index].classList.remove('hidden');
+            currentSlide = index;
+        }
+
+        function nextSlide() {
+            const nextIndex = (currentSlide + 1) % slides.length;
+            showSlide(nextIndex);
+        }
+
+        function previousSlide() {
+            const prevIndex = (currentSlide - 1 + slides.length) % slides.length;
+            showSlide(prevIndex);
+        }
+
+        function drawCharts() {
+            // Example chart initialization
+            new Chart(document.getElementById('pipelineChart'), {
+                type: 'line',
+                data: { labels: ['Stage 1', 'Stage 2'], datasets: [{ label: 'Pipeline', data: [10, 20] }] },
+            });
+            // Further chart initializations...
+        }
+
+        window.onload = function() {
+            showSlide(0);
+            drawCharts();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+{
+  "state": "idle",
+  "timestamp": "2025-10-25T09:27:45.881351",
+  "card_id": "auto-20251025092744",
+  "active_stage": null,
+  "health_status": "healthy",
+  "circuit_breakers_open": [],
+  "active_issues": [],
+  "stages": {
+    "requirements_parsing": {
+      "stage_name": "requirements_parsing",
+      "state": "pending",
+      "start_time": "2025-10-25T09:27:45.878647",
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "retry_count": 0,
+      "error_message": null,
+      "metadata": {}
+    },
+    "project_analysis": {
+      "stage_name": "project_analysis",
+      "state": "pending",
+      "start_time": "2025-10-25T09:27:45.878945",
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "retry_count": 0,
+      "error_message": null,
+      "metadata": {}
+    },
+    "architecture": {
+      "stage_name": "architecture",
+      "state": "pending",
+      "start_time": "2025-10-25T09:27:45.879165",
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "retry_count": 0,
+      "error_message": null,
+      "metadata": {}
+    },
+    "dependencies": {
+      "stage_name": "dependencies",
+      "state": "pending",
+      "start_time": "2025-10-25T09:27:45.879381",
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "retry_count": 0,
+      "error_message": null,
+      "metadata": {}
+    },
+    "development": {
+      "stage_name": "development",
+      "state": "pending",
+      "start_time": "2025-10-25T09:27:45.879593",
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "retry_count": 0,
+      "error_message": null,
+      "metadata": {}
+    },
+    "arbitration": {
+      "stage_name": "arbitration",
+      "state": "pending",
+      "start_time": "2025-10-25T09:27:45.879829",
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "retry_count": 0,
+      "error_message": null,
+      "metadata": {}
+    },
+    "code_review": {
+      "stage_name": "code_review",
+      "state": "pending",
+      "start_time": "2025-10-25T09:27:45.880069",
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "retry_count": 0,
+      "error_message": null,
+      "metadata": {}
+    },
+    "validation": {
+      "stage_name": "validation",
+      "state": "pending",
+      "start_time": "2025-10-25T09:27:45.880321",
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "retry_count": 0,
+      "error_message": null,
+      "metadata": {}
+    },
+    "integration": {
+      "stage_name": "integration",
+      "state": "pending",
+      "start_time": "2025-10-25T09:27:45.880680",
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "retry_count": 0,
+      "error_message": null,
+      "metadata": {}
+    },
+    "testing": {
+      "stage_name": "testing",
+      "state": "pending",
+      "start_time": "2025-10-25T09:27:45.881338",
+      "end_time": null,
+      "duration_seconds": 0.0,
+      "retry_count": 0,
+      "error_message": null,
+      "metadata": {}
+    }
+  }
+}

@@ -1,0 +1,94 @@
+# Sprint Planning Configuration - Standard Team Settings
+# Used by: SprintPlanningStage, ProjectReviewStage, RetrospectiveAgent
+
+# Sprint Planning Settings
+sprint_planning:
+  # Team velocity and capacity
+  team_velocity: 20.0  # Story points per sprint
+  sprint_duration_days: 14  # 2-week sprints
+
+  # Risk score mapping for prioritization
+  risk_scores:
+    low: 1
+    medium: 5
+    high: 10
+
+  # Priority calculation weights (must sum to 1.0)
+  priority_weights:
+    business_value: 0.6  # Prioritize high business value
+    story_points: 0.2    # Deprioritize high effort
+    risk: 0.2            # Deprioritize high risk
+
+  # Planning Poker settings
+  planning_poker:
+    agents:
+      - architect
+      - senior_developer
+      - qa_engineer
+      - devops_engineer
+    fibonacci_scale: [1, 2, 3, 5, 8, 13, 21, 34, 55]
+
+# Project Review Configuration
+project_review:
+  # Review criteria weights (must sum to 1.0)
+  review_weights:
+    architecture_quality: 0.30  # Most important
+    sprint_feasibility: 0.25
+    technical_debt: 0.20
+    scalability: 0.15
+    maintainability: 0.10
+
+  # Decision thresholds (0-10 scale)
+  thresholds:
+    approval: 8.0              # Auto-approve if score >= 8.0
+    conditional_approval: 6.0  # Approve with warnings if 6.0 <= score < 8.0
+    rejection: 6.0             # Reject if score < 6.0
+
+  # Maximum review iterations before forced approval
+  max_iterations: 3
+
+  # Sprint capacity thresholds
+  capacity:
+    overcommitted_threshold: 0.95  # Flag sprints using > 95% capacity
+    underutilized_threshold: 0.70  # Flag sprints using < 70% capacity
+    max_sprint1_points: 25         # Max story points for first sprint
+
+# UI/UX Evaluation Configuration
+uiux_evaluation:
+  # Issue severity deductions from UX score (0-100 scale)
+  score_deductions:
+    wcag_critical: 20
+    wcag_serious: 10
+    wcag_moderate: 5
+    gdpr_critical: 20
+    gdpr_high: 10
+    gdpr_medium: 5
+
+  # Failure thresholds
+  thresholds:
+    critical_accessibility_issues: 5  # Fail if more than 5 critical accessibility issues
+
+# Sprint Retrospective Configuration
+retrospective:
+  # Health score weights (must sum to 100)
+  health_weights:
+    velocity: 40      # Most important metric
+    test_quality: 30
+    blockers: 20
+    bug_management: 10
+
+  # Performance thresholds
+  thresholds:
+    velocity:
+      excellent: 90.0  # >= 90% completion rate
+      acceptable: 70.0 # >= 70% completion rate
+    test_quality:
+      excellent: 95.0  # >= 95% pass rate
+      acceptable: 80.0 # >= 80% pass rate
+    health_score:
+      healthy: 80      # Overall health >= 80
+      needs_attention: 50  # 50 <= health < 80
+      # < 50 = critical
+
+  # Historical analysis
+  historical_sprints_to_analyze: 3

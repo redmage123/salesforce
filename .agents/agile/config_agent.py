@@ -12,9 +12,18 @@ SOLID Principles:
 """
 
 import os
+import tempfile
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from pathlib import Path
+from debug_mixin import DebugMixin
+
+# Try to load dotenv if available
+try:
+    from dotenv import load_dotenv
+    load_dotenv(override=True)  # Load .env file and override system environment
+except ImportError:
+    pass  # dotenv not installed, will use system environment variables only
 
 
 @dataclass
@@ -27,7 +36,7 @@ class ConfigValidationResult:
     config_summary: Dict[str, Any]
 
 
-class ConfigurationAgent:
+class ConfigurationAgent(DebugMixin):
     """
     Configuration Agent - Manages all environment configuration
 
@@ -72,13 +81,13 @@ class ConfigurationAgent:
 
         # Database and Storage
         'ARTEMIS_RAG_DB_PATH': {
-            'default': '/tmp/rag_db',
+            'default': 'db',  # Relative to .agents/agile directory
             'required': False,
             'sensitive': False,
-            'description': 'Path to RAG database (ChromaDB)'
+            'description': 'Path to RAG database (ChromaDB, relative to .agents/agile)'
         },
         'ARTEMIS_TEMP_DIR': {
-            'default': '/tmp',
+            'default': tempfile.gettempdir(),
             'required': False,
             'sensitive': False,
             'description': 'Temporary directory for pipeline artifacts'
@@ -98,10 +107,10 @@ class ConfigurationAgent:
             'description': 'Enable code review stage (true/false)'
         },
         'ARTEMIS_AUTO_APPROVE_PROJECT_ANALYSIS': {
-            'default': 'false',
+            'default': 'true',  # Default to auto-approve for non-interactive use
             'required': False,
             'sensitive': False,
-            'description': 'Auto-approve project analysis suggestions'
+            'description': 'Auto-approve project analysis suggestions (true/false)'
         },
 
         # Logging and Monitoring
@@ -155,12 +164,15 @@ class ConfigurationAgent:
         Args:
             verbose: Enable verbose logging
         """
+        DebugMixin.__init__(self, component_name="config")
         self.verbose = verbose
         self.config: Dict[str, Any] = {}
         self.load_configuration()
+        self.debug_log("ConfigurationAgent initialized", verbose=verbose)
 
     def load_configuration(self) -> None:
         """Load all configuration from environment variables"""
+        self.debug_trace("load_configuration", schema_keys=len(self.CONFIG_SCHEMA))
         for key, schema in self.CONFIG_SCHEMA.items():
             # Read from environment or use default
             value = os.getenv(key, schema['default'])
@@ -186,6 +198,7 @@ class ConfigurationAgent:
         Returns:
             ConfigValidationResult with validation status
         """
+        self.debug_trace("validate_configuration", require_llm_key=require_llm_key)
         missing_keys = []
         invalid_keys = []
         warnings = []
@@ -229,6 +242,10 @@ class ConfigurationAgent:
         }
 
         is_valid = len(missing_keys) == 0 and len(invalid_keys) == 0
+
+        self.debug_if_enabled("validation_results", "Configuration validation completed",
+                             is_valid=is_valid, missing=len(missing_keys),
+                             invalid=len(invalid_keys), warnings=len(warnings))
 
         return ConfigValidationResult(
             is_valid=is_valid,
@@ -363,7 +380,7 @@ class ConfigurationAgent:
         """Set safe defaults for testing (no real API calls)"""
         self.config['ARTEMIS_LLM_PROVIDER'] = 'mock'
         self.config['OPENAI_API_KEY'] = 'sk-test-key'
-        self.config['ARTEMIS_RAG_DB_PATH'] = '/tmp/rag_db_test'
+        self.config['ARTEMIS_RAG_DB_PATH'] = 'db_test'  # Separate test DB
         self.config['ARTEMIS_ENABLE_CODE_REVIEW'] = False
         print("⚠️  Test mode enabled - using mock LLM provider")
 

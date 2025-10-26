@@ -17,6 +17,7 @@ Supports:
 """
 
 import json
+import os
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, Optional, List
@@ -116,7 +117,7 @@ class CostTracker:
 
     def __init__(
         self,
-        storage_path: str = "/tmp/artemis_costs.json",
+        storage_path: str = "../../.artemis_data/cost_tracking/artemis_costs.json",
         daily_budget: Optional[float] = None,
         monthly_budget: Optional[float] = None,
         alert_threshold: float = 0.8  # Alert at 80% of budget
@@ -125,12 +126,21 @@ class CostTracker:
         Initialize cost tracker
 
         Args:
-            storage_path: Path to store cost records
+            storage_path: Path to store cost records (relative to .agents/agile)
             daily_budget: Daily budget limit in USD (None = unlimited)
-            monthly_budget: Monthly budget limit in USD (None = unlimited)
+            monthly_budget: Optional[float] = None,
             alert_threshold: Alert when budget usage exceeds this fraction
         """
+        # Convert relative path to absolute
+        if not os.path.isabs(storage_path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            storage_path = os.path.join(script_dir, storage_path)
+
         self.storage_path = Path(storage_path)
+
+        # Ensure parent directory exists
+        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+
         self.daily_budget = daily_budget
         self.monthly_budget = monthly_budget
         self.alert_threshold = alert_threshold

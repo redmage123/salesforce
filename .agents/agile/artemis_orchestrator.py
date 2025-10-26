@@ -27,6 +27,9 @@ import sys
 import hydra
 from omegaconf import DictConfig, OmegaConf
 
+# Import debug service
+from debug_service import DebugService
+
 from artemis_stage_interface import PipelineStage, LoggerInterface
 from artemis_services import PipelineLogger, TestRunner
 from artemis_stages import (
@@ -36,14 +39,28 @@ from artemis_stages import (
     DevelopmentStage,
     ValidationStage,
     IntegrationStage,
-    TestingStage
+    TestingStage,
+    ResearchStage
 )
 from code_review_stage import CodeReviewStage
+from arbitration_stage import ArbitrationStage
+from sprint_planning_stage import SprintPlanningStage
+from project_review_stage import ProjectReviewStage
+from uiux_stage import UIUXStage
+from retrospective_agent import RetrospectiveAgent
+from requirements_stage import RequirementsParsingStage
+from ssd_generation_stage import SSDGenerationStage
+from platform_detector import PlatformDetector, PlatformInfo, ResourceAllocation, get_platform_summary
+from ai_orchestration_planner import (
+    OrchestrationPlannerFactory,
+    OrchestrationPlan
+)
 from kanban_manager import KanbanBoard
 from messenger_interface import MessengerInterface
 from messenger_factory import MessengerFactory
 from rag_agent import RAGAgent
 from config_agent import ConfigurationAgent, get_config
+from llm_client import LLMClient
 from hydra_config import ArtemisConfig
 from workflow_status_tracker import WorkflowStatusTracker
 from supervisor_agent import SupervisorAgent, RecoveryStrategy
@@ -63,7 +80,7 @@ from artemis_exceptions import (
     RAGStorageError,
     FileReadError,
     FileWriteError,
-    wrap_exception
+    create_wrapped_exception
 )
 from pipeline_observer import (
     PipelineObservable,
@@ -71,6 +88,20 @@ from pipeline_observer import (
     EventBuilder,
     EventType
 )
+
+# Import AIQueryService for centralized KG→RAG→LLM pipeline
+try:
+    from ai_query_service import create_ai_query_service, AIQueryService
+    AI_QUERY_SERVICE_AVAILABLE = True
+except ImportError:
+    AI_QUERY_SERVICE_AVAILABLE = False
+
+# Import IntelligentRouter for AI-powered stage selection
+try:
+    from intelligent_router import IntelligentRouter
+    INTELLIGENT_ROUTER_AVAILABLE = True
+except ImportError:
+    INTELLIGENT_ROUTER_AVAILABLE = False
 
 
 class WorkflowPlanner:
@@ -80,88 +111,109 @@ class WorkflowPlanner:
     Single Responsibility: Analyze tasks and create workflow plans
     """
 
-    def __init__(self, card: Dict, verbose: bool = True):
+    def __init__(self, card: Dict, verbose: bool = True, resource_allocation: Optional['ResourceAllocation'] = None):
         self.card = card
         self.verbose = verbose
+        self.resource_allocation = resource_allocation
         self.complexity = self._analyze_complexity()
         self.task_type = self._determine_task_type()
 
     def _analyze_complexity(self) -> str:
         """Analyze task complexity"""
+        # Calculate complexity score using configuration
+        priority_scores = {'high': 2, 'medium': 1, 'low': 0}
+        points_thresholds = [(13, 3), (8, 2), (5, 1)]
+        complexity_thresholds = [(6, 'complex'), (3, 'medium'), (0, 'simple')]
+
         complexity_score = 0
 
-        # Priority
+        # Priority contribution
         priority = self.card.get('priority', 'medium')
-        if priority == 'high':
-            complexity_score += 2
-        elif priority == 'medium':
-            complexity_score += 1
+        complexity_score += priority_scores.get(priority, 1)
 
-        # Story points
+        # Story points contribution
         points = self.card.get('points', 5)
-        if points >= 13:
-            complexity_score += 3
-        elif points >= 8:
-            complexity_score += 2
-        elif points >= 5:
-            complexity_score += 1
+        complexity_score += next((score for threshold, score in points_thresholds if points >= threshold), 0)
 
-        # Keywords
+        # Keywords contribution
         description = self.card.get('description', '').lower()
         complex_keywords = ['integrate', 'architecture', 'refactor', 'migrate',
                            'performance', 'scalability', 'distributed', 'api']
-        complex_count = sum(1 for kw in complex_keywords if kw in description)
-        complexity_score += min(complex_count, 3)
-
         simple_keywords = ['fix', 'update', 'small', 'minor', 'simple', 'quick']
-        simple_count = sum(1 for kw in simple_keywords if kw in description)
-        complexity_score -= min(simple_count, 2)
 
-        if complexity_score >= 6:
-            return 'complex'
-        elif complexity_score >= 3:
-            return 'medium'
-        else:
-            return 'simple'
+        complex_count = sum(1 for kw in complex_keywords if kw in description)
+        simple_count = sum(1 for kw in simple_keywords if kw in description)
+
+        complexity_score += min(complex_count, 3) - min(simple_count, 2)
+
+        # Determine complexity level
+        return next(level for threshold, level in complexity_thresholds if complexity_score >= threshold)
 
     def _determine_task_type(self) -> str:
-        """Determine task type"""
+        """Determine task type using keyword matching"""
         description = self.card.get('description', '').lower()
         title = self.card.get('title', '').lower()
         combined = f"{title} {description}"
 
-        if any(kw in combined for kw in ['bug', 'fix', 'error', 'issue']):
-            return 'bugfix'
-        elif any(kw in combined for kw in ['refactor', 'restructure', 'cleanup']):
-            return 'refactor'
-        elif any(kw in combined for kw in ['docs', 'documentation', 'readme']):
-            return 'documentation'
-        elif any(kw in combined for kw in ['feature', 'implement', 'add', 'create']):
-            return 'feature'
-        else:
-            return 'other'
+        # Define task type keywords in priority order
+        task_type_keywords = [
+            ('bugfix', ['bug', 'fix', 'error', 'issue']),
+            ('refactor', ['refactor', 'restructure', 'cleanup']),
+            ('documentation', ['docs', 'documentation', 'readme']),
+            ('feature', ['feature', 'implement', 'add', 'create'])
+        ]
+
+        # Return first matching task type or 'other'
+        return next(
+            (task_type for task_type, keywords in task_type_keywords if any(kw in combined for kw in keywords)),
+            'other'
+        )
 
     def create_workflow_plan(self) -> Dict:
         """Create workflow plan based on complexity"""
         plan = {
             'complexity': self.complexity,
             'task_type': self.task_type,
-            'stages': ['project_analysis', 'architecture', 'dependencies', 'development', 'code_review', 'validation', 'integration'],
+            'stages': ['requirements_parsing', 'project_analysis', 'architecture', 'dependencies', 'development', 'code_review', 'validation', 'integration'],
             'parallel_developers': 1,
+            'max_parallel_tests': 4,  # Default for backward compatibility
             'skip_stages': ['arbitration'],
             'execution_strategy': 'sequential',
             'reasoning': []
         }
 
-        # Determine parallel developers
-        if self.complexity == 'complex':
-            plan['parallel_developers'] = 3
-            plan['execution_strategy'] = 'parallel'
-        elif self.complexity == 'medium':
-            plan['parallel_developers'] = 2
-            plan['execution_strategy'] = 'parallel'
+        # Determine parallel developers using configuration mapping
+        complexity_config = {
+            'complex': {'parallel_developers': 3, 'execution_strategy': 'parallel'},
+            'medium': {'parallel_developers': 2, 'execution_strategy': 'parallel'},
+            'simple': {'parallel_developers': 1, 'execution_strategy': 'sequential'}
+        }
+
+        config = complexity_config.get(self.complexity, complexity_config['simple'])
+        desired_parallel_developers = config['parallel_developers']
+
+        # Cap parallel developers based on platform resource allocation
+        if self.resource_allocation:
+            plan['parallel_developers'] = min(
+                desired_parallel_developers,
+                self.resource_allocation.max_parallel_developers
+            )
+            if plan['parallel_developers'] < desired_parallel_developers:
+                plan['reasoning'].append(
+                    f"Limited parallel developers to {plan['parallel_developers']} "
+                    f"(platform resources: {self.resource_allocation.max_parallel_developers} max)"
+                )
         else:
-            plan['parallel_developers'] = 1
+            plan['parallel_developers'] = desired_parallel_developers
+
+        plan['execution_strategy'] = config.get('execution_strategy', 'sequential')
+
+        # Set max parallel tests based on platform resource allocation
+        if self.resource_allocation:
+            plan['max_parallel_tests'] = self.resource_allocation.max_parallel_tests
+            plan['reasoning'].append(
+                f"Max parallel tests set to {plan['max_parallel_tests']} based on platform resources"
+            )
 
         # Skip arbitration if only one developer
         if plan['parallel_developers'] == 1:
@@ -205,7 +257,8 @@ class ArtemisOrchestrator:
         supervisor: Optional[SupervisorAgent] = None,
         enable_supervision: bool = True,
         strategy: Optional[PipelineStrategy] = None,
-        enable_observers: bool = True
+        enable_observers: bool = True,
+        resume: bool = False
     ):
         """
         Initialize orchestrator with dependency injection
@@ -228,6 +281,7 @@ class ArtemisOrchestrator:
         self.board = board
         self.messenger = messenger
         self.rag = rag
+        self.resume = resume  # Checkpoint resume flag
 
         # Observer Pattern - Event broadcasting for pipeline events
         # (Create observable first, then pass to strategy)
@@ -255,6 +309,7 @@ class ArtemisOrchestrator:
             self.hydra_config = None  # Old config_agent path
             verbose = True
 
+        self.verbose = verbose  # Store verbose flag for use in other methods
         self.logger = logger or PipelineLogger(verbose=verbose)
         self.test_runner = test_runner or TestRunner()
 
@@ -279,24 +334,35 @@ class ArtemisOrchestrator:
 
         # Enable learning capability (requires LLM client)
         if self.supervisor:
-            from llm_client import get_llm_client
             try:
-                llm = get_llm_client()  # Use default provider from env
+                from llm_client import LLMClientFactory
+                llm = LLMClientFactory.create_from_env()  # Create from environment variables
                 self.supervisor.enable_learning(llm)
                 self.logger.log("✅ Supervisor learning enabled", "INFO")
+            except ImportError:
+                self.logger.log("⚠️  LLM client not available - supervisor learning disabled", "WARNING")
+                # Continue without learning - supervisor still provides cost tracking and sandboxing
             except Exception as e:
                 self.logger.log(f"⚠️  Could not enable supervisor learning: {e}", "WARNING")
                 # Continue without learning - supervisor still provides cost tracking and sandboxing
+
+        # Initialize LLM client for sprint workflow stages
+        try:
+            self.llm_client = LLMClient.create_from_env()
+            self.logger.log("✅ LLM client initialized for sprint workflow", "INFO")
+        except Exception as e:
+            self.logger.log(f"⚠️  LLM client initialization failed: {e}", "WARNING")
+            self.llm_client = None
 
         # Validate configuration (only for old config_agent)
         if self.config is not None:
             validation = self.config.validate_configuration(require_llm_key=True)
             if not validation.is_valid:
                 self.logger.log("❌ Invalid configuration detected", "ERROR")
-                for key in validation.missing_keys:
-                    self.logger.log(f"  Missing: {key}", "ERROR")
-                for key in validation.invalid_keys:
-                    self.logger.log(f"  Invalid: {key}", "ERROR")
+                # Log missing keys
+                [self.logger.log(f"  Missing: {key}", "ERROR") for key in validation.missing_keys]
+                # Log invalid keys
+                [self.logger.log(f"  Invalid: {key}", "ERROR") for key in validation.invalid_keys]
                 raise PipelineConfigurationError(
                     f"Invalid Artemis configuration",
                     context={
@@ -305,6 +371,27 @@ class ArtemisOrchestrator:
                     }
                 )
         # Hydra configs are validated at load time, no need to re-validate
+
+        # Platform Detection and Resource Allocation
+        self.platform_detector = PlatformDetector(logger=self.logger)
+        self.platform_info = self.platform_detector.detect_platform()
+        self.resource_allocation = self.platform_detector.calculate_resource_allocation(self.platform_info)
+
+        # Store platform info in RAG and validate against stored data
+        self._store_and_validate_platform_info()
+
+        # Display platform information
+        if self.verbose:
+            summary = get_platform_summary(self.platform_info, self.resource_allocation)
+            print(summary)
+
+        # Initialize AI Orchestration Planner
+        self.orchestration_planner = OrchestrationPlannerFactory.create_planner(
+            llm_client=self.llm_client,
+            logger=self.logger,
+            prefer_ai=True  # Prefer AI planner, fallback to rule-based if unavailable
+        )
+        self.logger.log("✅ Orchestration planner initialized", "INFO")
 
         # Create stages if not injected (default pipeline)
         if stages is None:
@@ -322,6 +409,17 @@ class ArtemisOrchestrator:
 
         Each stage gets custom recovery strategy based on its characteristics
         """
+        # Requirements Parsing: LLM-heavy, needs more time
+        self.supervisor.register_stage(
+            "requirements_parsing",
+            RecoveryStrategy(
+                max_retries=MAX_RETRY_ATTEMPTS - 1,  # 2 retries
+                retry_delay_seconds=DEFAULT_RETRY_INTERVAL_SECONDS,  # 5s
+                timeout_seconds=STAGE_TIMEOUT_SECONDS / 15,  # 240s (4 min)
+                circuit_breaker_threshold=MAX_RETRY_ATTEMPTS
+            )
+        )
+
         # Project Analysis: Fast, can retry quickly
         self.supervisor.register_stage(
             "project_analysis",
@@ -364,6 +462,17 @@ class ArtemisOrchestrator:
                 backoff_multiplier=RETRY_BACKOFF_FACTOR,  # 2.0
                 timeout_seconds=DEVELOPER_AGENT_TIMEOUT_SECONDS / 6,  # 600s (10 min)
                 circuit_breaker_threshold=MAX_RETRY_ATTEMPTS + 2  # 5
+            )
+        )
+
+        # Arbitration: Fast decision making, minimal retries
+        self.supervisor.register_stage(
+            "arbitration",
+            RecoveryStrategy(
+                max_retries=MAX_RETRY_ATTEMPTS - 1,  # 2 retries
+                retry_delay_seconds=DEFAULT_RETRY_INTERVAL_SECONDS - 2.0,  # 3s
+                timeout_seconds=STAGE_TIMEOUT_SECONDS / 30,  # 120s (2 min)
+                circuit_breaker_threshold=MAX_RETRY_ATTEMPTS  # 3
             )
         )
 
@@ -411,35 +520,230 @@ class ArtemisOrchestrator:
             )
         )
 
+    def _store_and_validate_platform_info(self) -> None:
+        """
+        Store platform information in RAG and validate against stored data
+
+        Checks if stored platform matches current platform and logs warnings if changed.
+        Stores complete platform info as RAG artifact for future reference.
+        """
+        try:
+            # Query RAG for previously stored platform info
+            stored_platform_data = self.rag.query(
+                query="platform_info",
+                collection_name="platform_metadata",
+                n_results=1
+            )
+
+            stored_platform_hash = None
+            if stored_platform_data and len(stored_platform_data.get('metadatas', [[]])[0]) > 0:
+                # Extract stored platform hash
+                stored_metadata = stored_platform_data['metadatas'][0][0]
+                stored_platform_hash = stored_metadata.get('platform_hash')
+
+                if stored_platform_hash:
+                    # Compare platform hashes
+                    if stored_platform_hash != self.platform_info.platform_hash:
+                        # Platform has changed
+                        self.logger.log("⚠️  Platform configuration has changed since last run!", "WARNING")
+                        self.logger.log(f"   Previous platform hash: {stored_platform_hash}", "WARNING")
+                        self.logger.log(f"   Current platform hash: {self.platform_info.platform_hash}", "WARNING")
+                        self.logger.log("   Updating platform information in RAG...", "INFO")
+                    else:
+                        # Platform matches
+                        self.logger.log("✅ Platform validation: Current platform matches stored configuration", "INFO")
+
+            # Store/update platform information in RAG
+            platform_data = self.platform_info.to_dict()
+            allocation_data = self.resource_allocation.to_dict()
+
+            # Combine into single document for RAG
+            combined_data = {
+                "platform": platform_data,
+                "resource_allocation": allocation_data,
+                "timestamp": datetime.now().isoformat(),
+                "platform_hash": self.platform_info.platform_hash
+            }
+
+            # Store as RAG artifact
+            self.rag.store_artifact(
+                artifact_type="platform_metadata",
+                content=json.dumps(combined_data, indent=2),
+                metadata={
+                    "platform_hash": self.platform_info.platform_hash,
+                    "os_type": self.platform_info.os_type,
+                    "cpu_cores": self.platform_info.cpu_count_logical,
+                    "total_memory_gb": self.platform_info.total_memory_gb,
+                    "max_parallel_developers": self.resource_allocation.max_parallel_developers,
+                    "max_parallel_tests": self.resource_allocation.max_parallel_tests,
+                    "timestamp": datetime.now().isoformat()
+                },
+                collection_name="platform_metadata"
+            )
+
+            if self.verbose:
+                self.logger.log("✅ Platform information stored in RAG successfully", "INFO")
+
+        except Exception as e:
+            # Don't fail the entire pipeline if platform storage fails
+            self.logger.log(f"⚠️  Failed to store/validate platform info in RAG: {e}", "WARNING")
+            self.logger.log("   Continuing without platform validation...", "INFO")
+
     def _create_default_stages(self) -> List[PipelineStage]:
         """
-        Create default pipeline stages with supervisor integration
+        Create default pipeline stages with supervisor integration AND sprint workflow
 
-        This method demonstrates Open/Closed Principle:
-        - Open for extension: Can add new stages by extending this list
-        - Closed for modification: Core orchestrator doesn't change
+        NEW Sprint-Based Workflow:
+        0. RequirementsParsing - Parse free-form requirements → structured YAML/JSON
+        1. SprintPlanning - Estimate features with Planning Poker, create sprints
+        2. ProjectAnalysis - Analyze requirements
+        3. Architecture - Design system (uses structured requirements)
+        4. ProjectReview - Review & approve architecture (with feedback loop)
+        5. Development - Multi-agent implementation
+        6. CodeReview - Security, GDPR, accessibility
+        7. UIUXStage - WCAG & GDPR compliance evaluation
+        8. Validation - Test solutions
+        9. Integration - Integrate winner
+        10. Testing - Final tests
+        11. Retrospective - Learn from sprint (handled separately)
 
-        All stages now receive supervisor for:
+        All stages receive supervisor for:
         - LLM cost tracking
         - Code execution sandboxing
         - Unexpected state handling and recovery
+        - Dynamic heartbeat adjustment
         """
-        # Pass observable AND supervisor to stages that support it
-        return [
+        stages = []
+
+        # Initialize centralized AI Query Service (KG→RAG→LLM pipeline)
+        ai_service = None
+        if AI_QUERY_SERVICE_AVAILABLE and self.llm_client:
+            try:
+                self.logger.log("Initializing centralized AI Query Service...", "INFO")
+                ai_service = create_ai_query_service(
+                    llm_client=self.llm_client,
+                    rag=self.rag,
+                    logger=self.logger,
+                    verbose=self.verbose
+                )
+                self.logger.log("✅ AI Query Service initialized successfully", "SUCCESS")
+                self.logger.log("   All agents will use KG-First approach for token optimization", "INFO")
+            except Exception as e:
+                self.logger.log(f"⚠️  AI Query Service initialization failed: {e}", "WARNING")
+                self.logger.log("   Agents will use direct LLM calls (no KG optimization)", "WARNING")
+                ai_service = None
+
+        # Initialize Intelligent Router for AI-powered stage selection
+        self.intelligent_router = None
+        if INTELLIGENT_ROUTER_AVAILABLE:
+            try:
+                self.logger.log("Initializing Intelligent Router for dynamic stage selection...", "INFO")
+                self.intelligent_router = IntelligentRouter(
+                    ai_service=ai_service,
+                    logger=self.logger,
+                    config=self.config
+                )
+                self.logger.log("✅ Intelligent Router initialized successfully", "SUCCESS")
+                self.logger.log("   Pipeline will skip unnecessary stages based on task requirements", "INFO")
+            except Exception as e:
+                self.logger.log(f"⚠️  Intelligent Router initialization failed: {e}", "WARNING")
+                self.logger.log("   Pipeline will run all standard stages", "WARNING")
+                self.intelligent_router = None
+
+        # Requirements Parsing (new) - Parse requirements documents first
+        if self.llm_client:
+            stages.append(
+                RequirementsParsingStage(
+                    logger=self.logger,
+                    rag=self.rag,
+                    messenger=self.messenger,
+                    supervisor=self.supervisor
+                    # Note: RequirementsParsingStage already integrated with AIQueryService
+                )
+            )
+
+        # Sprint Planning (new) - Only if LLM client available
+        if self.llm_client:
+            stages.append(
+                SprintPlanningStage(
+                    self.board,
+                    self.messenger,
+                    self.rag,
+                    self.logger,
+                    self.llm_client,
+                    config=self.config,
+                    observable=self.observable,
+                    supervisor=self.supervisor
+                )
+            )
+
+        # Existing stages (now with AI Query Service)
+        stages.extend([
             ProjectAnalysisStage(
-                self.board,
-                self.messenger,
-                self.rag,
-                self.logger,
-                supervisor=self.supervisor
-            ),  # Pre-implementation analysis
+                board=self.board,
+                messenger=self.messenger,
+                rag=self.rag,
+                logger=self.logger,
+                supervisor=self.supervisor,
+                llm_client=self.llm_client,
+                config=self.config
+            )
+        ])
+
+        # Software Specification Document Generation (new) - After project analysis, before architecture
+        # Intelligently decides if SSD is needed based on task complexity
+        if self.llm_client:
+            stages.append(
+                SSDGenerationStage(
+                    llm_client=self.llm_client,
+                    rag=self.rag,
+                    logger=self.logger,
+                    verbose=self.verbose
+                )
+            )
+
+        # Continue with remaining stages
+        stages.extend([
             ArchitectureStage(
                 self.board,
                 self.messenger,
                 self.rag,
                 self.logger,
-                supervisor=self.supervisor
-            ),
+                supervisor=self.supervisor,
+                llm_client=self.llm_client,
+                ai_service=ai_service  # NEW: centralized KG-First service
+            )
+        ])
+
+        # Project Review - Validate architecture and sprint plans
+        if self.llm_client:
+            stages.append(
+                ProjectReviewStage(
+                    self.board,
+                    self.messenger,
+                    self.rag,
+                    self.logger,
+                    self.llm_client,
+                    config=self.config,
+                    observable=self.observable,
+                    supervisor=self.supervisor
+                )
+            )
+
+        # Research Stage - Retrieve code examples before development
+        # Searches GitHub, HuggingFace, and local filesystem for relevant examples
+        # Stores examples in RAG for developers to query during implementation
+        stages.append(
+            ResearchStage(
+                rag_agent=self.rag,
+                sources=["local", "github", "huggingface"],
+                max_examples_per_source=5,
+                timeout_seconds=30
+            )
+        )
+
+        # Continue with existing stages
+        stages.extend([
             DependencyValidationStage(self.board, self.messenger, self.logger),
             DevelopmentStage(
                 self.board,
@@ -447,21 +751,45 @@ class ArtemisOrchestrator:
                 self.logger,
                 observable=self.observable,
                 supervisor=self.supervisor
-            ),  # Invokes Developer A/B
+            ),
+            # Arbitration - adjudicator selects winner when dev group (2+ developers) competes
+            ArbitrationStage(
+                logger=self.logger,
+                messenger=None,  # Messenger doesn't support register_handler() - arbitration doesn't need it
+                observable=self.observable,
+                supervisor=self.supervisor,
+                ai_service=ai_service
+            ),
+            # Validation tests ONLY the winner
+            ValidationStage(
+                self.board,
+                self.test_runner,
+                self.logger,
+                messenger=self.messenger,
+                observable=self.observable,
+                supervisor=self.supervisor
+            ),
+            # UI/UX evaluates ONLY the winner (if needed)
+            UIUXStage(
+                self.board,
+                self.messenger,
+                self.rag,
+                self.logger,
+                observable=self.observable,
+                supervisor=self.supervisor,
+                config=self.config,
+                ai_service=ai_service  # NEW: centralized KG-First service
+            ),
+            # Code Review reviews ONLY the winner
             CodeReviewStage(
                 self.messenger,
                 self.rag,
                 self.logger,
                 observable=self.observable,
-                supervisor=self.supervisor
-            ),  # Security, GDPR, Accessibility review
-            ValidationStage(
-                self.board,
-                self.test_runner,
-                self.logger,
-                observable=self.observable,
-                supervisor=self.supervisor
-            ),  # Validate developer solutions
+                supervisor=self.supervisor,
+                ai_service=ai_service  # NEW: centralized KG-First service
+            ),
+            # Integration and Testing proceed with winner
             IntegrationStage(
                 self.board,
                 self.messenger,
@@ -470,9 +798,11 @@ class ArtemisOrchestrator:
                 self.logger,
                 observable=self.observable,
                 supervisor=self.supervisor
-            ),  # Integrate winning solution
+            ),
             TestingStage(self.board, self.messenger, self.rag, self.test_runner, self.logger)
-        ]
+        ])
+
+        return stages
 
     def run_full_pipeline(self, max_retries: int = None) -> Dict:
         """
@@ -490,6 +820,7 @@ class ArtemisOrchestrator:
         if max_retries is None:
             max_retries = MAX_RETRY_ATTEMPTS - 1  # Default: 2 retries
 
+        # Start pipeline
         self.logger.log("=" * 60, "INFO")
         self.logger.log("🏹 ARTEMIS - STARTING AUTONOMOUS HUNT FOR OPTIMAL SOLUTION", "STAGE")
         self.logger.log(f"   Execution Strategy: {self.strategy.__class__.__name__}", "INFO")
@@ -501,14 +832,27 @@ class ArtemisOrchestrator:
             self.logger.log(f"Card {self.card_id} not found", "ERROR")
             return {"status": "ERROR", "reason": "Card not found"}
 
-        # Create workflow plan
-        planner = WorkflowPlanner(card)
-        workflow_plan = planner.create_workflow_plan()
+        # Create AI-powered orchestration plan
+        orchestration_plan = self.orchestration_planner.create_plan(
+            card=card,
+            platform_info=self.platform_info,
+            resource_allocation=self.resource_allocation
+        )
 
-        self.logger.log("📋 WORKFLOW PLAN", "INFO")
+        # Convert OrchestrationPlan to dict for backward compatibility
+        workflow_plan = orchestration_plan.to_dict()
+
+        self.logger.log("📋 AI-GENERATED ORCHESTRATION PLAN", "INFO")
         self.logger.log(f"Complexity: {workflow_plan['complexity']}", "INFO")
         self.logger.log(f"Task Type: {workflow_plan['task_type']}", "INFO")
         self.logger.log(f"Parallel Developers: {workflow_plan['parallel_developers']}", "INFO")
+        self.logger.log(f"Estimated Duration: {workflow_plan['estimated_duration_minutes']} minutes", "INFO")
+
+        # Log AI reasoning
+        if workflow_plan.get('reasoning'):
+            self.logger.log("AI Reasoning:", "INFO")
+            for reason in workflow_plan['reasoning']:
+                self.logger.log(f"  • {reason}", "INFO")
 
         # Query RAG for historical context
         rag_recommendations = self.rag.get_recommendations(
@@ -528,11 +872,46 @@ class ArtemisOrchestrator:
             'parallel_developers': workflow_plan['parallel_developers']
         }
 
-        # Filter stages based on workflow plan
-        stages_to_run = self._filter_stages_by_plan(workflow_plan)
+        # Use intelligent routing if available
+        if self.intelligent_router:
+            routing_decision = self.intelligent_router.make_routing_decision(card)
+            self.intelligent_router.log_routing_decision(routing_decision)
 
-        # Execute pipeline using strategy (Strategy Pattern - delegates complexity)
-        self.logger.log(f"▶️  Executing {len(stages_to_run)} stages...", "INFO")
+            # Update workflow plan with intelligent router's recommendations
+            workflow_plan['parallel_developers'] = routing_decision.requirements.parallel_developers_recommended
+            context['parallel_developers'] = routing_decision.requirements.parallel_developers_recommended
+
+            # Filter stages using intelligent router
+            stages_to_run = self.intelligent_router.filter_stages(self.stages, routing_decision)
+
+            self.logger.log(f"🧠 Intelligent routing selected {len(stages_to_run)}/{len(self.stages)} stages", "INFO")
+        else:
+            # Fallback: Filter stages based on workflow plan
+            stages_to_run = self._filter_stages_by_plan(workflow_plan)
+
+        # Checkpoint resume logic
+        if self.resume and self.checkpoint_manager.can_resume():
+            checkpoint = self.checkpoint_manager.resume()
+            self.logger.log(f"📥 Resuming from checkpoint: {len(checkpoint.stage_checkpoints)} stages completed", "INFO")
+
+            # Get completed stages
+            completed_stages = set(checkpoint.stage_checkpoints.keys())
+
+            # Filter out completed stages
+            original_count = len(stages_to_run)
+            stages_to_run = [
+                s for s in stages_to_run
+                if s.__class__.__name__.replace('Stage', '').lower() not in completed_stages
+            ]
+
+            self.logger.log(f"⏭️  Skipping {len(completed_stages)} completed stages", "INFO")
+            self.logger.log(f"▶️  Running {len(stages_to_run)} remaining stages", "INFO")
+        else:
+            # Execute pipeline using strategy (Strategy Pattern - delegates complexity)
+            self.logger.log(f"▶️  Executing {len(stages_to_run)} stages...", "INFO")
+
+        # Add orchestrator to context so strategy can access checkpoint_manager
+        context['orchestrator'] = self
 
         execution_result = self.strategy.execute(stages_to_run, context)
 
@@ -570,13 +949,24 @@ class ArtemisOrchestrator:
         # Build final report
         supervisor_stats = self.supervisor.get_statistics() if self.enable_supervision and self.supervisor else None
 
+        # Run Sprint Retrospective if LLM client available
+        retrospective_report = None
+        if self.llm_client and final_status == "success":
+            try:
+                self.logger.log("🔄 Conducting Sprint Retrospective...", "INFO")
+                retrospective_report = self._run_retrospective(card, stage_results, context)
+                self.logger.log("✅ Retrospective complete", "SUCCESS")
+            except Exception as e:
+                self.logger.log(f"⚠️  Retrospective failed: {e}", "WARNING")
+
         report = {
             "card_id": self.card_id,
             "workflow_plan": workflow_plan,
             "stages": stage_results,
             "status": pipeline_status,
             "execution_result": execution_result,
-            "supervisor_statistics": supervisor_stats
+            "supervisor_statistics": supervisor_stats,
+            "retrospective": retrospective_report
         }
 
         # Save report
@@ -588,229 +978,114 @@ class ArtemisOrchestrator:
 
         return report
 
-    def _old_run_full_pipeline_with_retry_logic(self, max_retries: int = None) -> Dict:
+    def run_all_pending_tasks(self, max_tasks: int = None) -> List[Dict]:
         """
-        DEPRECATED: Old implementation with manual retry logic.
+        Process all pending tasks on the kanban board until complete
 
-        This method is preserved for reference but should not be used.
-        The new run_full_pipeline() uses Strategy Pattern instead.
+        This method implements the intelligent orchestrator pattern where
+        the pipeline iterates over ALL tasks on the board, processes each one,
+        and updates the board status accordingly.
 
-        Kept here temporarily for backward compatibility testing.
+        Args:
+            max_tasks: Maximum number of tasks to process (None = all)
+
+        Returns:
+            List of pipeline reports for each processed task
         """
-        if max_retries is None:
-            max_retries = MAX_RETRY_ATTEMPTS - 1
+        self.logger.log("=" * 60, "INFO")
+        self.logger.log("🔄 PROCESSING ALL PENDING TASKS ON KANBAN BOARD", "STAGE")
+        self.logger.log("=" * 60, "INFO")
 
-        # Get card
-        card, _ = self.board._find_card(self.card_id)
-        if not card:
-            return {"status": "ERROR", "reason": "Card not found"}
+        all_reports = []
+        task_count = 0
 
-        # Create workflow plan
-        planner = WorkflowPlanner(card)
-        workflow_plan = planner.create_workflow_plan()
+        # Loop until all tasks are complete or max reached
+        while self.board.has_incomplete_cards():
+            # Get pending cards (backlog + in-progress)
+            pending_cards = self.board.get_pending_cards()
 
-        # Query RAG
-        rag_recommendations = self.rag.get_recommendations(
-            task_description=card.get('description', card.get('title', '')),
-            context={'priority': card.get('priority'), 'complexity': workflow_plan['complexity']}
-        )
-
-        self._notify_pipeline_start(card, workflow_plan)
-
-        context = {
-            'workflow_plan': workflow_plan,
-            'rag_recommendations': rag_recommendations,
-            'parallel_developers': workflow_plan['parallel_developers']
-        }
-
-        stage_results = {}
-        stages_to_run = self._filter_stages_by_plan(workflow_plan)
-        retry_count = 0
-        all_retry_history = []
-
-        # OLD IMPLEMENTATION: Manual retry loop
-        while retry_count <= max_retries:
-            # Track if this is a retry
-            if retry_count > 0:
-                self.logger.log("=" * 60, "INFO")
-                self.logger.log(f"🔄 RETRY ATTEMPT {retry_count}/{max_retries}", "STAGE")
-                self.logger.log("=" * 60, "INFO")
-                context['retry_attempt'] = retry_count
-                context['previous_review_feedback'] = self._extract_code_review_feedback(stage_results.get('code_review', {}))
-
-            # Execute stages up to and including code review
-            for i, stage in enumerate(stages_to_run, 1):
-                stage_name = stage.get_stage_name()
-
-                # Skip stages before development on retry
-                if retry_count > 0 and stage_name not in ['development', 'code_review']:
-                    continue
-
-                self.logger.log(f"📋 STAGE {i}/{len(stages_to_run)}: {stage_name.upper()}", "STAGE")
-
-                try:
-                    # Execute stage with or without supervision
-                    if self.enable_supervision and self.supervisor:
-                        result = self.supervisor.execute_with_supervision(
-                            stage, stage_name, card, context
-                        )
-                    else:
-                        result = stage.execute(card, context)
-
-                    stage_results[stage_name] = result
-                    context.update(result)  # Add results to context for next stage
-
-                    # Store winner in context if returned
-                    if 'winner' in result:
-                        context['winner'] = result['winner']
-
-                    # Check if code review failed
-                    if stage_name == 'code_review':
-                        review_status = result.get('status', 'PASS')
-
-                        if review_status == 'FAIL' and retry_count < max_retries:
-                            # Store retry info
-                            all_retry_history.append({
-                                'attempt': retry_count + 1,
-                                'review_result': result,
-                                'critical_issues': result.get('total_critical_issues', 0),
-                                'high_issues': result.get('total_high_issues', 0)
-                            })
-
-                            self.logger.log("=" * 60, "WARNING")
-                            self.logger.log(f"❌ Code Review FAILED (Attempt {retry_count + 1})", "ERROR")
-                            self.logger.log(f"Critical Issues: {result.get('total_critical_issues', 0)}", "ERROR")
-                            self.logger.log(f"High Issues: {result.get('total_high_issues', 0)}", "ERROR")
-                            self.logger.log("🔄 Retrying with code review feedback...", "INFO")
-                            self.logger.log("=" * 60, "WARNING")
-
-                            # Store detailed feedback in RAG
-                            self._store_retry_feedback_in_rag(card, result, retry_count + 1)
-
-                            retry_count += 1
-                            break  # Break to restart development stage
-
-                        elif review_status == 'FAIL' and retry_count >= max_retries:
-                            self.logger.log("=" * 60, "ERROR")
-                            self.logger.log(f"❌ Max retries ({max_retries}) reached", "ERROR")
-                            self.logger.log("Code review still failing - stopping pipeline", "ERROR")
-                            self.logger.log("=" * 60, "ERROR")
-
-                            # Store final failed attempt
-                            all_retry_history.append({
-                                'attempt': retry_count + 1,
-                                'review_result': result,
-                                'critical_issues': result.get('total_critical_issues', 0),
-                                'high_issues': result.get('total_high_issues', 0),
-                                'final_failure': True
-                            })
-
-                            # Skip remaining stages and complete with FAILED status
-                            stage_results['pipeline_status'] = 'FAILED_CODE_REVIEW'
-                            break
-
-                        elif review_status == 'PASS':
-                            self.logger.log("✅ Code Review PASSED - Continuing pipeline", "SUCCESS")
-                            # Continue to remaining stages
-                            continue
-
-                except Exception as e:
-                    raise wrap_exception(
-                        e,
-                        PipelineStageError,
-                        f"Stage {stage_name} execution failed",
-                        {
-                            "card_id": self.card_id,
-                            "stage_name": stage_name,
-                            "retry_attempt": retry_count
-                        }
-                    )
-
-            # Check if we should break out of retry loop
-            code_review_result = stage_results.get('code_review', {})
-            if code_review_result.get('status') == 'PASS' or stage_results.get('pipeline_status') == 'FAILED_CODE_REVIEW':
+            if not pending_cards:
+                self.logger.log("✅ No more pending tasks - board complete!", "SUCCESS")
                 break
 
-        # Continue with remaining stages if code review passed
-        if stage_results.get('code_review', {}).get('status') == 'PASS':
-            # Find index of code_review stage
-            code_review_idx = next((i for i, s in enumerate(stages_to_run) if s.get_stage_name() == 'code_review'), -1)
+            if max_tasks and task_count >= max_tasks:
+                self.logger.log(f"⚠️  Reached maximum task limit ({max_tasks})", "WARNING")
+                break
 
-            if code_review_idx >= 0:
-                # Execute remaining stages after code review
-                for i, stage in enumerate(stages_to_run[code_review_idx + 1:], code_review_idx + 2):
-                    stage_name = stage.get_stage_name()
-                    self.logger.log(f"📋 STAGE {i}/{len(stages_to_run)}: {stage_name.upper()}", "STAGE")
+            # Process next card
+            card = pending_cards[0]  # Process in order
+            card_id = card.get('card_id')
+            card_title = card.get('title', 'Unknown')
 
-                    try:
-                        # Execute stage with or without supervision
-                        if self.enable_supervision and self.supervisor:
-                            result = self.supervisor.execute_with_supervision(
-                                stage, stage_name, card, context
-                            )
-                        else:
-                            result = stage.execute(card, context)
-
-                        stage_results[stage_name] = result
-                        context.update(result)
-
-                        if 'winner' in result:
-                            context['winner'] = result['winner']
-
-                    except Exception as e:
-                        raise wrap_exception(
-                            e,
-                            PipelineStageError,
-                            f"Stage {stage_name} execution failed (post code-review)",
-                            {
-                                "card_id": self.card_id,
-                                "stage_name": stage_name,
-                                "pipeline_phase": "post_code_review"
-                            }
-                        )
-
-        # Notify pipeline completion
-        self._notify_pipeline_completion(card, stage_results)
-
-        # Determine final status
-        final_status = "COMPLETED_SUCCESSFULLY"
-        if stage_results.get('pipeline_status') == 'FAILED_CODE_REVIEW':
-            final_status = "FAILED_CODE_REVIEW"
-            self.logger.log("=" * 60, "ERROR")
-            self.logger.log("❌ ARTEMIS PIPELINE FAILED - CODE REVIEW ISSUES NOT RESOLVED", "ERROR")
-            self.logger.log("=" * 60, "ERROR")
-        else:
+            self.logger.log("", "INFO")
             self.logger.log("=" * 60, "INFO")
-            self.logger.log("🎉 ARTEMIS HUNT SUCCESSFUL - OPTIMAL SOLUTION DELIVERED!", "SUCCESS")
+            self.logger.log(f"📋 PROCESSING TASK {task_count + 1}: {card_title}", "STAGE")
+            self.logger.log(f"   Card ID: {card_id}", "INFO")
             self.logger.log("=" * 60, "INFO")
 
-        # Print supervisor health report if supervision enabled
-        if self.enable_supervision and self.supervisor:
-            self.supervisor.print_health_report()
+            # Temporarily switch card_id for this task
+            original_card_id = self.card_id
+            self.card_id = card_id
 
-            # Cleanup any zombie processes
-            cleaned = self.supervisor.cleanup_zombie_processes()
-            if cleaned > 0:
-                self.logger.log(f"🧹 Cleaned up {cleaned} zombie processes", "INFO")
+            try:
+                # Run full pipeline for this card
+                report = self.run_full_pipeline()
+                all_reports.append(report)
 
-        # Save full report with retry information
-        supervisor_stats = self.supervisor.get_statistics() if self.enable_supervision and self.supervisor else None
+                task_count += 1
 
-        report = {
-            "card_id": self.card_id,
-            "workflow_plan": workflow_plan,
-            "stages": stage_results,
-            "status": final_status,
-            "retry_history": all_retry_history if all_retry_history else None,
-            "total_retries": retry_count,
-            "supervisor_statistics": supervisor_stats
+                # Check if task completed successfully
+                if report.get('status') == 'COMPLETED_SUCCESSFULLY':
+                    self.logger.log(f"✅ Task {task_count} completed successfully", "SUCCESS")
+                else:
+                    self.logger.log(f"❌ Task {task_count} failed: {report.get('status')}", "ERROR")
+
+            except Exception as e:
+                self.logger.log(f"❌ Task {task_count + 1} failed with exception: {e}", "ERROR")
+                all_reports.append({
+                    "card_id": card_id,
+                    "status": "FAILED_WITH_EXCEPTION",
+                    "error": str(e)
+                })
+                task_count += 1
+
+            finally:
+                # Restore original card_id
+                self.card_id = original_card_id
+
+            # Brief pause between tasks
+            self.logger.log("", "INFO")
+
+        # Final summary
+        self.logger.log("=" * 60, "INFO")
+        self.logger.log("📊 BOARD PROCESSING COMPLETE", "STAGE")
+        self.logger.log("=" * 60, "INFO")
+        self.logger.log(f"Total tasks processed: {task_count}", "INFO")
+
+        successful = sum(1 for r in all_reports if r.get('status') == 'COMPLETED_SUCCESSFULLY')
+        failed = task_count - successful
+
+        self.logger.log(f"✅ Successful: {successful}", "SUCCESS")
+        if failed > 0:
+            self.logger.log(f"❌ Failed: {failed}", "ERROR")
+
+        # Save consolidated report
+        consolidated_report = {
+            "total_tasks_processed": task_count,
+            "successful_tasks": successful,
+            "failed_tasks": failed,
+            "task_reports": all_reports,
+            "completion_timestamp": datetime.utcnow().isoformat() + 'Z'
         }
 
-        report_path = Path("/tmp") / f"pipeline_full_report_{self.card_id}.json"
+        report_path = Path("/tmp") / "pipeline_board_processing_report.json"
         with open(report_path, 'w') as f:
-            json.dump(report, f, indent=2)
+            json.dump(consolidated_report, f, indent=2)
 
-        return report
+        self.logger.log(f"📄 Consolidated report saved: {report_path}", "INFO")
+        self.logger.log("=" * 60, "INFO")
+
+        return all_reports
 
     def _filter_stages_by_plan(self, workflow_plan: Dict) -> List[PipelineStage]:
         """Filter stages based on workflow plan"""
@@ -926,6 +1201,110 @@ class ArtemisOrchestrator:
             }
         )
 
+    def _run_retrospective(self, card: Dict, stage_results: Dict, context: Dict) -> Dict:
+        """
+        Run sprint retrospective to learn from pipeline execution
+
+        Args:
+            card: Kanban card
+            stage_results: Results from all stages
+            context: Pipeline context
+
+        Returns:
+            Retrospective report dict
+        """
+        # Collect sprint metrics from stage results
+        sprint_data = self._collect_sprint_metrics(card, stage_results, context)
+
+        # Initialize retrospective agent
+        retrospective = RetrospectiveAgent(
+            llm_client=self.llm_client,
+            rag=self.rag,
+            logger=self.logger,
+            messenger=self.messenger,
+            historical_sprints_to_analyze=3
+        )
+
+        # Conduct retrospective
+        report = retrospective.conduct_retrospective(
+            sprint_number=1,  # TODO: Track sprint number in context
+            sprint_data=sprint_data,
+            card_id=self.card_id
+        )
+
+        # Convert to dict for JSON serialization
+        return {
+            "sprint_number": report.sprint_number,
+            "overall_health": report.overall_health,
+            "velocity": report.metrics.velocity,
+            "velocity_trend": report.velocity_trend,
+            "what_went_well_count": len(report.what_went_well),
+            "what_didnt_go_well_count": len(report.what_didnt_go_well),
+            "action_items_count": len(report.action_items),
+            "key_learnings": report.key_learnings,
+            "recommendations": report.recommendations
+        }
+
+    def _collect_sprint_metrics(self, card: Dict, stage_results: Dict, context: Dict) -> Dict:
+        """
+        Collect sprint metrics from pipeline execution
+
+        Args:
+            card: Kanban card
+            stage_results: Stage execution results
+            context: Pipeline context
+
+        Returns:
+            Sprint metrics dict
+        """
+        # Calculate story points (from sprint planning or estimate from card)
+        planned_story_points = context.get('sprints', [{}])[0].get('total_story_points',
+                                                                     card.get('story_points', 5))
+
+        # Count completed vs failed stages
+        total_stages = len(stage_results)
+        completed_stages = sum(1 for result in stage_results.values()
+                             if result.get('status') in ['PASS', 'success', 'completed'])
+
+        # Estimate completion percentage
+        completion_rate = (completed_stages / max(total_stages, 1)) * 100
+
+        # Estimate completed story points based on completion rate
+        completed_story_points = int(planned_story_points * (completion_rate / 100))
+
+        # Extract test metrics if available
+        testing_result = stage_results.get('testing', {})
+        tests_passing = testing_result.get('test_pass_rate', 100.0)
+
+        # Extract code review metrics
+        code_review_result = stage_results.get('code_review', {})
+        code_review_iterations = 1  # Default
+
+        # Extract bugs from validation/testing
+        bugs_found = 0
+        bugs_fixed = 0
+        validation_result = stage_results.get('validation', {})
+        if validation_result:
+            bugs_found = validation_result.get('issues_found', 0)
+            bugs_fixed = validation_result.get('issues_fixed', 0)
+
+        # Count blockers (stages that failed)
+        blockers_encountered = total_stages - completed_stages
+
+        return {
+            "sprint_number": 1,
+            "start_date": card.get('created_at', datetime.now().isoformat())[:10],
+            "end_date": datetime.now().isoformat()[:10],
+            "total_story_points": planned_story_points,
+            "completed_story_points": completed_story_points,
+            "bugs_found": bugs_found,
+            "bugs_fixed": bugs_fixed,
+            "test_pass_rate": tests_passing,
+            "code_review_iterations": code_review_iterations,
+            "average_task_duration_hours": 0,  # TODO: Calculate from stage durations
+            "blockers_encountered": blockers_encountered
+        }
+
     def get_pipeline_metrics(self) -> Optional[Dict]:
         """
         Get pipeline metrics from MetricsObserver
@@ -938,11 +1317,8 @@ class ArtemisOrchestrator:
 
         # Find MetricsObserver in attached observers
         from pipeline_observer import MetricsObserver
-        for observer in self.observable._observers:
-            if isinstance(observer, MetricsObserver):
-                return observer.get_summary()
-
-        return None
+        observer = next((obs for obs in self.observable._observers if isinstance(obs, MetricsObserver)), None)
+        return observer.get_summary() if observer else None
 
     def get_pipeline_state(self) -> Optional[Dict]:
         """
@@ -956,11 +1332,8 @@ class ArtemisOrchestrator:
 
         # Find StateTrackingObserver in attached observers
         from pipeline_observer import StateTrackingObserver
-        for observer in self.observable._observers:
-            if isinstance(observer, StateTrackingObserver):
-                return observer.get_state()
-
-        return None
+        observer = next((obs for obs in self.observable._observers if isinstance(obs, StateTrackingObserver)), None)
+        return observer.get_state() if observer else None
 
     def _extract_code_review_feedback(self, code_review_result: Dict) -> Dict:
         """
@@ -993,7 +1366,7 @@ class ArtemisOrchestrator:
                         full_review = json.load(f)
                         detailed_issues = full_review.get('issues', [])
                 except Exception as e:
-                    raise wrap_exception(
+                    raise create_wrapped_exception(
                         e,
                         FileReadError,
                         "Could not load detailed code review report",
@@ -1080,6 +1453,15 @@ DETAILED ISSUES BY DEVELOPER:
 
                 content += "\n"
 
+            # Add refactoring suggestions if available
+            refactoring_suggestions = code_review_result.get('refactoring_suggestions')
+            if refactoring_suggestions:
+                content += f"\n{'='*60}\n"
+                content += "REFACTORING INSTRUCTIONS\n"
+                content += f"{'='*60}\n\n"
+                content += refactoring_suggestions
+                content += "\n"
+
             # Store in RAG
             artifact_id = self.rag.store_artifact(
                 artifact_type="code_review_retry_feedback",
@@ -1091,14 +1473,15 @@ DETAILED ISSUES BY DEVELOPER:
                     'review_status': feedback['status'],
                     'total_critical_issues': feedback['total_critical_issues'],
                     'total_high_issues': feedback['total_high_issues'],
-                    'developers': [r['developer'] for r in feedback['developer_reviews']]
+                    'developers': [r['developer'] for r in feedback['developer_reviews']],
+                    'has_refactoring_suggestions': refactoring_suggestions is not None
                 }
             )
 
             self.logger.log(f"Stored retry feedback in RAG: {artifact_id}", "DEBUG")
 
         except Exception as e:
-            raise wrap_exception(
+            raise create_wrapped_exception(
                 e,
                 RAGStorageError,
                 "Failed to store retry feedback in RAG",
@@ -1217,7 +1600,20 @@ def list_active_workflows():
     print(f"{'='*70}\n")
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
+def _get_config_path() -> str:
+    """Get absolute path to Hydra config directory.
+
+    This allows the orchestrator to be run from any directory,
+    not just from .agents/agile.
+
+    Returns:
+        Absolute path to the conf directory
+    """
+    script_dir = Path(__file__).parent
+    return str(script_dir / "conf")
+
+
+@hydra.main(version_base=None, config_path=_get_config_path(), config_name="config")
 def main_hydra(cfg: DictConfig) -> None:
     """
     Hydra-powered entry point with type-safe configuration
@@ -1242,6 +1638,17 @@ def main_hydra(cfg: DictConfig) -> None:
 
     # Initialize dependencies (Dependency Injection)
     board = KanbanBoard()
+
+    # Initialize logger before debug service
+    logger = PipelineLogger(verbose=cfg.logging.verbose)
+
+    # Initialize Debug Service (supports Hydra config + environment variables)
+    debug_config = cfg.get('debug', None) if hasattr(cfg, 'debug') else None
+    DebugService.initialize(
+        config=debug_config,
+        logger=logger,
+        cli_debug=None  # Hydra mode: CLI overrides via config
+    )
 
     # Create messenger using factory (pluggable implementation)
     messenger = MessengerFactory.create_from_env(
@@ -1271,7 +1678,7 @@ def main_hydra(cfg: DictConfig) -> None:
         print(f"\n✅ Pipeline completed: {result['status']}")
 
     except Exception as e:
-        raise wrap_exception(
+        raise create_wrapped_exception(
             e,
             PipelineStageError,
             "Pipeline orchestrator execution failed",
@@ -1288,11 +1695,16 @@ def main_legacy():
     parser = argparse.ArgumentParser(description="Artemis Pipeline Orchestrator")
     parser.add_argument("--card-id", help="Kanban card ID")
     parser.add_argument("--full", action="store_true", help="Run full pipeline")
+    parser.add_argument("--resume", action="store_true", help="Resume from last checkpoint (if available)")
+    parser.add_argument("--requirements-file", help="Path to requirements document (PDF, Word, Excel, text, etc.)")
     parser.add_argument("--config-report", action="store_true", help="Show configuration report")
     parser.add_argument("--skip-validation", action="store_true", help="Skip config validation (not recommended)")
     parser.add_argument("--status", action="store_true", help="Show workflow status for card-id")
     parser.add_argument("--list-active", action="store_true", help="List all active workflows")
     parser.add_argument("--json", action="store_true", help="Output status in JSON format")
+    parser.add_argument("--debug", nargs='?', const='default', metavar='PROFILE',
+                       help="Enable debug mode (optional profile: verbose, minimal, default)")
+    parser.add_argument("--debug-profile", help="Debug profile to use (verbose, minimal, default)")
     args = parser.parse_args()
 
     # Handle status queries (don't require config)
@@ -1314,9 +1726,9 @@ def main_legacy():
         config.print_configuration_report()
         return
 
-    # Require card-id for pipeline execution
-    if not args.card_id:
-        print("\n❌ Error: --card-id is required for pipeline execution\n")
+    # Require card-id OR requirements-file for pipeline execution
+    if not args.card_id and not args.requirements_file:
+        print("\n❌ Error: --card-id or --requirements-file is required for pipeline execution\n")
         parser.print_help()
         sys.exit(1)
 
@@ -1331,10 +1743,9 @@ def main_legacy():
 
             if validation.missing_keys:
                 print("Missing Required Keys:")
-                for key in validation.missing_keys:
-                    schema = config.CONFIG_SCHEMA.get(key, {})
-                    print(f"  ❌ {key}")
-                    print(f"     Description: {schema.get('description', 'N/A')}")
+                # Display missing keys with descriptions
+                [print(f"  ❌ {key}\n     Description: {config.CONFIG_SCHEMA.get(key, {}).get('description', 'N/A')}")
+                 for key in validation.missing_keys]
 
                 # Provide helpful hints
                 provider = config.get('ARTEMIS_LLM_PROVIDER', 'openai')
@@ -1347,8 +1758,7 @@ def main_legacy():
 
             if validation.invalid_keys:
                 print("\nInvalid Configuration Values:")
-                for key in validation.invalid_keys:
-                    print(f"  ❌ {key}")
+                [print(f"  ❌ {key}") for key in validation.invalid_keys]
 
             print("\n" + "="*80)
             print("\n💡 Run with --config-report to see full configuration")
@@ -1358,12 +1768,24 @@ def main_legacy():
     # Initialize dependencies (Dependency Injection)
     board = KanbanBoard()
 
+    # Initialize logger before debug service
+    logger = PipelineLogger(verbose=True)
+
+    # Initialize Debug Service (supports CLI + environment variables)
+    # Determine debug CLI value (priority: --debug-profile > --debug)
+    cli_debug_value = args.debug_profile or args.debug
+    DebugService.initialize(
+        config=None,  # Legacy mode: no Hydra config
+        logger=logger,
+        cli_debug=cli_debug_value
+    )
+
     # Create messenger using factory (pluggable implementation)
     messenger = MessengerFactory.create_from_env(
         agent_name="artemis-orchestrator"
     )
 
-    rag_db_path = config.get('ARTEMIS_RAG_DB_PATH', '/tmp/rag_db')
+    rag_db_path = config.get('ARTEMIS_RAG_DB_PATH', 'db')
     rag = RAGAgent(db_path=rag_db_path, verbose=True)
 
     # Register orchestrator
@@ -1373,13 +1795,131 @@ def main_legacy():
     )
 
     try:
+        # Performance: Dict dispatch for O(1) requirements handling strategy selection
+        def _create_card_from_requirements():
+            """Strategy: Create new card from requirements file (autonomous mode)"""
+            from requirements_parser_agent import RequirementsParserAgent
+            from document_reader import DocumentReader
+            import os
+            from datetime import datetime
+
+            print(f"\n🤖 Autonomous Mode: Creating card from requirements file...")
+            print(f"📄 Reading: {args.requirements_file}")
+
+            # Read requirements document
+            doc_reader = DocumentReader(verbose=False)
+            requirements_text = doc_reader.read_document(args.requirements_file)
+
+            # Parse requirements with AI
+            parser = RequirementsParserAgent(
+                llm_provider=config.get('ARTEMIS_LLM_PROVIDER', 'openai'),
+                llm_model=config.get('ARTEMIS_LLM_MODEL', 'gpt-4'),
+                rag=rag
+            )
+
+            parsed_reqs = parser.parse_requirements_file(args.requirements_file)
+
+            # Extract title: prefer project_name, then first functional requirement, then filename
+            filename_without_ext = Path(args.requirements_file).stem
+            filename_as_title = filename_without_ext.replace('_', ' ').replace('-', ' ').title()
+
+            if parsed_reqs.project_name and parsed_reqs.project_name != filename_as_title:
+                # Use project_name if it's explicitly set and not just derived from filename
+                title = parsed_reqs.project_name
+            elif parsed_reqs.functional_requirements:
+                # Fall back to first functional requirement title
+                title = parsed_reqs.functional_requirements[0].title
+            else:
+                # Last resort: use filename
+                title = filename_as_title
+
+            # Generate unique card ID
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            card_id = f"auto-{timestamp}"
+
+            # Determine priority from highest priority functional requirement
+            # Map RequirementsParser priorities to KanbanManager priorities
+            priority_map = {
+                'critical': 'high',     # critical → high
+                'high': 'high',         # high → high
+                'medium': 'medium',     # medium → medium
+                'low': 'low',           # low → low
+                'nice_to_have': 'low'   # nice_to_have → low
+            }
+
+            priority = 'medium'
+            if parsed_reqs.functional_requirements:
+                # Get highest priority (critical > high > medium > low > nice_to_have)
+                priority_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3, 'nice_to_have': 4}
+                priorities = [req.priority.value for req in parsed_reqs.functional_requirements]
+                highest_priority = min(priorities, key=lambda p: priority_order.get(p, 2))
+                priority = priority_map.get(highest_priority, 'medium')
+
+            # Calculate story points based on number of requirements
+            # Must use Fibonacci numbers: [1, 2, 3, 5, 8, 13]
+            total_reqs = len(parsed_reqs.functional_requirements) + len(parsed_reqs.non_functional_requirements)
+            fibonacci = [1, 2, 3, 5, 8, 13]
+            # Find closest Fibonacci number
+            story_points = min(fibonacci, key=lambda x: abs(x - total_reqs))
+
+            # Create card using builder pattern
+            card = (board.new_card(card_id, title)
+                   .with_description(parsed_reqs.executive_summary or requirements_text[:500])
+                   .with_priority(priority)
+                   .with_story_points(story_points)
+                   .build())
+
+            # Add requirements file reference
+            card['requirements_file'] = args.requirements_file
+            card['metadata'] = card.get('metadata', {})
+            card['metadata']['auto_created'] = True
+            card['metadata']['created_from'] = args.requirements_file
+
+            board.add_card(card)
+
+            print(f"✅ Created card: {card_id}")
+            print(f"   Title: {title}")
+            print(f"   Priority: {card['priority']}")
+            print(f"   Story Points: {card['story_points']}")
+
+            return card_id
+
+        def _attach_requirements_to_card():
+            """Strategy: Attach requirements file to existing card"""
+            card, _ = board._find_card(args.card_id)
+            if card:
+                board.update_card(args.card_id, {"requirements_file": args.requirements_file})
+                print(f"✅ Added requirements file to card: {args.requirements_file}")
+            else:
+                print(f"⚠️  Card {args.card_id} not found - requirements file will be used from context")
+            return args.card_id
+
+        def _use_existing_card():
+            """Strategy: Use existing card without requirements file"""
+            return args.card_id
+
+        # Performance: O(1) strategy dispatch using dict instead of O(n) if/elif chain
+        requirements_strategy = {
+            (True, False): _create_card_from_requirements,    # requirements file, no card
+            (True, True): _attach_requirements_to_card,       # requirements file + card
+            (False, True): _use_existing_card,                # card only
+        }
+
+        # Execute appropriate strategy
+        strategy_key = (bool(args.requirements_file), bool(args.card_id))
+        handler = requirements_strategy.get(strategy_key)
+
+        if handler:
+            args.card_id = handler()
+
         # Create orchestrator with injected dependencies
         orchestrator = ArtemisOrchestrator(
             card_id=args.card_id,
             board=board,
             messenger=messenger,
             rag=rag,
-            config=config
+            config=config,
+            resume=args.resume
         )
 
         # Run pipeline
@@ -1394,7 +1934,7 @@ def main_legacy():
         print("💡 Run with --config-report to see full configuration\n")
         sys.exit(1)
     except Exception as e:
-        raise wrap_exception(
+        raise create_wrapped_exception(
             e,
             PipelineStageError,
             "Pipeline orchestrator execution failed",

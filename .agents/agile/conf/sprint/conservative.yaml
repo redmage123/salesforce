@@ -1,0 +1,43 @@
+# Sprint Planning Configuration - Conservative/Quality-Focused Team
+# For teams prioritizing quality and stability over speed
+
+# @package _group_
+defaults:
+  - standard
+
+# Override for conservative teams
+sprint_planning:
+  team_velocity: 15.0  # Lower velocity for quality focus
+  sprint_duration_days: 21  # 3-week sprints
+
+  priority_weights:
+    business_value: 0.5
+    story_points: 0.2
+    risk: 0.3  # Higher risk aversion
+
+project_review:
+  review_weights:
+    architecture_quality: 0.35  # More focus on architecture
+    sprint_feasibility: 0.25
+    technical_debt: 0.25  # More focus on technical debt
+    scalability: 0.10
+    maintainability: 0.05
+
+  thresholds:
+    approval: 9.0  # Higher bar for approval
+    conditional_approval: 7.0
+    rejection: 7.0
+
+  max_iterations: 5  # More iterations allowed
+
+retrospective:
+  thresholds:
+    velocity:
+      excellent: 85.0  # More realistic expectations
+      acceptable: 60.0
+    test_quality:
+      excellent: 98.0  # Very high quality bar
+      acceptable: 90.0
+    health_score:
+      healthy: 85  # Higher health requirements
+      needs_attention: 60

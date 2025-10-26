@@ -1,0 +1,157 @@
+[
+  {
+    "file": "artemis_stages.py",
+    "missing_wrap_exception": [],
+    "bare_excepts": [
+      382,
+      398,
+      612,
+      865,
+      953,
+      1005,
+      1081,
+      1084,
+      1373,
+      1462,
+      1497,
+      1562,
+      1580,
+      1588
+    ],
+    "silent_failures": [],
+    "total_methods": 50,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "analysis_success": true
+  },
+  {
+    "file": "code_review_stage.py",
+    "missing_wrap_exception": [],
+    "bare_excepts": [
+      349,
+      384,
+      428,
+      435
+    ],
+    "silent_failures": [],
+    "total_methods": 8,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "analysis_success": true
+  },
+  {
+    "file": "arbitration_stage.py",
+    "missing_wrap_exception": [],
+    "bare_excepts": [
+      156
+    ],
+    "silent_failures": [],
+    "total_methods": 7,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "analysis_success": true
+  },
+  {
+    "file": "sprint_planning_stage.py",
+    "missing_wrap_exception": [
+      "SprintPlanningStage.execute:152"
+    ],
+    "bare_excepts": [
+      177,
+      297,
+      386,
+      461,
+      522,
+      578,
+      627,
+      675
+    ],
+    "silent_failures": [],
+    "total_methods": 16,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "analysis_success": true
+  },
+  {
+    "file": "project_review_stage.py",
+    "missing_wrap_exception": [],
+    "bare_excepts": [
+      278
+    ],
+    "silent_failures": [],
+    "total_methods": 14,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "analysis_success": true
+  },
+  {
+    "file": "uiux_stage.py",
+    "missing_wrap_exception": [
+      "UIUXStage.execute:225"
+    ],
+    "bare_excepts": [
+      196,
+      242,
+      472,
+      516,
+      529,
+      697,
+      731,
+      801,
+      898,
+      912
+    ],
+    "silent_failures": [],
+    "total_methods": 17,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "analysis_success": true
+  },
+  {
+    "file": "requirements_stage.py",
+    "missing_wrap_exception": [],
+    "bare_excepts": [
+      250,
+      316,
+      347,
+      419
+    ],
+    "silent_failures": [],
+    "total_methods": 7,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "analysis_success": true
+  },
+  {
+    "file": "bdd_scenario_generation_stage.py",
+    "missing_wrap_exception": [],
+    "bare_excepts": [],
+    "silent_failures": [],
+    "total_methods": 7,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "analysis_success": true
+  },
+  {
+    "file": "bdd_test_generation_stage.py",
+    "missing_wrap_exception": [],
+    "bare_excepts": [],
+    "silent_failures": [],
+    "total_methods": 7,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "analysis_success": true
+  },
+  {
+    "file": "bdd_validation_stage.py",
+    "missing_wrap_exception": [],
+    "bare_excepts": [
+      196
+    ],
+    "silent_failures": [],
+    "total_methods": 8,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "analysis_success": true
+  }
+]

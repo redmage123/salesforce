@@ -129,62 +129,97 @@ class ConfigValidator:
         """Check LLM API keys are present"""
         provider = os.getenv("ARTEMIS_LLM_PROVIDER", "openai")
 
-        if provider == "openai":
-            api_key = os.getenv("OPENAI_API_KEY")
-            if api_key:
-                # Validate key format (starts with sk-)
-                if api_key.startswith("sk-"):
-                    self._add_result(
-                        "OpenAI API Key",
-                        True,
-                        "API key present and valid format"
-                    )
-                else:
-                    self._add_result(
-                        "OpenAI API Key",
-                        False,
-                        "API key has invalid format",
-                        fix_suggestion="OpenAI keys should start with 'sk-'"
-                    )
-            else:
-                self._add_result(
-                    "OpenAI API Key",
-                    False,
-                    "OPENAI_API_KEY not set",
-                    fix_suggestion="export OPENAI_API_KEY=sk-..."
-                )
+        # Define provider validation configurations
+        provider_configs = {
+            "openai": {
+                "env_var": "OPENAI_API_KEY",
+                "name": "OpenAI API Key",
+                "validator": lambda key: key.startswith("sk-"),
+                "error_msg": "API key has invalid format",
+                "fix_suggestion": "export OPENAI_API_KEY=sk-...",
+                "validation_msg": "OpenAI keys should start with 'sk-'"
+            },
+            "anthropic": {
+                "env_var": "ANTHROPIC_API_KEY",
+                "name": "Anthropic API Key",
+                "validator": None,
+                "fix_suggestion": "export ANTHROPIC_API_KEY=..."
+            },
+            "mock": {
+                "env_var": None,
+                "name": "Mock LLM",
+                "is_mock": True
+            }
+        }
 
-        elif provider == "anthropic":
-            api_key = os.getenv("ANTHROPIC_API_KEY")
-            if api_key:
-                self._add_result(
-                    "Anthropic API Key",
-                    True,
-                    "API key present"
-                )
-            else:
-                self._add_result(
-                    "Anthropic API Key",
-                    False,
-                    "ANTHROPIC_API_KEY not set",
-                    fix_suggestion="export ANTHROPIC_API_KEY=..."
-                )
-
-        elif provider == "mock":
+        config = provider_configs.get(provider)
+        if not config:
             self._add_result(
-                "Mock LLM",
+                "LLM Provider",
+                False,
+                f"Unknown provider: {provider}",
+                fix_suggestion="Set ARTEMIS_LLM_PROVIDER to 'openai', 'anthropic', or 'mock'"
+            )
+            return
+
+        # Handle mock provider
+        if config.get("is_mock"):
+            self._add_result(
+                config["name"],
                 True,
                 "Using mock LLM (no API key needed)",
                 severity="warning"
             )
+            return
+
+        # Check API key for real providers
+        api_key = os.getenv(config["env_var"])
+        if api_key:
+            # Validate format if validator provided
+            if config.get("validator") and not config["validator"](api_key):
+                self._add_result(
+                    config["name"],
+                    False,
+                    config["error_msg"],
+                    fix_suggestion=config.get("validation_msg", config["fix_suggestion"])
+                )
+            else:
+                self._add_result(
+                    config["name"],
+                    True,
+                    "API key present" + (" and valid format" if config.get("validator") else "")
+                )
+        else:
+            self._add_result(
+                config["name"],
+                False,
+                f"{config['env_var']} not set",
+                fix_suggestion=config["fix_suggestion"]
+            )
 
     def _check_file_paths(self):
         """Check important file paths exist and are writable"""
+        # Get paths from environment variables (relative to .agents/agile directory)
+        import os
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+
+        temp_dir = os.getenv("ARTEMIS_TEMP_DIR", "../../.artemis_data/temp")
+        adr_dir = os.getenv("ARTEMIS_ADR_DIR", "../../.artemis_data/adrs")
+        developer_dir = os.getenv("ARTEMIS_DEVELOPER_DIR", "../../.artemis_data/developer_output")
+
+        # Convert relative paths to absolute
+        if not os.path.isabs(temp_dir):
+            temp_dir = os.path.join(script_dir, temp_dir)
+        if not os.path.isabs(adr_dir):
+            adr_dir = os.path.join(script_dir, adr_dir)
+        if not os.path.isabs(developer_dir):
+            developer_dir = os.path.join(script_dir, developer_dir)
+
         paths_to_check = [
-            ("/tmp", "Temp directory"),
-            ("/tmp/adr", "ADR directory"),
-            ("/tmp/developer-a", "Developer A output"),
-            ("/tmp/developer-b", "Developer B output"),
+            (temp_dir, "Temp directory"),
+            (adr_dir, "ADR directory"),
+            (f"{developer_dir}/developer-a", "Developer A output"),
+            (f"{developer_dir}/developer-b", "Developer B output"),
         ]
 
         for path_str, description in paths_to_check:
@@ -218,7 +253,11 @@ class ConfigValidator:
         persistence_type = os.getenv("ARTEMIS_PERSISTENCE_TYPE", "sqlite")
 
         if persistence_type == "sqlite":
-            db_path = os.getenv("ARTEMIS_PERSISTENCE_DB", "/tmp/artemis_persistence.db")
+            db_path = os.getenv("ARTEMIS_PERSISTENCE_DB", "../../.artemis_data/artemis_persistence.db")
+            # Convert relative path to absolute
+            if not os.path.isabs(db_path):
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                db_path = os.path.join(script_dir, db_path)
             db_file = Path(db_path)
 
             try:
@@ -315,7 +354,11 @@ class ConfigValidator:
 
     def _check_rag_database(self):
         """Check RAG database (ChromaDB) access"""
-        rag_db_path = os.getenv("ARTEMIS_RAG_DB_PATH", "/tmp/rag_db")
+        # Get RAG DB path from env or use default relative to script directory
+        rag_db_path = os.getenv("ARTEMIS_RAG_DB_PATH", "db")
+        if not os.path.isabs(rag_db_path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            rag_db_path = os.path.join(script_dir, rag_db_path)
 
         try:
             # Try to import chromadb

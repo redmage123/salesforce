@@ -1,0 +1,141 @@
+llm:
+  provider: openai
+  model: gpt-4o
+  api_key: ${oc.env:OPENAI_API_KEY}
+  max_tokens_per_request: 8000
+  temperature: 0.7
+  cost_limit_usd: null
+  supervisor:
+    model: gpt-4o
+    temperature: 0.3
+    max_tokens: 4000
+storage:
+  rag_db_type: sqlite
+  rag_db_path: ${oc.env:ARTEMIS_RAG_DB_PATH,db}
+  chromadb_host: null
+  chromadb_port: null
+  temp_dir: ${oc.env:ARTEMIS_TEMP_DIR,../../.artemis_data/temp}
+  checkpoint_dir: ${oc.env:ARTEMIS_CHECKPOINT_DIR,../../.artemis_data/checkpoints}
+  state_dir: ${oc.env:ARTEMIS_STATE_DIR,../../.artemis_data/state}
+  status_dir: ${oc.env:ARTEMIS_STATUS_DIR,../../.artemis_data/status}
+  adr_dir: ${oc.env:ARTEMIS_ADR_DIR,../../.artemis_data/adrs}
+  developer_output_dir: ${oc.env:ARTEMIS_DEVELOPER_DIR,../../.artemis_data/developer_output}
+  code_review_dir: ${oc.env:ARTEMIS_CODE_REVIEW_DIR,../../.artemis_data/code_reviews}
+  test_output_dir: ${oc.env:ARTEMIS_TEST_OUTPUT_DIR,../../.artemis_data/test_output}
+  requirements_dir: ${oc.env:ARTEMIS_REQUIREMENTS_DIR,../../.artemis_data/requirements}
+  persistence_db: ${oc.env:ARTEMIS_PERSISTENCE_DB,../../.artemis_data/artemis_persistence.db}
+  message_dir: ${oc.env:ARTEMIS_MESSAGE_DIR,../../.artemis_data/agent_messages}
+  cost_tracking_dir: ${oc.env:ARTEMIS_COST_DIR,../../.artemis_data/cost_tracking}
+  git_operations_dir: ${oc.env:ARTEMIS_GIT_OPS_DIR,../../.artemis_data/git_operations}
+pipeline:
+  max_parallel_developers: 3
+  enable_code_review: true
+  auto_approve_project_analysis: false
+  enable_supervision: true
+  max_retries: 2
+  stages:
+  - project_analysis
+  - architecture
+  - dependencies
+  - development
+  - code_review
+  - validation
+  - integration
+  - testing
+security:
+  enforce_gdpr: true
+  enforce_wcag: true
+  require_security_review: true
+  min_code_review_score: 80
+logging:
+  verbose: true
+  log_level: ${oc.env:ARTEMIS_LOG_LEVEL,INFO}
+  log_dir: ${oc.env:ARTEMIS_LOG_DIR,/var/log/artemis}
+  max_size_mb: ${oc.env:ARTEMIS_LOG_MAX_SIZE_MB,100}
+  backup_count: ${oc.env:ARTEMIS_LOG_BACKUP_COUNT,10}
+output:
+  storage_type: ${oc.env:ARTEMIS_OUTPUT_STORAGE,local}
+  local_path: ${oc.env:ARTEMIS_OUTPUT_PATH,../../outputs}
+  remote:
+    provider: ${oc.env:ARTEMIS_REMOTE_STORAGE_PROVIDER,s3}
+    s3:
+      bucket: ${oc.env:ARTEMIS_S3_BUCKET,}
+      region: ${oc.env:ARTEMIS_S3_REGION,us-east-1}
+    gcs:
+      bucket: ${oc.env:ARTEMIS_GCS_BUCKET,}
+      project: ${oc.env:ARTEMIS_GCS_PROJECT,}
+    azure:
+      container: ${oc.env:ARTEMIS_AZURE_CONTAINER,}
+      storage_account: ${oc.env:ARTEMIS_AZURE_STORAGE_ACCOUNT,}
+sprint:
+  sprint_planning:
+    team_velocity: 20.0
+    sprint_duration_days: 14
+    risk_scores:
+      low: 1
+      medium: 5
+      high: 10
+    priority_weights:
+      business_value: 0.6
+      story_points: 0.2
+      risk: 0.2
+    planning_poker:
+      agents:
+      - architect
+      - senior_developer
+      - qa_engineer
+      - devops_engineer
+      fibonacci_scale:
+      - 1
+      - 2
+      - 3
+      - 5
+      - 8
+      - 13
+      - 21
+      - 34
+      - 55
+  project_review:
+    review_weights:
+      architecture_quality: 0.3
+      sprint_feasibility: 0.25
+      technical_debt: 0.2
+      scalability: 0.15
+      maintainability: 0.1
+    thresholds:
+      approval: 8.0
+      conditional_approval: 6.0
+      rejection: 6.0
+    max_iterations: 3
+    capacity:
+      overcommitted_threshold: 0.95
+      underutilized_threshold: 0.7
+      max_sprint1_points: 25
+  uiux_evaluation:
+    score_deductions:
+      wcag_critical: 20
+      wcag_serious: 10
+      wcag_moderate: 5
+      gdpr_critical: 20
+      gdpr_high: 10
+      gdpr_medium: 5
+    thresholds:
+      critical_accessibility_issues: 5
+  retrospective:
+    health_weights:
+      velocity: 40
+      test_quality: 30
+      blockers: 20
+      bug_management: 10
+    thresholds:
+      velocity:
+        excellent: 90.0
+        acceptable: 70.0
+      test_quality:
+        excellent: 95.0
+        acceptable: 80.0
+      health_score:
+        healthy: 80
+        needs_attention: 50
+    historical_sprints_to_analyze: 3
+card_id: card-20251023065355

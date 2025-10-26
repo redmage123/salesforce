@@ -1,0 +1,115 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251025085716908264-artemis-orchestrator-3-c5841b79",
+  "timestamp": "2025-10-25T08:57:16.908428Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "orchestrator",
+  "message_type": "data_update",
+  "card_id": "card-20251025085646",
+  "priority": "medium",
+  "data": {
+    "update_type": "sprint_planning_complete",
+    "task_title": "Load Pipeline Execution Data",
+    "total_sprints": 4,
+    "total_story_points": 52,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-25",
+        "end_date": "2025-11-08",
+        "features": [
+          {
+            "title": "Identify Pipeline Bottlenecks",
+            "description": "Implement a feature to detect and highlight bottlenecks in pipeline execution.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "System identifies stages in the pipeline with the longest execution times.",
+              "Bottlenecks are visually highlighted in the performance visualizations.",
+              "Users receive notifications when new bottlenecks are detected."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-08",
+        "end_date": "2025-11-22",
+        "features": [
+          {
+            "title": "Analyze Pipeline Execution Metrics",
+            "description": "Develop a system to analyze metrics from recent pipeline runs to identify performance trends.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "System can ingest pipeline execution data from various sources.",
+              "Metrics are processed and stored in a structured format.",
+              "Performance trends are identified and highlighted."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 6.5
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-22",
+        "end_date": "2025-12-06",
+        "features": [
+          {
+            "title": "Recommend Pipeline Improvements",
+            "description": "Provide actionable recommendations for optimizing pipeline performance based on analysis.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "System generates recommendations for reducing execution times.",
+              "Recommendations are based on historical data and trends.",
+              "Users can view and track the implementation of recommendations."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 6.5
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-06",
+        "end_date": "2025-12-20",
+        "features": [
+          {
+            "title": "Create Performance Visualizations",
+            "description": "Generate visual representations of pipeline performance metrics to provide insights into trends and bottlenecks.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Visualizations include graphs and charts of key performance metrics.",
+              "Users can filter and sort visualizations by different parameters.",
+              "Visualizations update in real-time as new data is ingested."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 6.1000000000000005
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      }
+    ]
+  },
+  "metadata": {}
+}

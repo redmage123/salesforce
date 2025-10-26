@@ -1,0 +1,145 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251024165101753900-artemis-orchestrator-3-83713a0b",
+  "timestamp": "2025-10-24T16:51:01.753978Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "orchestrator",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "medium",
+  "data": {
+    "update_type": "sprint_planning_complete",
+    "task_title": "Create Artemis self-demo with Chart.js visualization",
+    "total_sprints": 4,
+    "total_story_points": 55,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-24",
+        "end_date": "2025-11-07",
+        "features": [
+          {
+            "title": "Chart.js Visualizations",
+            "description": "Implement data visualizations using Chart.js for various metrics and stages.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Pipeline metrics are visualized using an 8-stage pipeline chart.",
+              "Cost tracking and success rates are displayed using appropriate chart types.",
+              "Real-time dashboard includes line, bar, area, and pie charts."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-07",
+        "end_date": "2025-11-21",
+        "features": [
+          {
+            "title": "Content Integration",
+            "description": "Integrate specific content sections to showcase Artemis features and metrics.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "HERO section introduces Artemis as an Autonomous AI Development System.",
+              "FEATURES section includes cost tracking, sandboxing, and learning metrics.",
+              "RESULTS section displays real metrics from recent runs."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-21",
+        "end_date": "2025-12-05",
+        "features": [
+          {
+            "title": "HTML Presentation Setup",
+            "description": "Create a standalone HTML file for the Artemis demo with embedded CSS, JavaScript, and Chart.js.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "HTML file is standalone with no external dependencies.",
+              "CSS and JavaScript are embedded within the HTML file.",
+              "Chart.js library is correctly integrated for data visualization."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7333333333333333,
+            "priority_score": 5.3
+          },
+          {
+            "title": "Interactive Elements",
+            "description": "Enhance the demo with interactive elements and animations using Chart.js.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Charts include animations for data transitions.",
+              "Interactive elements respond to user inputs.",
+              "User interactions enhance the understanding of the data."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 5.3
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-05",
+        "end_date": "2025-12-19",
+        "features": [
+          {
+            "title": "Auto-Advance and Navigation",
+            "description": "Implement auto-advance functionality for slides with navigation controls.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Slides auto-advance after a set duration.",
+              "Users can manually navigate between slides using controls.",
+              "Navigation controls are intuitive and responsive."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.500000000000001
+          },
+          {
+            "title": "Professional Design",
+            "description": "Design the presentation with a professional gradient background and smooth transitions.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Background uses a professional gradient design.",
+              "Transitions between slides are smooth and visually appealing.",
+              "Overall design is consistent and professional."
+            ],
+            "story_points": 5,
+            "estimated_hours": 10.0,
+            "risk_level": "low",
+            "confidence": 0.7333333333333333,
+            "priority_score": 4.000000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      }
+    ]
+  },
+  "metadata": {}
+}

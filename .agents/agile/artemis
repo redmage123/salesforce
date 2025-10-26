@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# Artemis CLI Wrapper
+# Automatically loads environment and runs the Artemis CLI
+#
+
+# Get the directory where this script lives
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Load environment variables
+if [ -f "$SCRIPT_DIR/.env_artemis" ]; then
+    set -a
+    source "$SCRIPT_DIR/.env_artemis"
+    set +a
+else
+    echo "⚠️  Warning: .env_artemis not found"
+fi
+
+# Use virtual environment Python if available
+if [ -f "$SCRIPT_DIR/../../.venv/bin/python3" ]; then
+    PYTHON="$SCRIPT_DIR/../../.venv/bin/python3"
+else
+    PYTHON="python3"
+fi
+
+# Run the CLI
+exec "$PYTHON" "$SCRIPT_DIR/artemis_cli.py" "$@"

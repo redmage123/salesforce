@@ -23,8 +23,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 import json
+import os
 import concurrent.futures
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from artemis_stage_interface import PipelineStage
 from artemis_constants import (
@@ -105,6 +106,48 @@ class PipelineStrategy(ABC):
             event = EventBuilder.stage_failed(card_id, stage_name, error, **data)
             self.observable.notify(event)
 
+    def _recalculate_complexity_after_sprint_planning(
+        self,
+        card: Dict,
+        sprint_planning_result: Dict,
+        context: Dict[str, Any]
+    ):
+        """
+        POST-SPRINT-PLANNING HOOK: Recalculate complexity based on actual story points
+
+        This fixes the bug where AI guesses complexity without seeing actual sprint planning results.
+        After sprint planning completes, we update the routing decision based on actual story points.
+
+        Args:
+            card: Kanban card
+            sprint_planning_result: Result from SprintPlanningStage with total_story_points
+            context: Pipeline execution context
+        """
+        # Get orchestrator from context
+        orchestrator = context.get('orchestrator')
+        if not orchestrator or not hasattr(orchestrator, 'intelligent_router'):
+            return
+
+        router = orchestrator.intelligent_router
+        if not router:
+            return
+
+        # Recalculate complexity using intelligent router
+        updated_decision = router.recalculate_complexity_from_sprint_planning(
+            card,
+            sprint_planning_result
+        )
+
+        # Update context with corrected routing decision
+        context['routing_decision'] = updated_decision
+
+        # Re-filter stages based on corrected complexity
+        if hasattr(orchestrator, 'stages'):
+            corrected_stages = router.filter_stages(orchestrator.stages, updated_decision)
+            # Update orchestrator's active stages (note: this won't affect current execution but will log)
+            self._log(f"🔧 Complexity recalculated after sprint planning", "INFO")
+            self._log(f"   Updated stages to run: {len(corrected_stages)}", "INFO")
+
 
 # ============================================================================
 # STANDARD PIPELINE STRATEGY
@@ -146,14 +189,24 @@ class StandardPipelineStrategy(PipelineStrategy):
             self._notify_stage_started(card_id, stage_name, stage_number=i, total_stages=len(stages))
 
             try:
-                # Execute stage
-                stage_result = stage.execute()
+                # Execute stage with card and context
+                card = context.get('card')
+                stage_result = stage.execute(card, context)
 
                 # Store result
                 results[stage_name] = stage_result
 
-                # Check if stage succeeded
-                if not stage_result.get("success", False):
+                # Update context with stage result for downstream stages
+                context.update(stage_result)
+
+                # POST-SPRINT-PLANNING HOOK: Recalculate complexity based on actual story points
+                # This fixes the bug where AI guesses complexity without seeing sprint planning results
+                if stage_name == "SprintPlanningStage" and "total_story_points" in stage_result:
+                    self._recalculate_complexity_after_sprint_planning(card, stage_result, context)
+
+                # Check if stage succeeded (check both "success" and "status" keys)
+                success = stage_result.get("success", False) or stage_result.get("status") in ["COMPLETE", "PASS"]
+                if not success:
                     self._log(f"❌ Stage FAILED: {stage_name}", "ERROR")
 
                     # Notify stage failed
@@ -174,6 +227,18 @@ class StandardPipelineStrategy(PipelineStrategy):
 
                 # Notify stage completed
                 self._notify_stage_completed(card_id, stage_name, stage_result=stage_result)
+
+                # Save checkpoint after successful stage completion
+                orchestrator = context.get('orchestrator')
+                if orchestrator and hasattr(orchestrator, 'checkpoint_manager'):
+                    checkpoint_manager = orchestrator.checkpoint_manager
+                    checkpoint_manager.save_stage_checkpoint(
+                        stage_name=stage_name.lower(),
+                        status="completed",
+                        result=stage_result,
+                        start_time=datetime.now() - timedelta(seconds=5),  # Estimate (TODO: track actual start time)
+                        end_time=datetime.now()
+                    )
 
             except Exception as e:
                 self._log(f"❌ Stage EXCEPTION: {stage_name} - {e}", "ERROR")
@@ -268,10 +333,17 @@ class FastPipelineStrategy(PipelineStrategy):
             self._log(f"▶️  Stage {i}/{len(active_stages)}: {stage_name}", "STAGE")
 
             try:
-                stage_result = stage.execute()
+                # Execute stage with card and context
+                card = context.get('card')
+                stage_result = stage.execute(card, context)
                 results[stage_name] = stage_result
 
-                if not stage_result.get("success", False):
+                # Update context with stage result for downstream stages
+                context.update(stage_result)
+
+                # Check if stage succeeded (check both "success" and "status" keys)
+                success = stage_result.get("success", False) or stage_result.get("status") in ["COMPLETE", "PASS"]
+                if not success:
                     self._log(f"❌ Stage FAILED: {stage_name}", "ERROR")
 
                     return {
@@ -380,10 +452,14 @@ class ParallelPipelineStrategy(PipelineStrategy):
                 self._log(f"   ▶️  {stage_name}")
 
                 try:
-                    stage_result = stage.execute()
+                    # Execute stage with card and context
+                    card = context.get('card')
+                    stage_result = stage.execute(card, context)
                     results[stage_name] = stage_result
 
-                    if not stage_result.get("success", False):
+                    # Check if stage succeeded (check both "success" and "status" keys)
+                    success = stage_result.get("success", False) or stage_result.get("status") in ["COMPLETE", "PASS"]
+                    if not success:
                         return self._build_failure_result(
                             total_stages_completed,
                             stage_name,
@@ -421,7 +497,9 @@ class ParallelPipelineStrategy(PipelineStrategy):
                             stage_result = future.result()
                             results[stage_name] = stage_result
 
-                            if not stage_result.get("success", False):
+                            # Check if stage succeeded (check both "success" and "status" keys)
+                            success = stage_result.get("success", False) or stage_result.get("status") in ["COMPLETE", "PASS"]
+                            if not success:
                                 # Cancel remaining futures
                                 for f in future_to_stage:
                                     f.cancel()
@@ -557,15 +635,21 @@ class CheckpointPipelineStrategy(PipelineStrategy):
     - Cost optimization (don't re-run LLM calls)
     """
 
-    def __init__(self, checkpoint_dir: str = "/tmp/artemis_checkpoints", verbose: bool = True):
+    def __init__(self, checkpoint_dir: str = "../../.artemis_data/checkpoints", verbose: bool = True):
         """
         Initialize checkpoint strategy.
 
         Args:
-            checkpoint_dir: Directory to store checkpoints
+            checkpoint_dir: Directory to store checkpoints (relative to .agents/agile)
             verbose: Enable verbose logging
         """
         super().__init__(verbose)
+
+        # Convert relative path to absolute
+        if not os.path.isabs(checkpoint_dir):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            checkpoint_dir = os.path.join(script_dir, checkpoint_dir)
+
         self.checkpoint_dir = Path(checkpoint_dir)
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
@@ -598,10 +682,17 @@ class CheckpointPipelineStrategy(PipelineStrategy):
             self._log(f"▶️  Stage {i + 1}/{len(stages)}: {stage_name}", "STAGE")
 
             try:
-                stage_result = stage.execute()
+                # Execute stage with card and context
+                card = context.get('card')
+                stage_result = stage.execute(card, context)
                 results[stage_name] = stage_result
 
-                if not stage_result.get("success", False):
+                # Update context with stage result for downstream stages
+                context.update(stage_result)
+
+                # Check if stage succeeded (check both "success" and "status" keys)
+                success = stage_result.get("success", False) or stage_result.get("status") in ["COMPLETE", "PASS"]
+                if not success:
                     self._log(f"❌ Stage FAILED: {stage_name}", "ERROR")
 
                     # Save checkpoint before returning

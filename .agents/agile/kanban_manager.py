@@ -19,6 +19,7 @@ from artemis_exceptions import (
     wrap_exception
 )
 from artemis_constants import KANBAN_BOARD_PATH
+from debug_mixin import DebugMixin
 
 # Board file path (now using constant from artemis_constants)
 BOARD_PATH = str(KANBAN_BOARD_PATH)
@@ -115,17 +116,18 @@ class CardBuilder:
         Set story points (Fibonacci scale)
 
         Args:
-            points: Must be 1, 2, 3, 5, 8, or 13
+            points: Will be rounded to nearest Fibonacci: [1, 2, 3, 5, 8, 13]
 
-        Raises:
-            ValueError: If points not in Fibonacci scale
+        Note:
+            Non-Fibonacci values are automatically rounded to nearest valid value
         """
         valid_points = [1, 2, 3, 5, 8, 13]
         if points not in valid_points:
-            raise ValueError(
-                f"Invalid story points: {points}. Must be Fibonacci: {valid_points}"
-            )
-        self._card['story_points'] = points
+            # Round to nearest Fibonacci value
+            nearest = min(valid_points, key=lambda x: abs(x - points))
+            self._card['story_points'] = nearest
+        else:
+            self._card['story_points'] = points
         return self
 
     def with_assigned_agents(self, agents: List[str]) -> 'CardBuilder':
@@ -136,6 +138,19 @@ class CardBuilder:
     def with_acceptance_criteria(self, criteria: List[Dict]) -> 'CardBuilder':
         """Set acceptance criteria"""
         self._card['acceptance_criteria'] = criteria
+        return self
+
+    def with_requirements_file(self, requirements_file: str) -> 'CardBuilder':
+        """
+        Set requirements file path for requirements parsing
+
+        Args:
+            requirements_file: Path to requirements document (PDF, Word, Excel, text, etc.)
+
+        Returns:
+            CardBuilder instance for fluent API
+        """
+        self._card['requirements_file'] = requirements_file
         return self
 
     def blocked(self, reason: str) -> 'CardBuilder':
@@ -189,10 +204,11 @@ class CardBuilder:
         return self._card
 
 
-class KanbanBoard:
+class KanbanBoard(DebugMixin):
     """Manages Kanban board operations"""
 
     def __init__(self, board_path: str = BOARD_PATH):
+        DebugMixin.__init__(self, component_name="kanban")
         self.board_path = board_path
         self.board = self._load_board()
 
@@ -206,7 +222,22 @@ class KanbanBoard:
 
         try:
             with open(self.board_path, 'r') as f:
-                return json.load(f)
+                board = json.load(f)
+
+                # Ensure metrics field exists (for backward compatibility)
+                if 'metrics' not in board:
+                    board['metrics'] = {
+                        'cycle_time_avg_hours': 0,
+                        'cycle_time_min_hours': 0,
+                        'cycle_time_max_hours': 0,
+                        'cards_completed': 0,
+                        'throughput_current_sprint': 0,
+                        'velocity_current_sprint': 0,
+                        'wip_violations_count': 0,
+                        'blocked_items_count': 0
+                    }
+
+                return board
         except Exception as e:
             raise wrap_exception(
                 e,
@@ -224,18 +255,41 @@ class KanbanBoard:
 
     def _find_card(self, card_id: str) -> tuple[Optional[Dict], Optional[str]]:
         """Find a card by ID, return (card, column_id)"""
-        for column in self.board['columns']:
-            for card in column['cards']:
-                if card['card_id'] == card_id:
-                    return card, column['column_id']
-        return None, None
+        columns = self.board.get('columns', {})
+
+        # Handle dict format
+        if isinstance(columns, dict):
+            # Use generator expression for early termination on first match
+            # Note: CardBuilder creates cards with 'task_id', not 'card_id'
+            result = next(
+                ((card, column_id)
+                 for column_id, column_data in columns.items()
+                 for card in column_data.get('cards', [])
+                 if card.get('task_id') == card_id or card.get('card_id') == card_id),
+                (None, None)
+            )
+            return result
+        else:
+            # Handle list format
+            result = next(
+                ((card, column.get('column_id'))
+                 for column in columns
+                 for card in column.get('cards', [])
+                 if card.get('task_id') == card_id or card.get('card_id') == card_id),
+                (None, None)
+            )
+            return result
 
     def _get_column(self, column_id: str) -> Optional[Dict]:
         """Get column by ID"""
-        for column in self.board['columns']:
-            if column['column_id'] == column_id:
-                return column
-        return None
+        # Handle both dict and list formats
+        columns = self.board.get('columns', {})
+        if isinstance(columns, dict):
+            # Dict format: {column_id: {name, wip_limit, cards}}
+            return columns.get(column_id)
+        else:
+            # List format: [{column_id, name, wip_limit, cards}]
+            return next((column for column in columns if column.get('column_id') == column_id), None)
 
     def new_card(self, task_id: str, title: str) -> CardBuilder:
         """
@@ -272,6 +326,8 @@ class KanbanBoard:
         Raises:
             KanbanBoardError: If backlog column not found
         """
+        self.debug_log("Adding card to backlog", card_id=card.get('card_id', 'unknown'), task_id=card.get('task_id', 'unknown'))
+
         backlog = self._get_column("backlog")
         if not backlog:
             raise KanbanBoardError(
@@ -281,117 +337,9 @@ class KanbanBoard:
 
         backlog['cards'].append(card)
         self._save_board()
+
+        self.debug_log("Card added successfully", card_id=card.get('card_id', 'unknown'))
         return card
-
-    def create_card(
-        self,
-        task_id: str,
-        title: str,
-        description: str,
-        priority: str = "medium",
-        labels: List[str] = None,
-        size: str = "medium",
-        story_points: int = 3,
-        assigned_agents: List[str] = None,
-        acceptance_criteria: List[Dict] = None
-    ) -> Dict:
-        """
-        Create a new card in the Backlog column
-
-        ⚠️  DEPRECATED: Use new_card() with Builder pattern instead
-            This method will be removed in Artemis 3.0
-
-            Old way:
-                card = board.create_card("TASK-001", "Title", "Description",
-                                        priority="high", story_points=8)
-
-            New way (RECOMMENDED):
-                card = (board.new_card("TASK-001", "Title")
-                    .with_description("Description")
-                    .with_priority("high")
-                    .with_story_points(8)
-                    .build())
-                board.add_card(card)
-
-        Args:
-            task_id: Unique task identifier
-            title: Card title
-            description: Detailed description
-            priority: high|medium|low
-            labels: List of label tags
-            size: small|medium|large
-            story_points: Fibonacci scale (1,2,3,5,8,13)
-            assigned_agents: List of agent names
-            acceptance_criteria: List of {criterion, status, verified_by}
-
-        Returns:
-            Created card dictionary
-        """
-        warnings.warn(
-            "create_card() with 9 parameters is deprecated. "
-            "Use new_card() with Builder pattern instead. "
-            "See method docstring for migration example.",
-            DeprecationWarning,
-            stacklevel=2
-        )
-        # Generate card ID
-        timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
-        card_id = f"card-{timestamp}"
-
-        # Create card
-        card = {
-            "card_id": card_id,
-            "task_id": task_id,
-            "title": title,
-            "description": description,
-            "priority": priority,
-            "labels": labels or [],
-            "size": size,
-            "story_points": story_points,
-            "created_at": datetime.utcnow().isoformat() + 'Z',
-            "moved_to_current_column_at": datetime.utcnow().isoformat() + 'Z',
-            "assigned_agents": assigned_agents or [],
-            "current_column": "backlog",
-            "blocked": False,
-            "blocked_reason": None,
-            "test_status": {
-                "unit_tests_written": False,
-                "unit_tests_passing": False,
-                "integration_tests_written": False,
-                "integration_tests_passing": False,
-                "test_coverage_percent": 0
-            },
-            "acceptance_criteria": acceptance_criteria or [],
-            "definition_of_done": {
-                "code_complete": False,
-                "tests_passing": False,
-                "code_reviewed": False,
-                "documentation_updated": False,
-                "deployed_to_production": False
-            },
-            "history": [
-                {
-                    "timestamp": datetime.utcnow().isoformat() + 'Z',
-                    "action": "created",
-                    "column": "backlog",
-                    "agent": "system",
-                    "comment": "Card created"
-                }
-            ]
-        }
-
-        # Add to backlog
-        backlog = self._get_column("backlog")
-        if backlog:
-            backlog['cards'].append(card)
-            self._save_board()
-            print(f"✅ Created card {card_id}: {title}")
-            return card
-        else:
-            raise KanbanBoardError(
-                "Backlog column not found in Kanban board",
-                context={"available_columns": [c['column_id'] for c in self.board['columns']]}
-            )
 
     def move_card(
         self,
@@ -412,9 +360,12 @@ class KanbanBoard:
         Returns:
             True if successful
         """
+        self.debug_log("Moving card", card_id=card_id, from_column="searching", to_column=to_column, agent=agent)
+
         card, from_column = self._find_card(card_id)
         if not card:
             print(f"❌ Card {card_id} not found")
+            self.debug_log("Card not found", card_id=card_id)
             return False
 
         to_col = self._get_column(to_column)
@@ -719,6 +670,375 @@ class KanbanBoard:
         print(f"  WIP Violations: {metrics.get('wip_violations_count', 0)}")
         print("="*80 + "\n")
 
+    def create_sprint(
+        self,
+        sprint_number: int,
+        start_date: str,
+        end_date: str,
+        committed_story_points: int,
+        features: List[Dict] = None
+    ) -> Dict:
+        """
+        Create a new sprint
+
+        Args:
+            sprint_number: Sprint number (e.g., 1, 2, 3)
+            start_date: Sprint start date (YYYY-MM-DD)
+            end_date: Sprint end date (YYYY-MM-DD)
+            committed_story_points: Total story points committed for sprint
+            features: List of features/stories in sprint
+
+        Returns:
+            Created sprint dict
+        """
+        self.debug_log("Creating sprint", sprint_number=sprint_number, start_date=start_date, end_date=end_date, points=committed_story_points)
+
+        sprint = {
+            'sprint_id': f"sprint-{sprint_number}",
+            'sprint_number': sprint_number,
+            'start_date': start_date,
+            'end_date': end_date,
+            'committed_story_points': committed_story_points,
+            'completed_story_points': 0,
+            'status': 'planned',  # planned, active, completed
+            'features': features or [],
+            'created_at': datetime.utcnow().isoformat() + 'Z'
+        }
+
+        # Initialize sprints list if not exists
+        if 'sprints' not in self.board:
+            self.board['sprints'] = []
+
+        # Add sprint to board
+        self.board['sprints'].append(sprint)
+        self._save_board()
+
+        self.debug_log("Sprint created", sprint_id=sprint['sprint_id'])
+        return sprint
+
+    def start_sprint(self, sprint_number: int) -> Dict:
+        """
+        Start a sprint (set as current sprint)
+
+        Args:
+            sprint_number: Sprint number to start
+
+        Returns:
+            Started sprint dict
+
+        Raises:
+            KanbanBoardError: If sprint not found or another sprint is active
+        """
+        if 'sprints' not in self.board:
+            raise KanbanBoardError(
+                "No sprints found on board",
+                context={"sprint_number": sprint_number}
+            )
+
+        # Check if another sprint is active
+        current_sprint = self.board.get('current_sprint')
+        if current_sprint and current_sprint.get('status') == 'active':
+            raise KanbanBoardError(
+                f"Sprint {current_sprint.get('sprint_number')} is already active",
+                context={"active_sprint": current_sprint.get('sprint_number')}
+            )
+
+        # Find sprint using next() for early termination
+        sprint = next(
+            (s for s in self.board['sprints'] if s.get('sprint_number') == sprint_number),
+            None
+        )
+
+        if not sprint:
+            raise KanbanBoardError(
+                f"Sprint {sprint_number} not found",
+                context={"sprint_number": sprint_number}
+            )
+
+        # Start sprint
+        sprint['status'] = 'active'
+        sprint['started_at'] = datetime.utcnow().isoformat() + 'Z'
+        self.board['current_sprint'] = sprint
+
+        self._save_board()
+        return sprint
+
+    def complete_sprint(
+        self,
+        sprint_number: int,
+        completed_story_points: int,
+        retrospective_notes: Optional[str] = None
+    ) -> Dict:
+        """
+        Complete a sprint and run retrospective
+
+        Args:
+            sprint_number: Sprint number to complete
+            completed_story_points: Actual story points completed
+            retrospective_notes: Optional retrospective notes
+
+        Returns:
+            Completed sprint dict
+
+        Raises:
+            KanbanBoardError: If sprint not found
+        """
+        if 'sprints' not in self.board:
+            raise KanbanBoardError(
+                "No sprints found on board",
+                context={"sprint_number": sprint_number}
+            )
+
+        # Find sprint using next() for early termination
+        sprint = next(
+            (s for s in self.board['sprints'] if s.get('sprint_number') == sprint_number),
+            None
+        )
+
+        if not sprint:
+            raise KanbanBoardError(
+                f"Sprint {sprint_number} not found",
+                context={"sprint_number": sprint_number}
+            )
+
+        # Complete sprint
+        sprint['status'] = 'completed'
+        sprint['completed_at'] = datetime.utcnow().isoformat() + 'Z'
+        sprint['completed_story_points'] = completed_story_points
+        sprint['velocity'] = (completed_story_points / max(sprint['committed_story_points'], 1)) * 100
+
+        if retrospective_notes:
+            sprint['retrospective_notes'] = retrospective_notes
+
+        # Clear current sprint if this was active
+        if self.board.get('current_sprint', {}).get('sprint_number') == sprint_number:
+            self.board['current_sprint'] = None
+
+        self._save_board()
+        return sprint
+
+    def get_sprint(self, sprint_number: int) -> Optional[Dict]:
+        """
+        Get sprint by number
+
+        Args:
+            sprint_number: Sprint number
+
+        Returns:
+            Sprint dict or None if not found
+        """
+        if 'sprints' not in self.board:
+            return None
+
+        # Use next() with generator expression for early termination
+        return next(
+            (sprint for sprint in self.board['sprints'] if sprint.get('sprint_number') == sprint_number),
+            None
+        )
+
+    def get_current_sprint(self) -> Optional[Dict]:
+        """
+        Get the current active sprint
+
+        Returns:
+            Current sprint dict or None if no active sprint
+        """
+        return self.board.get('current_sprint')
+
+    def get_all_sprints(self) -> List[Dict]:
+        """
+        Get all sprints
+
+        Returns:
+            List of all sprints
+        """
+        return self.board.get('sprints', [])
+
+    def update_sprint_metadata(
+        self,
+        sprint_number: int,
+        metadata: Dict[str, Any]
+    ) -> None:
+        """
+        Update sprint metadata
+
+        Args:
+            sprint_number: Sprint number
+            metadata: Metadata to merge into sprint
+
+        Raises:
+            KanbanBoardError: If sprint not found
+        """
+        sprint = self.get_sprint(sprint_number)
+        if not sprint:
+            raise KanbanBoardError(
+                f"Sprint {sprint_number} not found",
+                context={"sprint_number": sprint_number}
+            )
+
+        # Merge metadata
+        sprint.update(metadata)
+        self._save_board()
+
+    def assign_card_to_sprint(
+        self,
+        card_id: str,
+        sprint_number: int
+    ) -> None:
+        """
+        Assign a card to a sprint
+
+        Args:
+            card_id: Card ID to assign
+            sprint_number: Sprint number to assign to
+
+        Raises:
+            KanbanCardNotFoundError: If card not found
+            KanbanBoardError: If sprint not found
+        """
+        card, _ = self._find_card(card_id)
+        if not card:
+            raise KanbanCardNotFoundError(
+                card_id,
+                context={"card_id": card_id}
+            )
+
+        sprint = self.get_sprint(sprint_number)
+        if not sprint:
+            raise KanbanBoardError(
+                f"Sprint {sprint_number} not found",
+                context={"sprint_number": sprint_number}
+            )
+
+        # Update card with sprint assignment
+        card['sprint_number'] = sprint_number
+        card['assigned_to_sprint'] = sprint['sprint_id']
+
+        self._save_board()
+
+    def get_sprint_backlog(self, sprint_number: int) -> List[Dict]:
+        """
+        Get all cards assigned to a sprint
+
+        Args:
+            sprint_number: Sprint number
+
+        Returns:
+            List of cards in sprint backlog
+        """
+        columns = self.board.get('columns', {})
+
+        # Handle both dict and list formats using list comprehension
+        if isinstance(columns, dict):
+            cards = [
+                card
+                for column_data in columns.values()
+                for card in column_data.get('cards', [])
+                if card.get('sprint_number') == sprint_number
+            ]
+        else:
+            cards = [
+                card
+                for column in columns
+                for card in column.get('cards', [])
+                if card.get('sprint_number') == sprint_number
+            ]
+
+        return cards
+
+    def get_sprint_velocity(self, sprint_number: int) -> float:
+        """
+        Calculate sprint velocity (completed story points / committed story points)
+
+        Args:
+            sprint_number: Sprint number
+
+        Returns:
+            Velocity as percentage (0-100)
+        """
+        sprint = self.get_sprint(sprint_number)
+        if not sprint:
+            return 0.0
+
+        committed = sprint.get('committed_story_points', 0)
+        completed = sprint.get('completed_story_points', 0)
+
+        if committed == 0:
+            return 0.0
+
+        return (completed / committed) * 100
+
+    def get_cards_in_column(self, column_id: str) -> List[Dict]:
+        """
+        Get all cards in a specific column
+
+        Args:
+            column_id: Column to get cards from
+
+        Returns:
+            List of card dictionaries
+        """
+        column = self._get_column(column_id)
+        if not column:
+            return []
+
+        return column.get('cards', [])
+
+    def get_pending_cards(self) -> List[Dict]:
+        """
+        Get all pending cards (from backlog and development columns)
+
+        Returns:
+            List of card dictionaries that need processing
+        """
+        pending_cards = []
+
+        # Get cards from backlog
+        backlog_cards = self.get_cards_in_column('backlog')
+        pending_cards.extend(backlog_cards)
+
+        # Get cards from development (in progress but may need routing)
+        # Note: We only include cards that are not blocked
+        dev_cards = self.get_cards_in_column('development')
+        for card in dev_cards:
+            if not card.get('blocked', False):
+                pending_cards.append(card)
+
+        return pending_cards
+
+    def get_all_incomplete_cards(self) -> List[Dict]:
+        """
+        Get all cards that are not in 'done' column
+
+        Returns:
+            List of card dictionaries that are incomplete
+        """
+        incomplete_cards = []
+        columns = self.board.get('columns', {})
+
+        if isinstance(columns, dict):
+            for column_id, column_data in columns.items():
+                if column_id != 'done':  # Skip done column
+                    cards = column_data.get('cards', [])
+                    incomplete_cards.extend(cards)
+        else:
+            # List format
+            for column in columns:
+                if column.get('column_id') != 'done':
+                    cards = column.get('cards', [])
+                    incomplete_cards.extend(cards)
+
+        return incomplete_cards
+
+    def has_incomplete_cards(self) -> bool:
+        """
+        Check if there are any incomplete cards on the board
+
+        Returns:
+            True if there are cards not in 'done' column
+        """
+        return len(self.get_all_incomplete_cards()) > 0
+
 
 def main():
     """CLI interface for Kanban board"""
@@ -742,7 +1062,11 @@ def main():
             sys.exit(1)
         task_id = sys.argv[2]
         title = ' '.join(sys.argv[3:])
-        board.create_card(task_id, title, "Created via CLI")
+        # Use Builder pattern instead of deprecated create_card
+        card = (board.new_card(task_id, title)
+                .with_description("Created via CLI")
+                .build())
+        board.add_card(card)
 
     elif command == "move":
         if len(sys.argv) < 4:

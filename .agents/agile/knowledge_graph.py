@@ -72,6 +72,41 @@ class ADR:
     rationale: Optional[str] = None
 
 
+@dataclass
+class Requirement:
+    """Requirement node in knowledge graph"""
+    req_id: str
+    title: str
+    type: str  # functional, non_functional, use_case, data, integration
+    priority: str  # critical, high, medium, low
+    status: str = "active"  # active, implemented, deprecated
+
+
+@dataclass
+class Task:
+    """Task/Card node in knowledge graph"""
+    card_id: str
+    title: str
+    priority: str
+    status: str  # backlog, in_progress, review, done
+    assigned_agents: List[str] = None
+
+    def __post_init__(self):
+        if self.assigned_agents is None:
+            self.assigned_agents = []
+
+
+@dataclass
+class CodeReview:
+    """Code review result node"""
+    review_id: str
+    card_id: str
+    status: str  # PASS, FAIL
+    score: int
+    critical_issues: int = 0
+    high_issues: int = 0
+
+
 class KnowledgeGraph:
     """
     Knowledge Graph for Artemis using Memgraph with GraphQL
@@ -96,7 +131,13 @@ class KnowledgeGraph:
             raise ImportError("gqlalchemy not installed. Run: pip install gqlalchemy")
 
         self.db = Memgraph(host=host, port=port)
-        self._create_indexes()
+        self._connected = False
+        try:
+            self._create_indexes()
+            self._connected = True
+        except Exception:
+            # Connection failed - queries will return empty results
+            pass
 
     def _create_indexes(self):
         """Create indexes for faster queries"""
@@ -112,6 +153,33 @@ class KnowledgeGraph:
         except Exception as e:
             # Indexes might already exist
             pass
+
+    def query(self, cypher_query: str, params: Optional[dict] = None):
+        """
+        Execute a Cypher query and return results
+
+        Args:
+            cypher_query: Cypher query string
+            params: Optional query parameters
+
+        Returns:
+            Query results from execute_and_fetch, or empty list if not connected
+
+        Raises:
+            Exception: If database connection fails or query times out
+        """
+        # Return empty results if not connected
+        if not self._connected:
+            return []
+
+        try:
+            results = list(self.db.execute_and_fetch(cypher_query, params or {}))
+            return results
+        except Exception as e:
+            # Connection lost or query failed - return empty results
+            # Caller (ai_query_service) will fall back to RAG
+            self._connected = False
+            return []
 
     # ==================== CREATE OPERATIONS ====================
 
@@ -359,6 +427,220 @@ class KnowledgeGraph:
                 self.db.execute(impact_query, {"adr_id": adr_id, "file_path": file_path})
 
         return adr_id
+
+    def add_requirement(self, req_id: str, title: str, type: str,
+                       priority: str, status: str = "active") -> str:
+        """
+        Add a requirement to the graph
+
+        Args:
+            req_id: Requirement ID (e.g., "REQ-F-001")
+            title: Requirement title
+            type: functional, non_functional, use_case, data, integration
+            priority: critical, high, medium, low
+            status: active, implemented, deprecated
+
+        Returns:
+            Requirement ID
+        """
+        query = """
+        MERGE (req:Requirement {req_id: $req_id})
+        SET req.title = $title,
+            req.type = $type,
+            req.priority = $priority,
+            req.status = $status,
+            req.created = $created
+        RETURN req.req_id
+        """
+
+        self.db.execute_and_fetch(
+            query,
+            {
+                "req_id": req_id,
+                "title": title,
+                "type": type,
+                "priority": priority,
+                "status": status,
+                "created": datetime.now().isoformat()
+            }
+        )
+
+        return req_id
+
+    def add_task(self, card_id: str, title: str, priority: str,
+                status: str, assigned_agents: Optional[List[str]] = None) -> str:
+        """
+        Add a task/card to the graph
+
+        Args:
+            card_id: Card identifier
+            title: Task title
+            priority: high, medium, low
+            status: backlog, in_progress, review, done
+            assigned_agents: List of agent names
+
+        Returns:
+            Card ID
+        """
+        if assigned_agents is None:
+            assigned_agents = []
+
+        query = """
+        MERGE (task:Task {card_id: $card_id})
+        SET task.title = $title,
+            task.priority = $priority,
+            task.status = $status,
+            task.assigned_agents = $assigned_agents,
+            task.created = $created
+        RETURN task.card_id
+        """
+
+        self.db.execute_and_fetch(
+            query,
+            {
+                "card_id": card_id,
+                "title": title,
+                "priority": priority,
+                "status": status,
+                "assigned_agents": assigned_agents,
+                "created": datetime.now().isoformat()
+            }
+        )
+
+        return card_id
+
+    def add_code_review(self, review_id: str, card_id: str, status: str,
+                       score: int, critical_issues: int = 0,
+                       high_issues: int = 0) -> str:
+        """
+        Add a code review result to the graph
+
+        Args:
+            review_id: Review identifier
+            card_id: Associated card ID
+            status: PASS or FAIL
+            score: Overall score (0-100)
+            critical_issues: Number of critical issues
+            high_issues: Number of high severity issues
+
+        Returns:
+            Review ID
+        """
+        query = """
+        MERGE (review:CodeReview {review_id: $review_id})
+        SET review.card_id = $card_id,
+            review.status = $status,
+            review.score = $score,
+            review.critical_issues = $critical_issues,
+            review.high_issues = $high_issues,
+            review.created = $created
+        RETURN review.review_id
+        """
+
+        self.db.execute_and_fetch(
+            query,
+            {
+                "review_id": review_id,
+                "card_id": card_id,
+                "status": status,
+                "score": score,
+                "critical_issues": critical_issues,
+                "high_issues": high_issues,
+                "created": datetime.now().isoformat()
+            }
+        )
+
+        # Link review to task
+        link_query = """
+        MATCH (review:CodeReview {review_id: $review_id})
+        MATCH (task:Task {card_id: $card_id})
+        MERGE (task)-[:HAS_REVIEW]->(review)
+        """
+        self.db.execute(link_query, {"review_id": review_id, "card_id": card_id})
+
+        return review_id
+
+    def link_requirement_to_adr(self, req_id: str, adr_id: str) -> None:
+        """
+        Link a requirement to an ADR that addresses it
+
+        Args:
+            req_id: Requirement ID
+            adr_id: ADR ID
+        """
+        query = """
+        MATCH (req:Requirement {req_id: $req_id})
+        MATCH (adr:ADR {adr_id: $adr_id})
+        MERGE (adr)-[:ADDRESSES]->(req)
+        SET adr.last_updated = $updated
+        """
+
+        self.db.execute(
+            query,
+            {
+                "req_id": req_id,
+                "adr_id": adr_id,
+                "updated": datetime.now().isoformat()
+            }
+        )
+
+    def link_requirement_to_task(self, req_id: str, card_id: str) -> None:
+        """
+        Link a requirement to a task
+
+        Args:
+            req_id: Requirement ID
+            card_id: Card ID
+        """
+        query = """
+        MATCH (req:Requirement {req_id: $req_id})
+        MATCH (task:Task {card_id: $card_id})
+        MERGE (task)-[:IMPLEMENTS]->(req)
+        """
+
+        self.db.execute(query, {"req_id": req_id, "card_id": card_id})
+
+    def link_adr_to_file(self, adr_id: str, file_path: str,
+                        relationship: str = "IMPLEMENTED_BY") -> None:
+        """
+        Link an ADR to files that implement it
+
+        Args:
+            adr_id: ADR ID
+            file_path: File path
+            relationship: IMPLEMENTED_BY, IMPACTS, DEPENDS_ON
+        """
+        query = f"""
+        MATCH (adr:ADR {{adr_id: $adr_id}})
+        MATCH (f:File {{path: $file_path}})
+        MERGE (adr)-[r:{relationship}]->(f)
+        SET r.created = $created
+        """
+
+        self.db.execute(
+            query,
+            {
+                "adr_id": adr_id,
+                "file_path": file_path,
+                "created": datetime.now().isoformat()
+            }
+        )
+
+    def link_task_to_file(self, card_id: str, file_path: str) -> None:
+        """
+        Link a task to files it modified
+
+        Args:
+            card_id: Card ID
+            file_path: File path
+        """
+        query = """
+        MATCH (task:Task {card_id: $card_id})
+        MATCH (f:File {path: $file_path})
+        MERGE (task)-[:MODIFIED]->(f)
+        """
+
+        self.db.execute(query, {"card_id": card_id, "file_path": file_path})
 
     # ==================== QUERY OPERATIONS (GraphQL-style) ====================
 

@@ -1,0 +1,16 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251023153258157661-artemis-orchestrator-3-69c5557d",
+  "timestamp": "2025-10-23T15:32:58.157733Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "dependency-validation-agent",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "high",
+  "data": {
+    "update_type": "adr_created",
+    "adr_file": "/tmp/adr/ADR-018-create-artemis-self-demo-with-chartjs-visualizatio.md",
+    "adr_number": "018"
+  },
+  "metadata": {}
+}

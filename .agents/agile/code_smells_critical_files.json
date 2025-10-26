@@ -1,0 +1,614 @@
+{
+  "scan_date": "2025-10-25",
+  "summary": {
+    "total_files": 127,
+    "total_god_classes": 21,
+    "total_long_methods": 54,
+    "total_parameter_issues": 44,
+    "total_deep_nesting": 0,
+    "total_magic_values": 768,
+    "total_mutable_defaults": 0,
+    "total_missing_type_hints": 158,
+    "total_todos": 49,
+    "total_commented_code": 7,
+    "files_with_issues": 50,
+    "top_offenders": [
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_stages.py",
+        "total_issues": 10,
+        "god_classes": 1,
+        "long_methods": 6,
+        "parameter_issues": 3,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_stages_original_backup.py",
+        "total_issues": 10,
+        "god_classes": 1,
+        "long_methods": 6,
+        "parameter_issues": 3,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_orchestrator.py",
+        "total_issues": 9,
+        "god_classes": 1,
+        "long_methods": 7,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/standalone_developer_agent.py",
+        "total_issues": 9,
+        "god_classes": 1,
+        "long_methods": 2,
+        "parameter_issues": 6,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/supervisor_agent.py",
+        "total_issues": 8,
+        "god_classes": 1,
+        "long_methods": 5,
+        "parameter_issues": 2,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/stages/architecture_stage.py",
+        "total_issues": 5,
+        "god_classes": 1,
+        "long_methods": 3,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/project_review_stage.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 0,
+        "parameter_issues": 2,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/uiux_stage_original_backup.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 2,
+        "parameter_issues": 0,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/kanban_manager.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/project_review_stage_original_backup.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 0,
+        "parameter_issues": 2,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/uiux_stage.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/artemis_state_machine.py",
+        "total_issues": 3,
+        "god_classes": 1,
+        "long_methods": 2,
+        "parameter_issues": 0,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/maven_manager.py",
+        "total_issues": 2,
+        "god_classes": 0,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/requirements_parser_agent.py",
+        "total_issues": 2,
+        "god_classes": 1,
+        "long_methods": 1,
+        "parameter_issues": 0,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/messenger_interface.py",
+        "total_issues": 2,
+        "god_classes": 0,
+        "long_methods": 0,
+        "parameter_issues": 2,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/sprint_planning_stage.py",
+        "total_issues": 2,
+        "god_classes": 1,
+        "long_methods": 0,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/code_review_agent.py",
+        "total_issues": 2,
+        "god_classes": 1,
+        "long_methods": 1,
+        "parameter_issues": 0,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/requirements_stage.py",
+        "total_issues": 2,
+        "god_classes": 0,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/planning_poker.py",
+        "total_issues": 2,
+        "god_classes": 0,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      },
+      {
+        "file": "/home/bbrelin/src/repos/salesforce/.agents/agile/code_review_stage.py",
+        "total_issues": 2,
+        "god_classes": 0,
+        "long_methods": 1,
+        "parameter_issues": 1,
+        "deep_nesting": 0
+      }
+    ]
+  },
+  "critical_files": [
+    {
+      "file": "artemis_orchestrator.py",
+      "line_count": 1838,
+      "god_classes": [
+        {
+          "class": "ArtemisOrchestrator",
+          "lines": 1321,
+          "line_number": 203
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "__init__",
+          "lines": 135,
+          "line_number": 215
+        },
+        {
+          "method": "_register_stages_with_supervisor",
+          "lines": 115,
+          "line_number": 352
+        },
+        {
+          "method": "_create_default_stages",
+          "lines": 179,
+          "line_number": 469
+        },
+        {
+          "method": "run_full_pipeline",
+          "lines": 138,
+          "line_number": 650
+        },
+        {
+          "method": "_old_run_full_pipeline_with_retry_logic",
+          "lines": 222,
+          "line_number": 790
+        },
+        {
+          "method": "run_all_pending_tasks",
+          "lines": 107,
+          "line_number": 1014
+        },
+        {
+          "method": "main_legacy",
+          "lines": 131,
+          "line_number": 1696
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 14,
+          "line_number": 215
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 5,
+          "line_number": 122,
+          "type": "number"
+        },
+        {
+          "value": 13,
+          "line_number": 123,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 124,
+          "type": "number"
+        },
+        {
+          "value": 8,
+          "line_number": 125,
+          "type": "number"
+        },
+        {
+          "value": 5,
+          "line_number": 127,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 135,
+          "type": "number"
+        },
+        {
+          "value": 6,
+          "line_number": 141,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 143,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 179,
+          "type": "number"
+        },
+        {
+          "value": 200.0,
+          "line_number": 299,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "display_workflow_status",
+          "line_number": 1531,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "list_active_workflows",
+          "line_number": 1598,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "main_legacy",
+          "line_number": 1696,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [
+        {
+          "line_number": 538,
+          "type": "NOTE",
+          "comment": "RequirementsParsingStage already integrated with AIQueryService"
+        },
+        {
+          "line_number": 604,
+          "type": "NOTE",
+          "comment": "Arbitration stage is added dynamically in the pipeline strategy"
+        },
+        {
+          "line_number": 1263,
+          "type": "TODO",
+          "comment": "Track sprint number in context"
+        },
+        {
+          "line_number": 1337,
+          "type": "TODO",
+          "comment": "Calculate from stage durations"
+        },
+        {
+          "line_number": 1833,
+          "type": "XXX",
+          "comment": "or --config-name"
+        },
+        {
+          "line_number": 1836,
+          "type": "XXX",
+          "comment": "--full"
+        }
+      ],
+      "commented_code": [
+        {
+          "line_number": 605,
+          "line": "# if multiple developers were invoked"
+        }
+      ]
+    },
+    {
+      "file": "supervisor_agent.py",
+      "line_count": 3036,
+      "god_classes": [
+        {
+          "class": "SupervisorAgent",
+          "lines": 2732,
+          "line_number": 219
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "__init__",
+          "lines": 234,
+          "line_number": 226
+        },
+        {
+          "method": "execute_with_supervision",
+          "lines": 124,
+          "line_number": 823
+        },
+        {
+          "method": "_try_fix_json_parsing_failure",
+          "lines": 104,
+          "line_number": 1424
+        },
+        {
+          "method": "llm_auto_fix_error",
+          "lines": 106,
+          "line_number": 1676
+        },
+        {
+          "method": "_llm_suggest_fix",
+          "lines": 110,
+          "line_number": 1784
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 12,
+          "line_number": 226
+        },
+        {
+          "method": "_llm_suggest_fix",
+          "params": 8,
+          "line_number": 1784
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 300.0,
+          "line_number": 213,
+          "type": "number"
+        },
+        {
+          "value": 300.0,
+          "line_number": 215,
+          "type": "number"
+        },
+        {
+          "value": 0.3,
+          "line_number": 266,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 267,
+          "type": "number"
+        },
+        {
+          "value": 0.7,
+          "line_number": 276,
+          "type": "number"
+        },
+        {
+          "value": 4000,
+          "line_number": 277,
+          "type": "number"
+        },
+        {
+          "value": 300,
+          "line_number": 413,
+          "type": "number"
+        },
+        {
+          "value": 512,
+          "line_number": 414,
+          "type": "number"
+        },
+        {
+          "value": 600,
+          "line_number": 415,
+          "type": "number"
+        },
+        {
+          "value": 3,
+          "line_number": 740,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [
+        {
+          "method": "watchdog_loop",
+          "line_number": 2692,
+          "reason": "missing_return_type"
+        },
+        {
+          "method": "execute",
+          "line_number": 2989,
+          "reason": "missing_return_type"
+        }
+      ],
+      "todos": [],
+      "commented_code": []
+    },
+    {
+      "file": "artemis_stages.py",
+      "line_count": 2106,
+      "god_classes": [
+        {
+          "class": "ArchitectureStage",
+          "lines": 760,
+          "line_number": 326
+        }
+      ],
+      "long_methods": [
+        {
+          "method": "_do_analysis",
+          "lines": 118,
+          "line_number": 125
+        },
+        {
+          "method": "_create_adr",
+          "lines": 116,
+          "line_number": 412
+        },
+        {
+          "method": "_generate_adr_template",
+          "lines": 127,
+          "line_number": 668
+        },
+        {
+          "method": "_generate_user_stories_from_adr",
+          "lines": 136,
+          "line_number": 819
+        },
+        {
+          "method": "_do_work",
+          "lines": 195,
+          "line_number": 1293
+        },
+        {
+          "method": "_do_work",
+          "lines": 109,
+          "line_number": 1880
+        }
+      ],
+      "too_many_params": [
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 78
+        },
+        {
+          "method": "__init__",
+          "params": 9,
+          "line_number": 338
+        },
+        {
+          "method": "__init__",
+          "params": 8,
+          "line_number": 1841
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [
+        {
+          "value": 15,
+          "line_number": 96,
+          "type": "number"
+        },
+        {
+          "value": 40,
+          "line_number": 149,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 157,
+          "type": "number"
+        },
+        {
+          "value": 60,
+          "line_number": 171,
+          "type": "number"
+        },
+        {
+          "value": 70,
+          "line_number": 198,
+          "type": "number"
+        },
+        {
+          "value": 85,
+          "line_number": 205,
+          "type": "number"
+        },
+        {
+          "value": 95,
+          "line_number": 215,
+          "type": "number"
+        },
+        {
+          "value": 15,
+          "line_number": 365,
+          "type": "number"
+        },
+        {
+          "value": 30,
+          "line_number": 432,
+          "type": "number"
+        },
+        {
+          "value": 50,
+          "line_number": 440,
+          "type": "number"
+        }
+      ],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [
+        {
+          "line_number": 1075,
+          "type": "NOTE",
+          "comment": "Task should already exist from requirements stage"
+        },
+        {
+          "line_number": 1662,
+          "type": "TODO",
+          "comment": "AgentMessenger doesn't have register_handler method yet"
+        }
+      ],
+      "commented_code": [
+        {
+          "line_number": 1663,
+          "line": "# if self.messenger and hasattr(self.messenger, 'register_handler'):"
+        }
+      ]
+    },
+    {
+      "file": "developer_invoker.py",
+      "line_count": 366,
+      "god_classes": [],
+      "long_methods": [],
+      "too_many_params": [
+        {
+          "method": "invoke_developer",
+          "params": 8,
+          "line_number": 38
+        }
+      ],
+      "deep_nesting": [],
+      "magic_values": [],
+      "mutable_defaults": [],
+      "missing_type_hints": [],
+      "todos": [],
+      "commented_code": []
+    }
+  ]
+}

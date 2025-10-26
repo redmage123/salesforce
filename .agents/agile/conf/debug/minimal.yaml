@@ -1,0 +1,39 @@
+# Debug Mode - Minimal Profile
+# Only critical debug info, useful for production troubleshooting
+
+defaults:
+  - default
+
+enabled: true
+
+components:
+  validation:
+    verbose_test_output: true
+    log_paths: false
+    dump_test_results: false
+
+  development:
+    log_prompts: false
+    log_responses: false
+    show_file_operations: false
+
+  sprint_planning:
+    show_estimates: false
+    log_planning_poker: false
+    dump_features: false
+
+  routing:
+    log_decisions: true
+    show_complexity_calc: true
+    trace_hooks: false
+
+  stages:
+    dump_context: false
+    log_transitions: true
+    show_timing: true
+
+formatting:
+  indent_json: 0
+  truncate_output: 500
+  color_output: true
+  timestamp_format: "%H:%M:%S"

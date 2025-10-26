@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artemis Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #4e54c8, #8f94fb);
+            color: #fff;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #presentation {
+            width: 80%;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .slide {
+            display: none;
+            text-align: center;
+            transition: opacity 1s ease-in-out;
+        }
+        .active {
+            display: block;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .nav-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            color: #fff;
+            font-size: 18px;
+        }
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div id="presentation">
+        <div class="slide active" id="hero">
+            <h1>What is Artemis?</h1>
+            <p>Autonomous AI Development System</p>
+        </div>
+        <div class="slide" id="pipeline">
+            <h2>Pipeline Visualization</h2>
+            <canvas id="pipelineChart"></canvas>
+        </div>
+        <div class="slide" id="features">
+            <h2>Features</h2>
+            <canvas id="featuresChart"></canvas>
+        </div>
+        <div class="slide" id="liveMetrics">
+            <h2>Live Metrics</h2>
+            <canvas id="llmCostChart"></canvas>
+            <canvas id="completionRatesChart"></canvas>
+            <canvas id="successRateChart"></canvas>
+        </div>
+        <div class="slide" id="integration">
+            <h2>Integration</h2>
+            <canvas id="integrationChart"></canvas>
+        </div>
+        <div class="slide" id="codeQuality">
+            <h2>Code Quality</h2>
+            <canvas id="codeQualityChart"></canvas>
+        </div>
+        <div class="slide" id="results">
+            <h2>Results</h2>
+            <p>Real metrics from recent runs</p>
+            <!-- Add actual data presentation here -->
+        </div>
+        <div class="navigation">
+            <button class="nav-button" id="prev">Previous</button>
+            <button class="nav-button" id="next">Next</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+
+        document.getElementById('next').addEventListener('click', function() {
+            navigateSlides(1);
+        });
+
+        document.getElementById('prev').addEventListener('click', function() {
+            navigateSlides(-1);
+        });
+
+        function navigateSlides(direction) {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + direction + totalSlides) % totalSlides;
+            slides[currentSlide].classList.add('active');
+        }
+
+        // Auto-advance slides every 10 seconds
+        setInterval(() => navigateSlides(1), 10000);
+
+        // Example Chart.js setup
+        const ctxPipeline = document.getElementById('pipelineChart').getContext('2d');
+        const pipelineChart = new Chart(ctxPipeline, {
+            type: 'line',
+            data: {
+                labels: ['Stage 1', 'Stage 2', 'Stage 3', 'Stage 4', 'Stage 5', 'Stage 6', 'Stage 7', 'Stage 8'],
+                datasets: [{
+                    label: 'Pipeline Progress',
+                    data: [12, 19, 3, 5, 2, 3, 7, 10],
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Additional charts setup goes here...
+
+    </script>
+</body>
+</html>

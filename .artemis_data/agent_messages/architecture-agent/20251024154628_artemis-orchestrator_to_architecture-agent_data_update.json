@@ -1,0 +1,33 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251024154628138724-artemis-orchestrator-4-c9931b8c",
+  "timestamp": "2025-10-24T15:46:28.138782Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "architecture-agent",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "high",
+  "data": {
+    "update_type": "review_feedback_for_revision",
+    "status": "REJECTED",
+    "score": 5.75,
+    "feedback": {
+      "architecture_issues": [],
+      "sprint_issues": [
+        "Sprint 6 is overcommitted (100%)"
+      ],
+      "quality_issues": [
+        "No explicit error handling mentioned",
+        "No logging/monitoring strategy mentioned",
+        "No testing strategy mentioned",
+        "No authentication/security mentioned"
+      ],
+      "actionable_steps": [],
+      "summary": "Address: 1 sprint planning issue(s), 4 quality issue(s)"
+    },
+    "iteration": 1,
+    "max_iterations": 3,
+    "requires_revision": true
+  },
+  "metadata": {}
+}

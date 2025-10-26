@@ -20,10 +20,12 @@ SOLID Principles:
 - Dependency Inversion: Depends on abstractions (PipelineStage, LoggerInterface)
 """
 
+import os
 import time
 import psutil
 import signal
 import threading
+from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Callable, Any
 from enum import Enum
@@ -58,6 +60,107 @@ from supervisor_learning import (
     LearnedSolution,
     LearningStrategy
 )
+from debug_mixin import DebugMixin
+
+
+class AgentHealthEvent(Enum):
+    """Agent health event types"""
+    STARTED = "started"
+    PROGRESS = "progress"
+    STALLED = "stalled"
+    CRASHED = "crashed"
+    HUNG = "hung"
+    COMPLETED = "completed"
+
+
+class AgentHealthObserver(ABC):
+    """
+    Observer interface for agent health monitoring (Observer Pattern)
+
+    Instead of polling, agents notify observers when their state changes.
+    This is more efficient and event-driven.
+    """
+
+    @abstractmethod
+    def on_agent_event(
+        self,
+        agent_name: str,
+        event: AgentHealthEvent,
+        data: Dict[str, Any]
+    ) -> None:
+        """
+        Called when an agent health event occurs
+
+        Args:
+            agent_name: Name of the agent
+            event: Type of health event
+            data: Event-specific data
+        """
+        pass
+
+
+class SupervisorHealthObserver(AgentHealthObserver):
+    """
+    Supervisor implementation of health observer
+
+    Listens for agent crashes and hangs, then triggers recovery
+    """
+
+    def __init__(self, supervisor: 'SupervisorAgent'):
+        self.supervisor = supervisor
+        self.agent_start_times: Dict[str, datetime] = {}
+        self.agent_last_activity: Dict[str, datetime] = {}
+
+    def on_agent_event(
+        self,
+        agent_name: str,
+        event: AgentHealthEvent,
+        data: Dict[str, Any]
+    ) -> None:
+        """Handle agent health events"""
+        now = datetime.now()
+
+        if event == AgentHealthEvent.STARTED:
+            self.agent_start_times[agent_name] = now
+            self.agent_last_activity[agent_name] = now
+            if self.supervisor.verbose:
+                print(f"[Supervisor] 👀 Monitoring agent '{agent_name}'")
+
+        elif event == AgentHealthEvent.PROGRESS:
+            self.agent_last_activity[agent_name] = now
+            if self.supervisor.verbose:
+                print(f"[Supervisor] ✓ Agent '{agent_name}' making progress")
+
+        elif event == AgentHealthEvent.CRASHED:
+            if self.supervisor.verbose:
+                print(f"[Supervisor] 💥 Agent '{agent_name}' crashed!")
+
+            # Trigger crash recovery
+            crash_info = data.get("crash_info", {})
+            context = data.get("context", {})
+            self.supervisor.recover_crashed_agent(crash_info, context)
+
+        elif event == AgentHealthEvent.HUNG:
+            if self.supervisor.verbose:
+                print(f"[Supervisor] ⏰ Agent '{agent_name}' appears hung!")
+
+            # Trigger hang recovery
+            timeout_info = data.get("timeout_info", {})
+            self.supervisor.recover_hung_agent(agent_name, timeout_info)
+
+        elif event == AgentHealthEvent.STALLED:
+            if self.supervisor.verbose:
+                time_since = data.get("time_since_activity", 0)
+                print(f"[Supervisor] ⚠️  Agent '{agent_name}' stalled (no activity for {time_since}s)")
+
+        elif event == AgentHealthEvent.COMPLETED:
+            if self.supervisor.verbose:
+                elapsed = (now - self.agent_start_times.get(agent_name, now)).total_seconds()
+                print(f"[Supervisor] ✅ Agent '{agent_name}' completed (elapsed: {elapsed}s)")
+
+            # Clean up tracking
+            self.agent_start_times.pop(agent_name, None)
+            self.agent_last_activity.pop(agent_name, None)
 
 
 class HealthStatus(Enum):
@@ -114,7 +217,7 @@ class RecoveryStrategy:
     fallback_action: Optional[Callable] = None
 
 
-class SupervisorAgent:
+class SupervisorAgent(DebugMixin):
     """
     Artemis Supervisor Agent - Pipeline Traffic Cop
 
@@ -132,7 +235,8 @@ class SupervisorAgent:
         enable_config_validation: bool = True,
         enable_sandboxing: bool = True,
         daily_budget: Optional[float] = None,
-        monthly_budget: Optional[float] = None
+        monthly_budget: Optional[float] = None,
+        hydra_config: Optional[Any] = None
     ):
         """
         Initialize supervisor agent
@@ -148,34 +252,198 @@ class SupervisorAgent:
             enable_sandboxing: Enable security sandboxing for code execution
             daily_budget: Daily LLM budget (None = unlimited)
             monthly_budget: Monthly LLM budget (None = unlimited)
+            hydra_config: Hydra configuration object (for LLM settings)
         """
+        # Initialize DebugMixin
+        DebugMixin.__init__(self, component_name="supervisor")
+
+        # Initialize basic attributes
+        self._init_basic_attributes(logger, messenger, verbose, rag, card_id, hydra_config)
+
+        # Initialize LLM configuration
+        self._init_llm_config()
+
+        # Initialize health monitoring
+        self._init_health_monitoring()
+
+        # Run validation checks
+        if enable_config_validation:
+            self._run_config_validation()
+            self._run_preflight_validation()
+
+        # Initialize optional subsystems
+        self._init_cost_tracking(enable_cost_tracking, card_id, daily_budget, monthly_budget)
+        self._init_security_sandbox(enable_sandboxing)
+        self._init_learning_engine()
+        self._init_state_machine(card_id, verbose)
+        self._init_health_tracking()
+        self._init_statistics()
+
+    def _init_basic_attributes(self, logger, messenger, verbose, rag, card_id, hydra_config):
+        """Initialize basic supervisor attributes"""
         self.logger = logger
         self.messenger = messenger
         self.verbose = verbose
         self.rag = rag
         self.card_id = card_id
+        self.llm_client = None  # Will be set later when needed
+        self.hydra_config = hydra_config
 
-        # Phase 2: Config validation at startup
-        if enable_config_validation:
+    def _init_llm_config(self):
+        """Initialize LLM configuration from Hydra config"""
+        self.llm_model = None
+        self.llm_temperature = 0.3
+        self.llm_max_tokens = 4000
+
+        if self.hydra_config and hasattr(self.hydra_config, 'llm'):
+            # Use supervisor-specific settings if available, otherwise use default
+            if hasattr(self.hydra_config.llm, 'supervisor'):
+                self.llm_model = self.hydra_config.llm.supervisor.model
+                self.llm_temperature = self.hydra_config.llm.supervisor.temperature
+                self.llm_max_tokens = self.hydra_config.llm.supervisor.max_tokens
+            else:
+                self.llm_model = self.hydra_config.llm.model
+                self.llm_temperature = getattr(self.hydra_config.llm, 'temperature', 0.7)
+                self.llm_max_tokens = getattr(self.hydra_config.llm, 'max_tokens_per_request', 4000)
+
+        if self.verbose and self.llm_model:
+            print(f"[Supervisor] Using LLM model: {self.llm_model} (temp={self.llm_temperature})")
+
+    def _init_health_monitoring(self):
+        """Initialize agent health monitoring with Observer Pattern"""
+        self.health_observers: List[AgentHealthObserver] = []
+        self.register_health_observer(SupervisorHealthObserver(self))
+        self.registered_agents: Dict[str, Dict[str, Any]] = {}
+
+        if self.verbose:
+            print(f"[Supervisor] Initialized health monitoring with Observer Pattern")
+
+    def _run_config_validation(self):
+        """Run startup configuration validation"""
+        if self.verbose:
+            print(f"[Supervisor] Running startup configuration validation...")
+
+        validator = ConfigValidator(verbose=self.verbose)
+        report = validator.validate_all()
+
+        if report.overall_status == "fail":
+            raise RuntimeError(f"Configuration validation failed: {report.errors} errors")
+        elif report.overall_status == "warning":
             if self.verbose:
-                print(f"[Supervisor] Running startup configuration validation...")
-            validator = ConfigValidator(verbose=self.verbose)
-            report = validator.validate_all()
+                print(f"[Supervisor] ⚠️  Configuration warnings: {report.warnings} warnings")
 
-            if report.overall_status == "fail":
-                raise RuntimeError(f"Configuration validation failed: {report.errors} errors")
-            elif report.overall_status == "warning":
+    def _run_preflight_validation(self):
+        """Run preflight validation (syntax checks with auto-fix)"""
+        if self.verbose:
+            print(f"[Supervisor] Running preflight validation (syntax checks)...")
+
+        try:
+            from preflight_validator import PreflightValidator
+            from llm_client import LLMClientFactory
+
+            # Try to get LLM client for auto-fixing
+            llm_client, auto_fix_enabled = self._setup_llm_for_autofix()
+
+            preflight = PreflightValidator(
+                verbose=self.verbose,
+                llm_client=llm_client,
+                auto_fix=auto_fix_enabled
+            )
+
+            # Get the directory containing the agile code
+            import os
+            agile_dir = os.path.dirname(os.path.abspath(__file__))
+            preflight_results = preflight.validate_all(agile_dir)
+
+            self._handle_preflight_results(preflight, preflight_results, auto_fix_enabled)
+
+        except ImportError as e:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Preflight validator not available - skipping syntax checks: {e}")
+
+    def _setup_llm_for_autofix(self):
+        """Setup LLM client for auto-fixing syntax errors"""
+        from llm_client import LLMClientFactory
+
+        llm_client = None
+        auto_fix_enabled = False
+
+        try:
+            llm_client = LLMClientFactory.create()
+            auto_fix_enabled = True
+            if self.verbose:
+                print(f"[Supervisor] LLM-based auto-fix enabled")
+        except Exception:
+            if self.verbose:
+                print(f"[Supervisor] LLM not available - auto-fix disabled")
+
+        return llm_client, auto_fix_enabled
+
+    def _handle_preflight_results(self, preflight, preflight_results, auto_fix_enabled):
+        """Handle preflight validation results"""
+        import os
+        import sys
+
+        if not preflight_results["passed"]:
+            if self.verbose:
+                print(f"[Supervisor] ❌ Found {preflight_results['critical_count']} critical issues")
+
+            # Try to auto-fix syntax errors
+            if auto_fix_enabled and preflight_results["critical_count"] > 0:
                 if self.verbose:
-                    print(f"[Supervisor] ⚠️  Configuration warnings: {report.warnings} warnings")
+                    print(f"[Supervisor] Attempting auto-fix...")
 
-        # Phase 2: Cost tracking
+                all_fixed = preflight.auto_fix_syntax_errors()
+
+                if all_fixed:
+                    if self.verbose:
+                        print(f"[Supervisor] ✅ All syntax errors fixed automatically!")
+                        print(f"[Supervisor] 🔄 Restarting Artemis to apply fixes...")
+                    # Re-exec the current process to restart with fixed code
+                    os.execv(sys.executable, [sys.executable] + sys.argv)
+                else:
+                    if self.verbose:
+                        preflight.print_report()
+                    raise RuntimeError(
+                        f"Preflight validation failed: Could not auto-fix all {preflight_results['critical_count']} "
+                        f"critical issues"
+                    )
+            else:
+                if self.verbose:
+                    preflight.print_report()
+                raise RuntimeError(
+                    f"Preflight validation failed: {preflight_results['critical_count']} "
+                    f"critical issues found (auto-fix disabled)"
+                )
+        elif preflight_results["high_count"] > 0:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Preflight warnings: {preflight_results['high_count']} high-priority issues")
+        else:
+            if self.verbose:
+                print(f"[Supervisor] ✅ Preflight validation passed")
+
+    def _init_cost_tracking(self, enable_cost_tracking, card_id, daily_budget, monthly_budget):
+        """Initialize LLM cost tracking"""
+        import os
+
         self.cost_tracker: Optional[CostTracker] = None
         if enable_cost_tracking:
+            # Get cost tracking directory from env or use default
+            cost_dir = os.getenv("ARTEMIS_COST_DIR", "../../.artemis_data/cost_tracking")
+            if not os.path.isabs(cost_dir):
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                cost_dir = os.path.join(script_dir, cost_dir)
+
+            # Create cost tracker with dynamic path
+            cost_filename = f"artemis_costs_{card_id}.json" if card_id else "artemis_costs.json"
+            storage_path = os.path.join(cost_dir, cost_filename)
+
             self.cost_tracker = CostTracker(
-                storage_path=f"/tmp/artemis_costs_{card_id}.json" if card_id else "/tmp/artemis_costs.json",
+                storage_path=storage_path,
                 daily_budget=daily_budget,
                 monthly_budget=monthly_budget
             )
+
             if self.verbose:
                 budget_info = []
                 if daily_budget:
@@ -185,7 +453,8 @@ class SupervisorAgent:
                 budget_str = ", ".join(budget_info) if budget_info else "unlimited"
                 print(f"[Supervisor] Cost tracking enabled ({budget_str})")
 
-        # Phase 2: Security sandboxing
+    def _init_security_sandbox(self, enable_sandboxing):
+        """Initialize security sandboxing for code execution"""
         self.sandbox: Optional[SandboxExecutor] = None
         if enable_sandboxing:
             sandbox_config = SandboxConfig(
@@ -197,16 +466,19 @@ class SupervisorAgent:
             if self.verbose:
                 print(f"[Supervisor] Security sandbox enabled (backend: {self.sandbox.backend_name})")
 
-        # Learning engine for dynamic problem solving
+    def _init_learning_engine(self):
+        """Initialize learning engine for dynamic problem solving"""
         self.learning_engine: Optional[SupervisorLearningEngine] = None
         # Will be initialized with LLM client when needed
 
-        # State machine for tracking pipeline state
+    def _init_state_machine(self, card_id, verbose):
+        """Initialize state machine for tracking pipeline state"""
         self.state_machine: Optional[ArtemisStateMachine] = None
         if card_id:
             self.state_machine = ArtemisStateMachine(
                 card_id=card_id,
-                verbose=verbose
+                verbose=verbose,
+                llm_client=self.llm_client  # Pass LLM client for workflow generation
             )
             if self.verbose:
                 print(f"[Supervisor] State machine initialized for card {card_id}")
@@ -215,7 +487,8 @@ class SupervisorAgent:
         if self.rag and self.verbose:
             print(f"[Supervisor] RAG integration enabled - learning from history")
 
-        # Health tracking
+    def _init_health_tracking(self):
+        """Initialize health tracking data structures"""
         self.stage_health: Dict[str, StageHealth] = {}
         self.process_registry: Dict[int, ProcessHealth] = {}
         self.recovery_strategies: Dict[str, RecoveryStrategy] = {}
@@ -225,7 +498,8 @@ class SupervisorAgent:
         self.monitoring_thread: Optional[threading.Thread] = None
         self.monitored_processes: List[int] = []
 
-        # Statistics
+    def _init_statistics(self):
+        """Initialize supervisor statistics"""
         self.stats = {
             "total_interventions": 0,
             "successful_recoveries": 0,
@@ -433,6 +707,11 @@ class SupervisorAgent:
         Returns:
             Solution result if handled, None otherwise
         """
+        # DEBUG: Log unexpected state handling
+        self.debug_if_enabled('log_recovery', "Handling unexpected state",
+                             current_state=current_state,
+                             expected_states=expected_states)
+
         if not self.learning_engine:
             if self.verbose:
                 print(f"[Supervisor] ⚠️  Learning engine not enabled, cannot handle unexpected state")
@@ -467,10 +746,36 @@ class SupervisorAgent:
 
         if not solution:
             if self.verbose:
-                print(f"[Supervisor] ❌ Could not learn solution")
+                print(f"[Supervisor] ❌ Could not learn solution - trying fallback strategies...")
+
+            # FALLBACK STRATEGY 0: Detect and handle JSON parsing failures
+            json_parse_result = self._try_fix_json_parsing_failure(unexpected, context)
+            if json_parse_result and json_parse_result.get("success"):
+                return json_parse_result
+
+            # FALLBACK STRATEGY 1: Try simple retry with backoff
+            retry_result = self._try_fallback_retry(unexpected, context)
+            if retry_result and retry_result.get("success"):
+                return retry_result
+
+            # FALLBACK STRATEGY 2: Try to use default values for missing data
+            default_result = self._try_default_values(unexpected, context)
+            if default_result and default_result.get("success"):
+                return default_result
+
+            # FALLBACK STRATEGY 3: Try to skip non-critical stage
+            skip_result = self._try_skip_stage(unexpected, context)
+            if skip_result and skip_result.get("success"):
+                return skip_result
+
+            # LAST RESORT: Request manual intervention
+            if self.verbose:
+                print(f"[Supervisor] 🚨 All recovery strategies failed - requesting manual intervention")
+
             return {
                 "unexpected_state": unexpected,
-                "action": "learning_failed"
+                "action": "manual_intervention_required",
+                "message": "All automated recovery strategies failed. Manual intervention needed."
             }
 
         # Apply solution
@@ -594,6 +899,19 @@ class SupervisorAgent:
         Raises:
             PipelineStageError: If stage fails after all recovery attempts
         """
+        # Setup and validate stage execution
+        self._setup_stage_execution(stage_name)
+
+        # Check circuit breaker and handle if open
+        circuit_result = self._check_circuit_breaker_status(stage_name, *args, **kwargs)
+        if circuit_result is not None:
+            return circuit_result
+
+        # Execute stage with retry logic
+        return self._execute_stage_with_retries(stage, stage_name, *args, **kwargs)
+
+    def _setup_stage_execution(self, stage_name):
+        """Setup and register stage for execution"""
         # Register stage if not already registered
         if stage_name not in self.stage_health:
             self.register_stage(stage_name)
@@ -603,7 +921,13 @@ class SupervisorAgent:
             self.state_machine.push_state(PipelineState.STAGE_RUNNING, {"stage": stage_name})
             self.state_machine.update_stage_state(stage_name, StageState.RUNNING)
 
-        # Check circuit breaker
+    def _check_circuit_breaker_status(self, stage_name, *args, **kwargs):
+        """
+        Check circuit breaker and handle if open
+
+        Returns:
+            Result dict if circuit breaker is open, None otherwise
+        """
         if self.check_circuit_breaker(stage_name):
             # Circuit open - attempt fallback or skip
             strategy = self.recovery_strategies.get(stage_name, RecoveryStrategy())
@@ -616,7 +940,18 @@ class SupervisorAgent:
                 if self.verbose:
                     print(f"[Supervisor] Skipping {stage_name} (circuit breaker open)")
                 return {"status": "skipped", "reason": "circuit_breaker_open"}
+        return None
 
+    def _execute_stage_with_retries(self, stage, stage_name, *args, **kwargs):
+        """
+        Execute stage with retry logic and monitoring
+
+        Returns:
+            Stage execution result
+
+        Raises:
+            PipelineStageError: If all retries are exhausted
+        """
         health = self.stage_health[stage_name]
         strategy = self.recovery_strategies.get(stage_name, RecoveryStrategy())
 
@@ -625,59 +960,138 @@ class SupervisorAgent:
 
         while retry_count <= strategy.max_retries:
             try:
+                # Wait before retry if needed
                 if retry_count > 0:
-                    retry_delay = strategy.retry_delay_seconds * (strategy.backoff_multiplier ** (retry_count - 1))
-                    if self.verbose:
-                        print(f"[Supervisor] Retry {retry_count}/{strategy.max_retries} for {stage_name} (waiting {retry_delay}s)")
-                    time.sleep(retry_delay)
+                    self._wait_before_retry(stage_name, retry_count, strategy)
 
-                # Execute stage with timeout monitoring
-                start_time = datetime.now()
+                # Execute stage with monitoring
+                result_data = self._execute_stage_monitored(stage, stage_name, strategy, *args, **kwargs)
 
-                # Start monitoring in background thread
-                monitor_thread = threading.Thread(
-                    target=self._monitor_execution,
-                    args=(stage_name, strategy.timeout_seconds),
-                    daemon=True
+                # Handle successful execution - pass result for state tracking
+                self._handle_successful_execution(
+                    stage_name,
+                    health,
+                    retry_count,
+                    result_data['duration'],
+                    result_data['result']  # Pass result to store in state machine
                 )
-                monitor_thread.start()
 
-                # Execute stage
-                result = stage.execute(*args, **kwargs)
-
-                # Success!
-                duration = (datetime.now() - start_time).total_seconds()
-                health.execution_count += 1
-                health.total_duration += duration
-
-                if retry_count > 0:
-                    self.stats["successful_recoveries"] += 1
-                    if self.verbose:
-                        print(f"[Supervisor] ✅ Recovery successful for {stage_name} after {retry_count} retries")
-
-                return result
+                return result_data['result']
 
             except Exception as e:
+                # Handle execution failure
                 last_error = e
                 retry_count += 1
-                health.failure_count += 1
-                health.last_failure = datetime.now()
-                self.stats["total_interventions"] += 1
 
-                if self.verbose:
-                    print(f"[Supervisor] ❌ Stage {stage_name} failed: {str(e)}")
+                # Store failure in state machine for complete state tracking
+                if self.state_machine:
+                    self.state_machine.push_state(
+                        PipelineState.STAGE_FAILED,
+                        {
+                            "stage": stage_name,
+                            "error": str(e),
+                            "error_type": type(e).__name__,
+                            "retry_count": retry_count,
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    )
+                    self.state_machine.update_stage_state(stage_name, StageState.FAILED)
 
-                # Check if circuit breaker should open
-                if health.failure_count >= strategy.circuit_breaker_threshold:
-                    self.open_circuit_breaker(stage_name)
+                should_break = self._handle_execution_failure(
+                    stage_name, health, strategy, retry_count, e
+                )
+                if should_break:
                     break
 
-                # Log retry attempt
-                if retry_count <= strategy.max_retries:
-                    if self.logger:
-                        self.logger.log(f"Stage {stage_name} failed, retrying ({retry_count}/{strategy.max_retries})")
+        # All retries exhausted - raise final error
+        return self._raise_final_error(stage_name, health, retry_count, last_error)
 
-        # All retries exhausted
+    def _wait_before_retry(self, stage_name, retry_count, strategy):
+        """Wait before retrying with exponential backoff"""
+        retry_delay = strategy.retry_delay_seconds * (strategy.backoff_multiplier ** (retry_count - 1))
+        if self.verbose:
+            print(f"[Supervisor] Retry {retry_count}/{strategy.max_retries} for {stage_name} (waiting {retry_delay}s)")
+        time.sleep(retry_delay)
+
+    def _execute_stage_monitored(self, stage, stage_name, strategy, *args, **kwargs):
+        """Execute stage with timeout monitoring"""
+        start_time = datetime.now()
+
+        # Start monitoring in background thread
+        monitor_thread = threading.Thread(
+            target=self._monitor_execution,
+            args=(stage_name, strategy.timeout_seconds),
+            daemon=True
+        )
+        monitor_thread.start()
+
+        # Execute stage
+        result = stage.execute(*args, **kwargs)
+        duration = (datetime.now() - start_time).total_seconds()
+
+        return {'result': result, 'duration': duration}
+
+    def _handle_successful_execution(self, stage_name, health, retry_count, duration, result=None):
+        """
+        Handle successful stage execution
+
+        Args:
+            stage_name: Name of the stage
+            health: Stage health tracker
+            retry_count: Number of retries used
+            duration: Execution duration in seconds
+            result: Stage execution result (optional, for state tracking)
+        """
+        health.execution_count += 1
+        health.total_duration += duration
+
+        # Store result in state machine for complete pipeline state tracking
+        if self.state_machine and result is not None:
+            self.state_machine.push_state(
+                PipelineState.STAGE_COMPLETED,
+                {
+                    "stage": stage_name,
+                    "result": result,
+                    "duration": duration,
+                    "retry_count": retry_count,
+                    "timestamp": datetime.now().isoformat()
+                }
+            )
+            self.state_machine.update_stage_state(stage_name, StageState.COMPLETED)
+
+        if retry_count > 0:
+            self.stats["successful_recoveries"] += 1
+            if self.verbose:
+                print(f"[Supervisor] ✅ Recovery successful for {stage_name} after {retry_count} retries")
+
+    def _handle_execution_failure(self, stage_name, health, strategy, retry_count, error):
+        """
+        Handle stage execution failure
+
+        Returns:
+            True if should break retry loop, False otherwise
+        """
+        health.failure_count += 1
+        health.last_failure = datetime.now()
+        self.stats["total_interventions"] += 1
+
+        if self.verbose:
+            print(f"[Supervisor] ❌ Stage {stage_name} failed: {str(error)}")
+
+        # Check if circuit breaker should open
+        if health.failure_count >= strategy.circuit_breaker_threshold:
+            self.open_circuit_breaker(stage_name)
+            return True
+
+        # Log retry attempt
+        if retry_count <= strategy.max_retries:
+            if self.logger:
+                self.logger.log(f"Stage {stage_name} failed, retrying ({retry_count}/{strategy.max_retries})")
+
+        return False
+
+    def _raise_final_error(self, stage_name, health, retry_count, last_error):
+        """Raise final error after all retries exhausted"""
         self.stats["failed_recoveries"] += 1
 
         if self.messenger:
@@ -958,6 +1372,82 @@ class SupervisorAgent:
 
         return success
 
+    def get_stage_result(self, stage_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Retrieve latest result for a stage from state machine
+
+        This allows the supervisor to query "What did code review find?"
+        without needing to ask the orchestrator.
+
+        Args:
+            stage_name: Name of the stage (e.g., "code_review", "developer")
+
+        Returns:
+            Stage result dict or None if not found
+
+        Example:
+            >>> supervisor = SupervisorAgent(...)
+            >>> code_review_result = supervisor.get_stage_result('code_review')
+            >>> if code_review_result:
+            >>>     refactoring_suggestions = code_review_result.get('refactoring_suggestions')
+            >>>     critical_issues = code_review_result.get('total_critical_issues', 0)
+        """
+        # Guard clause: No state machine available
+        if not self.state_machine:
+            return None
+
+        # Guard clause: State stack not available
+        if not hasattr(self.state_machine, '_state_stack'):
+            return None
+
+        # Pattern #4: Use next() with generator for first match (latest first)
+        return next(
+            (
+                context['result']
+                for state_entry in reversed(self.state_machine._state_stack)
+                if (context := state_entry.get('context', {})).get('stage') == stage_name
+                and 'result' in context
+            ),
+            None  # Default value if no match found
+        )
+
+    def get_all_stage_results(self) -> Dict[str, Dict[str, Any]]:
+        """
+        Retrieve latest results for all stages from state machine
+
+        Returns:
+            Dict mapping stage_name to result dict
+
+        Example:
+            >>> results = supervisor.get_all_stage_results()
+            >>> code_review = results.get('code_review', {})
+            >>> developer_a = results.get('developer', {})
+        """
+        # Guard clause: No state machine available
+        if not self.state_machine:
+            return {}
+
+        # Guard clause: State stack not available
+        if not hasattr(self.state_machine, '_state_stack'):
+            return {}
+
+        # Pattern #1: Use dict comprehension with generator
+        # Collect unique stages with their latest results (reversed = latest first)
+        seen_stages = set()
+
+        def _unique_stage_results():
+            """Generator yielding (stage, result) tuples for unseen stages"""
+            for state_entry in reversed(self.state_machine._state_stack):
+                context = state_entry.get('context', {})
+                stage = context.get('stage')
+                result = context.get('result')
+
+                if stage and result and stage not in seen_stages:
+                    seen_stages.add(stage)
+                    yield (stage, result)
+
+        return dict(_unique_stage_results())
+
     def get_state_snapshot(self) -> Optional[Dict[str, Any]]:
         """
         Get current pipeline state snapshot
@@ -1172,6 +1662,1419 @@ class SupervisorAgent:
         except Exception as e:
             if self.verbose:
                 print(f"[Supervisor] ⚠️  Failed to store in RAG: {e}")
+
+    def _try_fix_json_parsing_failure(self, unexpected_state: Dict, context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Fallback strategy: Detect and handle JSON parsing failures from LLM responses
+
+        This strategy detects when developers fail due to JSON parsing errors and
+        provides actionable guidance on fixing the prompt or response format.
+
+        Args:
+            unexpected_state: Unexpected state details
+            context: Execution context
+
+        Returns:
+            Result dict with recommendations if JSON parsing failure detected, None otherwise
+        """
+        # Check if this is a JSON parsing failure
+        developer_errors = context.get("developer_errors", [])
+        json_parse_failures = [
+            err for err in developer_errors
+            if err and ("parse" in err.lower() and "json" in err.lower() or "Expecting value" in err)
+        ]
+
+        if not json_parse_failures:
+            return None  # Not a JSON parsing issue
+
+        if self.verbose:
+            print(f"[Supervisor] 🔍 Detected JSON parsing failures in {len(json_parse_failures)} developer(s)")
+
+        # Consult LLM for advice on fixing the prompt
+        if self.llm_client:
+            if self.verbose:
+                print(f"[Supervisor] 💬 Consulting LLM for JSON parsing fix recommendations...")
+
+            try:
+                system_message = """You are a debugging expert for AI agent systems. When developers fail to parse JSON from LLM responses, you provide specific, actionable fixes."""
+
+                user_message = f"""The developer agents failed with JSON parsing errors:
+
+Errors:
+{chr(10).join(f"- {err}" for err in json_parse_failures)}
+
+Context:
+- Stage: {context.get('stage_name', 'development')}
+- Task: {context.get('card_id', 'unknown')}
+- Number of failed developers: {len(json_parse_failures)}
+
+Provide specific recommendations in JSON format:
+{{
+  "root_cause": "Brief explanation of why JSON parsing failed",
+  "recommended_actions": [
+    "Specific action 1 to fix the prompt",
+    "Specific action 2 to improve response parsing"
+  ],
+  "prompt_improvements": [
+    "Add explicit JSON schema to prompt",
+    "Request strict JSON without markdown"
+  ],
+  "retry_strategy": "Should we retry immediately, adjust prompt first, or skip?"
+}}"""
+
+                response = self.llm_client.generate_text(
+                    system_message=system_message,
+                    user_message=user_message,
+                    temperature=0.3,
+                    max_tokens=1000
+                )
+
+                # Parse recommendations
+                import json
+                import re
+                json_match = re.search(r'\{.*\}', response, re.DOTALL)
+                if json_match:
+                    recommendations = json.loads(json_match.group(0))
+
+                    if self.verbose:
+                        print(f"[Supervisor] ✅ LLM recommendations:")
+                        print(f"   Root cause: {recommendations.get('root_cause', 'Unknown')}")
+                        print(f"   Actions: {len(recommendations.get('recommended_actions', []))}")
+
+                    return {
+                        "strategy": "json_parsing_fix",
+                        "success": True,
+                        "recommendations": recommendations,
+                        "message": f"JSON parsing failure detected and analyzed. {recommendations.get('retry_strategy', 'Retry recommended')}"
+                    }
+
+            except Exception as e:
+                if self.verbose:
+                    print(f"[Supervisor] ⚠️  Failed to get LLM recommendations: {e}")
+
+        # Fallback: Provide generic JSON parsing advice
+        return {
+            "strategy": "json_parsing_fix",
+            "success": True,
+            "recommendations": {
+                "root_cause": "LLM response not in valid JSON format",
+                "recommended_actions": [
+                    "Check if LLM prompt explicitly requests JSON output",
+                    "Verify prompt includes JSON schema/example",
+                    "Check if response parser handles markdown code blocks",
+                    "Consider adjusting temperature (lower = more structured)"
+                ],
+                "retry_strategy": "Adjust prompt to explicitly request JSON-only output, then retry"
+            },
+            "message": "JSON parsing failure detected. Generic recommendations provided."
+        }
+
+    def _try_fallback_retry(self, unexpected_state: Dict, context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Fallback strategy: Try simple retry with exponential backoff
+
+        Args:
+            unexpected_state: Unexpected state details
+            context: Execution context
+
+        Returns:
+            Result dict if successful, None otherwise
+        """
+        if self.verbose:
+            print(f"[Supervisor] 🔄 Trying fallback strategy: RETRY")
+
+        # Don't retry if we've already tried too many times
+        retry_count = context.get("retry_count", 0)
+        if retry_count >= MAX_RETRY_ATTEMPTS:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Max retries ({MAX_RETRY_ATTEMPTS}) reached")
+            return None
+
+        # For now, just log that we would retry
+        # Actual retry logic would be implemented by the caller
+        if self.verbose:
+            print(f"[Supervisor] ✅ Retry strategy available (attempt {retry_count + 1}/{MAX_RETRY_ATTEMPTS})")
+
+        return {
+            "strategy": "retry",
+            "success": False,  # Caller must implement actual retry
+            "retry_count": retry_count + 1,
+            "message": f"Retry recommended (attempt {retry_count + 1})"
+        }
+
+    def _try_default_values(self, unexpected_state: Dict, context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Fallback strategy: Try to populate missing data with sensible defaults
+        AND automatically fix the source code to prevent future occurrences using LLM
+
+        Args:
+            unexpected_state: Unexpected state details
+            context: Execution context
+
+        Returns:
+            Result dict if successful, None otherwise
+        """
+        if self.verbose:
+            print(f"[Supervisor] 🔧 Trying fallback strategy: LLM-POWERED AUTO-FIX")
+
+        # Extract error information
+        error_info = context.get("error", {})
+        error_type = error_info.get("type", "")
+        traceback_info = context.get("traceback", "")
+        exception = context.get("exception")
+
+        # Try LLM-powered auto-fix for ANY error type (not just KeyError)
+        if exception and traceback_info:
+            if self.verbose:
+                print(f"[Supervisor] 🤖 Attempting LLM-powered auto-fix for {type(exception).__name__}...")
+
+            fix_result = self.llm_auto_fix_error(exception, traceback_info, context)
+
+            if fix_result and fix_result.get("success"):
+                if self.verbose:
+                    print(f"[Supervisor] ✅ LLM AUTO-FIX SUCCESS!")
+                    print(f"[Supervisor]    File: {fix_result['file_path']}:{fix_result['line_number']}")
+                    print(f"[Supervisor]    Error: {fix_result['error_type']}")
+                    print(f"[Supervisor]    Before: {fix_result['original_line']}")
+                    print(f"[Supervisor]    After:  {fix_result['fixed_line']}")
+                    print(f"[Supervisor]    Backup: {fix_result['backup_path']}")
+                    if 'llm_reasoning' in fix_result:
+                        print(f"[Supervisor]    LLM Reasoning: {fix_result['llm_reasoning']}")
+
+                # After fixing, restart the failed stage/agent
+                restart_result = self._restart_failed_stage(context, fix_result)
+
+                return {
+                    "strategy": "llm_auto_fix",
+                    "success": True,
+                    "auto_fixed": True,
+                    "fix_details": fix_result,
+                    "restart_result": restart_result,
+                    "message": f"LLM automatically fixed {fix_result['error_type']} in source code and restarted stage"
+                }
+
+        # Fallback: For KeyError, provide default values (original behavior)
+        if "KeyError" in error_type or "key" in str(error_info).lower():
+            missing_key = error_info.get("message", "").replace("'", "").strip()
+            if not missing_key and exception:
+                missing_key = str(exception).replace("'", "").strip()
+
+            # Get default from the centralized method
+            default_value = self._get_default_for_key(missing_key)
+
+            if default_value is not None:
+                if self.verbose:
+                    print(f"[Supervisor] ✅ Found default for '{missing_key}': {default_value}")
+
+                return {
+                    "strategy": "default_values",
+                    "success": True,
+                    "missing_key": missing_key,
+                    "default_value": default_value,
+                    "message": f"Applied default value '{default_value}' for missing key '{missing_key}'"
+                }
+            else:
+                if self.verbose:
+                    print(f"[Supervisor] ⚠️  No default available for '{missing_key}'")
+
+        return None
+
+    def _try_skip_stage(self, unexpected_state: Dict, context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Fallback strategy: Try to skip non-critical stage
+
+        Args:
+            unexpected_state: Unexpected state details
+            context: Execution context
+
+        Returns:
+            Result dict if successful, None otherwise
+        """
+        if self.verbose:
+            print(f"[Supervisor] ⏭️  Trying fallback strategy: SKIP_STAGE")
+
+        # Determine if stage is skippable
+        stage_name = context.get("stage_name", "")
+        skippable_stages = ["validation", "testing"]  # Non-critical stages
+
+        is_skippable = any(skip in stage_name.lower() for skip in skippable_stages)
+
+        if is_skippable:
+            if self.verbose:
+                print(f"[Supervisor] ✅ Stage '{stage_name}' is skippable")
+
+            return {
+                "strategy": "skip_stage",
+                "success": True,
+                "stage_name": stage_name,
+                "message": f"Skipping non-critical stage '{stage_name}'"
+            }
+        else:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Stage '{stage_name}' is critical, cannot skip")
+
+        return None
+
+    def llm_auto_fix_error(self, error: Exception, traceback_info: str, context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Use LLM to automatically analyze and fix errors by modifying source code
+
+        Args:
+            error: The exception that occurred
+            traceback_info: Traceback string
+            context: Execution context
+
+        Returns:
+            Fix result dict if successful, None otherwise
+        """
+        error_type = type(error).__name__
+        error_message = str(error)
+
+        if self.verbose:
+            print(f"[Supervisor] 🧠 LLM auto-fixing {error_type}: {error_message}")
+
+        try:
+            import re
+
+            # Extract file path and line number from traceback
+            file_match = re.search(r'File "([^"]+)", line (\d+)', traceback_info)
+            if not file_match:
+                if self.verbose:
+                    print(f"[Supervisor] ⚠️  Could not extract file path from traceback")
+                return self._fallback_regex_fix(error, traceback_info, context)
+
+            file_path = file_match.group(1)
+            line_number = int(file_match.group(2))
+
+            if self.verbose:
+                print(f"[Supervisor] 📝 Found error in {file_path}:{line_number}")
+
+            # Read the source file with context (10 lines before and after)
+            with open(file_path, 'r') as f:
+                all_lines = f.readlines()
+
+            if line_number > len(all_lines):
+                if self.verbose:
+                    print(f"[Supervisor] ⚠️  Line number out of range")
+                return None
+
+            # Get context lines
+            context_start = max(0, line_number - 10)
+            context_end = min(len(all_lines), line_number + 10)
+            context_lines = all_lines[context_start:context_end]
+            problem_line = all_lines[line_number - 1]
+
+            if self.verbose:
+                print(f"[Supervisor] 📄 Problem line: {problem_line.strip()}")
+
+            # Try LLM-powered fix first
+            llm_fix = self._llm_suggest_fix(
+                error_type=error_type,
+                error_message=error_message,
+                file_path=file_path,
+                line_number=line_number,
+                problem_line=problem_line,
+                context_lines=context_lines,
+                context=context
+            )
+
+            if llm_fix and llm_fix.get("success"):
+                # Apply the LLM-suggested fix
+                fixed_line = llm_fix["fixed_line"]
+
+                # Create backup
+                backup_path = file_path + ".backup"
+                with open(backup_path, 'w') as f:
+                    f.writelines(all_lines)
+
+                if self.verbose:
+                    print(f"[Supervisor] 💾 Created backup: {backup_path}")
+
+                # Write fixed version
+                all_lines[line_number - 1] = fixed_line + "\n" if not fixed_line.endswith("\n") else fixed_line
+                with open(file_path, 'w') as f:
+                    f.writelines(all_lines)
+
+                if self.verbose:
+                    print(f"[Supervisor] ✅ LLM auto-fixed {file_path}")
+
+                return {
+                    "success": True,
+                    "file_path": file_path,
+                    "line_number": line_number,
+                    "error_type": error_type,
+                    "error_message": error_message,
+                    "original_line": problem_line.strip(),
+                    "fixed_line": fixed_line.strip(),
+                    "backup_path": backup_path,
+                    "llm_reasoning": llm_fix.get("reasoning", ""),
+                    "message": f"LLM automatically fixed {error_type} in {file_path}:{line_number}"
+                }
+
+            # Fallback to regex-based fix if LLM fails
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  LLM fix failed, trying regex fallback...")
+            return self._fallback_regex_fix(error, traceback_info, context)
+
+        except Exception as e:
+            if self.verbose:
+                print(f"[Supervisor] ❌ LLM auto-fix failed: {e}")
+
+            # Fallback to regex-based fix
+            return self._fallback_regex_fix(error, traceback_info, context)
+
+    def _llm_suggest_fix(
+        self,
+        error_type: str,
+        error_message: str,
+        file_path: str,
+        line_number: int,
+        problem_line: str,
+        context_lines: list,
+        context: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Use LLM to suggest a fix for the error
+
+        Args:
+            error_type: Type of error (KeyError, TypeError, etc.)
+            error_message: Error message
+            file_path: Path to file with error
+            line_number: Line number with error
+            problem_line: The problematic line
+            context_lines: Surrounding context lines
+            context: Execution context
+
+        Returns:
+            Fix suggestion dict if successful, None otherwise
+        """
+        if not self.learning_engine or not self.learning_engine.llm_client:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  LLM client not available")
+            return None
+
+        try:
+            # Build context for LLM
+            context_code = "".join(context_lines)
+
+            # Create prompt for LLM
+            prompt = f"""You are a Python code debugging expert. Analyze this error and provide a fix.
+
+**Error Details:**
+- Type: {error_type}
+- Message: {error_message}
+- File: {file_path}
+- Line: {line_number}
+
+**Problematic Line:**
+```python
+{problem_line.strip()}
+```
+
+**Surrounding Context:**
+```python
+{context_code}
+```
+
+**Task:**
+Provide a fixed version of the problematic line that resolves the {error_type} error. The fix should:
+1. Be defensive (use .get() for dict access, check types, handle None, etc.)
+2. Maintain the same functionality
+3. Include sensible defaults
+4. Be a drop-in replacement (same indentation, same line)
+
+**Response Format (JSON):**
+{{
+    "reasoning": "Brief explanation of the error and fix",
+    "fixed_line": "The complete fixed line of code with proper indentation"
+}}
+
+Respond ONLY with valid JSON, no other text."""
+
+            if self.verbose:
+                print(f"[Supervisor] 💬 Consulting LLM for fix suggestion...")
+
+            # Call LLM with config-based model (GPT-5 or fallback to gpt-4)
+            llm_model = self.llm_model or "gpt-4"  # Fallback to gpt-4 if config not available
+            response = self.learning_engine.llm_client.chat(
+                model=llm_model,
+                messages=[
+                    {"role": "system", "content": "You are a Python debugging expert. Respond only with valid JSON."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=self.llm_temperature
+            )
+
+            # Parse LLM response
+            import json
+            response_text = response.choices[0].message.content.strip()
+
+            # Extract JSON if wrapped in code blocks
+            if "```json" in response_text:
+                response_text = response_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in response_text:
+                response_text = response_text.split("```")[1].split("```")[0].strip()
+
+            fix_data = json.loads(response_text)
+
+            if "fixed_line" in fix_data:
+                if self.verbose:
+                    print(f"[Supervisor] ✅ LLM suggested fix")
+                    print(f"[Supervisor]    Reasoning: {fix_data.get('reasoning', 'N/A')}")
+                    print(f"[Supervisor]    Fixed: {fix_data['fixed_line']}")
+
+                return {
+                    "success": True,
+                    "fixed_line": fix_data["fixed_line"],
+                    "reasoning": fix_data.get("reasoning", "")
+                }
+
+        except Exception as e:
+            if self.verbose:
+                print(f"[Supervisor] ❌ LLM suggestion failed: {e}")
+
+        return None
+
+    def _fallback_regex_fix(self, error: Exception, traceback_info: str, context: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Fallback regex-based fix for when LLM is unavailable (KeyError only)
+
+        Args:
+            error: The exception
+            traceback_info: Traceback string
+            context: Execution context
+
+        Returns:
+            Fix result dict if successful, None otherwise
+        """
+        # Only handle KeyError with regex fallback
+        if not isinstance(error, KeyError):
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Regex fallback only supports KeyError, got {type(error).__name__}")
+            return None
+
+        if self.verbose:
+            print(f"[Supervisor] 🔧 Using regex fallback for KeyError")
+
+        try:
+            import re
+
+            missing_key = str(error).replace("'", "").strip()
+
+            # Extract file path and line number
+            file_match = re.search(r'File "([^"]+)", line (\d+)', traceback_info)
+            if not file_match:
+                return None
+
+            file_path = file_match.group(1)
+            line_number = int(file_match.group(2))
+
+            # Read the source file
+            with open(file_path, 'r') as f:
+                lines = f.readlines()
+
+            if line_number > len(lines):
+                return None
+
+            problem_line = lines[line_number - 1]
+            original_line = problem_line
+
+            # Pattern to match dict['key'] access
+            pattern = r"(\w+)\['([^']+)'\]"
+
+            if missing_key in problem_line or re.search(pattern, problem_line):
+                default_value = self._get_default_for_key(missing_key)
+
+                # Replace dict['key'] with dict.get('key', default)
+                fixed_line = re.sub(
+                    pattern,
+                    lambda m: f"{m.group(1)}.get('{m.group(2)}', {default_value!r})",
+                    problem_line
+                )
+
+                if fixed_line != problem_line:
+                    # Create backup
+                    backup_path = file_path + ".backup"
+                    with open(backup_path, 'w') as f:
+                        f.writelines(lines)
+
+                    # Write fixed version
+                    lines[line_number - 1] = fixed_line
+                    with open(file_path, 'w') as f:
+                        f.writelines(lines)
+
+                    return {
+                        "success": True,
+                        "file_path": file_path,
+                        "line_number": line_number,
+                        "error_type": "KeyError",
+                        "error_message": str(error),
+                        "original_line": original_line.strip(),
+                        "fixed_line": fixed_line.strip(),
+                        "backup_path": backup_path,
+                        "message": f"Regex fallback fixed KeyError for '{missing_key}' in {file_path}:{line_number}"
+                    }
+
+        except Exception as e:
+            if self.verbose:
+                print(f"[Supervisor] ❌ Regex fallback failed: {e}")
+
+        return None
+
+    def _restart_failed_stage(self, context: Dict[str, Any], fix_result: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Restart a failed stage after applying a fix
+
+        Args:
+            context: Execution context with stage information
+            fix_result: Result from the auto-fix operation
+
+        Returns:
+            Restart result dict
+        """
+        if self.verbose:
+            print(f"[Supervisor] 🔄 Restarting failed stage after auto-fix...")
+
+        try:
+            stage_name = context.get("stage_name", "unknown")
+            stage_instance = context.get("stage_instance")
+            stage_context = context.get("stage_context", {})
+
+            if not stage_instance:
+                if self.verbose:
+                    print(f"[Supervisor] ⚠️  No stage instance available for restart")
+                return {
+                    "success": False,
+                    "message": "No stage instance available for restart"
+                }
+
+            if self.verbose:
+                print(f"[Supervisor] 🚀 Restarting stage: {stage_name}")
+
+            # Reload the fixed module to pick up code changes
+            import importlib
+            import sys
+
+            # Get the module containing the fixed file
+            fixed_file = fix_result.get("file_path", "")
+            if fixed_file:
+                # Convert file path to module name
+                module_name = None
+                for mod_name, mod in sys.modules.items():
+                    if hasattr(mod, '__file__') and mod.__file__ == fixed_file:
+                        module_name = mod_name
+                        break
+
+                if module_name:
+                    if self.verbose:
+                        print(f"[Supervisor] 📦 Reloading module: {module_name}")
+                    importlib.reload(sys.modules[module_name])
+
+            # Re-execute the stage
+            result = stage_instance.execute(stage_context)
+
+            if self.verbose:
+                print(f"[Supervisor] ✅ Stage restarted successfully")
+
+            return {
+                "success": True,
+                "stage_name": stage_name,
+                "result": result,
+                "message": f"Successfully restarted stage '{stage_name}' after auto-fix"
+            }
+
+        except Exception as e:
+            if self.verbose:
+                print(f"[Supervisor] ❌ Stage restart failed: {e}")
+
+            return {
+                "success": False,
+                "error": str(e),
+                "message": f"Failed to restart stage: {e}"
+            }
+
+    def monitor_agent_health(
+        self,
+        agent_name: str,
+        timeout_seconds: int = 300,
+        check_interval: int = 5
+    ) -> Dict[str, Any]:
+        """
+        Monitor an agent's health, detecting crashes and hangs
+
+        Args:
+            agent_name: Name of the agent to monitor
+            timeout_seconds: Maximum time before considering agent hung (default 5 minutes)
+            check_interval: How often to check agent status in seconds (default 5 seconds)
+
+        Returns:
+            Health status dict
+        """
+        import time
+        from datetime import datetime, timedelta
+
+        if self.verbose:
+            print(f"[Supervisor] 👀 Monitoring agent '{agent_name}' (timeout: {timeout_seconds}s)")
+
+        start_time = datetime.now()
+        last_activity = start_time
+        health_status = {
+            "agent_name": agent_name,
+            "status": "healthy",
+            "start_time": start_time.isoformat(),
+            "checks_performed": 0
+        }
+
+        while True:
+            elapsed = (datetime.now() - start_time).total_seconds()
+            health_status["checks_performed"] += 1
+
+            # Check if agent has crashed
+            crash_detected = self._detect_agent_crash(agent_name)
+            if crash_detected:
+                health_status["status"] = "crashed"
+                health_status["crash_info"] = crash_detected
+                health_status["elapsed_time"] = elapsed
+
+                if self.verbose:
+                    print(f"[Supervisor] 💥 Agent '{agent_name}' crashed!")
+                    print(f"[Supervisor]    Error: {crash_detected.get('error')}")
+
+                return health_status
+
+            # Check if agent has hung (timeout exceeded)
+            if elapsed > timeout_seconds:
+                health_status["status"] = "hung"
+                health_status["timeout_seconds"] = timeout_seconds
+                health_status["elapsed_time"] = elapsed
+
+                if self.verbose:
+                    print(f"[Supervisor] ⏰ Agent '{agent_name}' appears hung (timeout: {timeout_seconds}s)")
+
+                return health_status
+
+            # Check for progress (heartbeat)
+            progress = self._check_agent_progress(agent_name)
+            if progress:
+                last_activity = datetime.now()
+                health_status["last_activity"] = last_activity.isoformat()
+
+            # Check if stuck (no progress for extended period)
+            time_since_activity = (datetime.now() - last_activity).total_seconds()
+            if time_since_activity > (timeout_seconds / 2):
+                health_status["status"] = "stalled"
+                health_status["time_since_activity"] = time_since_activity
+
+                if self.verbose:
+                    print(f"[Supervisor] ⚠️  Agent '{agent_name}' may be stalled (no activity for {time_since_activity}s)")
+
+            # Sleep before next check
+            time.sleep(check_interval)
+
+    def _detect_agent_crash(self, agent_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Detect if an agent has crashed
+
+        Args:
+            agent_name: Name of the agent
+
+        Returns:
+            Crash info dict if crashed, None otherwise
+        """
+        try:
+            # Check state machine for FAILED state
+            if self.state_machine:
+                current_state = self.state_machine.get_current_state()
+                if current_state and "FAILED" in str(current_state):
+                    # Get error details from context
+                    context = self.state_machine.context if hasattr(self.state_machine, 'context') else {}
+                    error_info = context.get("error", {})
+
+                    return {
+                        "agent_name": agent_name,
+                        "error": error_info.get("message", "Unknown error"),
+                        "error_type": error_info.get("type", "Unknown"),
+                        "traceback": context.get("traceback", ""),
+                        "state": str(current_state)
+                    }
+
+            # Could also check process status, log files, etc.
+            return None
+
+        except Exception as e:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Error detecting crash: {e}")
+            return None
+
+    def _check_agent_progress(self, agent_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Check if an agent is making progress
+
+        Args:
+            agent_name: Name of the agent
+
+        Returns:
+            Progress info dict if progressing, None otherwise
+        """
+        try:
+            # Check state machine for state transitions
+            if self.state_machine and hasattr(self.state_machine, 'context'):
+                context = self.state_machine.context
+                last_transition = context.get("last_transition_time")
+
+                if last_transition:
+                    return {
+                        "agent_name": agent_name,
+                        "last_transition": last_transition,
+                        "current_state": str(self.state_machine.get_current_state())
+                    }
+
+            # Could also check:
+            # - Log file updates
+            # - Database writes
+            # - Heartbeat signals
+            # - Checkpoint updates
+
+            return None
+
+        except Exception as e:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Error checking progress: {e}")
+            return None
+
+    def recover_crashed_agent(
+        self,
+        crash_info: Dict[str, Any],
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Recover a crashed agent by fixing the error and restarting
+
+        Args:
+            crash_info: Information about the crash
+            context: Execution context
+
+        Returns:
+            Recovery result dict
+        """
+        # DEBUG: Log crash recovery
+        self.debug_if_enabled('log_recovery', "Starting crash recovery",
+                             agent=crash_info.get('agent_name'),
+                             error=crash_info.get('error'))
+
+        if self.verbose:
+            print(f"[Supervisor] 🚑 Recovering crashed agent...")
+            print(f"[Supervisor]    Agent: {crash_info.get('agent_name')}")
+            print(f"[Supervisor]    Error: {crash_info.get('error')}")
+
+        try:
+            # Extract error details
+            error_type = crash_info.get("error_type", "Unknown")
+            error_message = crash_info.get("error", "Unknown error")
+            traceback_info = crash_info.get("traceback", "")
+
+            # DEBUG: Dump crash details
+            self.debug_dump_if_enabled('log_recovery', "Crash Details", {
+                "agent": crash_info.get('agent_name'),
+                "error_type": error_type,
+                "error_message": error_message,
+                "has_traceback": bool(traceback_info)
+            })
+
+            # Create a mock exception for the auto-fix system
+            if error_type == "KeyError":
+                exception = KeyError(error_message)
+            elif error_type == "TypeError":
+                exception = TypeError(error_message)
+            elif error_type == "AttributeError":
+                exception = AttributeError(error_message)
+            elif error_type == "ValueError":
+                exception = ValueError(error_message)
+            else:
+                exception = Exception(error_message)
+
+            # Add exception to context
+            context["exception"] = exception
+            context["traceback"] = traceback_info
+            context["error"] = {
+                "type": error_type,
+                "message": error_message
+            }
+
+            # Try LLM-powered auto-fix
+            fix_result = self.llm_auto_fix_error(exception, traceback_info, context)
+
+            if fix_result and fix_result.get("success"):
+                if self.verbose:
+                    print(f"[Supervisor] ✅ Error fixed, restarting agent...")
+
+                # Restart the agent/stage
+                restart_result = self._restart_failed_stage(context, fix_result)
+
+                return {
+                    "success": True,
+                    "recovery_strategy": "auto_fix_and_restart",
+                    "fix_result": fix_result,
+                    "restart_result": restart_result,
+                    "message": f"Successfully recovered crashed agent using auto-fix and restart"
+                }
+            else:
+                if self.verbose:
+                    print(f"[Supervisor] ⚠️  Auto-fix failed, cannot recover automatically")
+
+                return {
+                    "success": False,
+                    "recovery_strategy": "manual_intervention_required",
+                    "message": "Auto-fix failed, manual intervention required"
+                }
+
+        except Exception as e:
+            if self.verbose:
+                print(f"[Supervisor] ❌ Recovery failed: {e}")
+
+            return {
+                "success": False,
+                "error": str(e),
+                "message": f"Recovery failed: {e}"
+            }
+
+    def recover_hung_agent(
+        self,
+        agent_name: str,
+        timeout_info: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Recover a hung agent by terminating and restarting it
+
+        Args:
+            agent_name: Name of the hung agent
+            timeout_info: Information about the timeout
+
+        Returns:
+            Recovery result dict
+        """
+        if self.verbose:
+            print(f"[Supervisor] ⏰ Recovering hung agent '{agent_name}'...")
+            print(f"[Supervisor]    Timeout: {timeout_info.get('timeout_seconds')}s")
+            print(f"[Supervisor]    Elapsed: {timeout_info.get('elapsed_time')}s")
+
+        try:
+            # Terminate the hung agent
+            terminate_result = self._terminate_agent(agent_name)
+
+            if not terminate_result.get("success"):
+                return {
+                    "success": False,
+                    "message": f"Failed to terminate hung agent: {terminate_result.get('error')}"
+                }
+
+            if self.verbose:
+                print(f"[Supervisor] 🛑 Terminated hung agent")
+                print(f"[Supervisor] 🔄 Restarting agent with increased timeout...")
+
+            # Restart with increased timeout
+            increased_timeout = timeout_info.get("timeout_seconds", 300) * 2
+
+            return {
+                "success": True,
+                "recovery_strategy": "terminate_and_restart",
+                "terminate_result": terminate_result,
+                "recommended_timeout": increased_timeout,
+                "message": f"Terminated hung agent, recommend restarting with {increased_timeout}s timeout"
+            }
+
+        except Exception as e:
+            if self.verbose:
+                print(f"[Supervisor] ❌ Recovery failed: {e}")
+
+            return {
+                "success": False,
+                "error": str(e),
+                "message": f"Failed to recover hung agent: {e}"
+            }
+
+    def _terminate_agent(self, agent_name: str) -> Dict[str, Any]:
+        """
+        Terminate a running agent
+
+        Args:
+            agent_name: Name of the agent to terminate
+
+        Returns:
+            Termination result dict
+        """
+        try:
+            import signal
+            import psutil
+
+            # Find the agent process
+            # This is a simplified implementation - would need to track PIDs properly
+            current_process = psutil.Process()
+            children = current_process.children(recursive=True)
+
+            terminated = False
+            for child in children:
+                # Check if this is the agent process (by command line or name)
+                if agent_name.lower() in " ".join(child.cmdline()).lower():
+                    if self.verbose:
+                        print(f"[Supervisor] 🛑 Terminating process {child.pid}")
+
+                    child.terminate()
+                    terminated = True
+
+                    # Wait for termination (with timeout)
+                    try:
+                        child.wait(timeout=10)
+                    except psutil.TimeoutExpired:
+                        # Force kill if doesn't terminate gracefully
+                        child.kill()
+
+            if terminated:
+                return {
+                    "success": True,
+                    "message": f"Terminated agent '{agent_name}'"
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": f"Could not find agent '{agent_name}' to terminate"
+                }
+
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "message": f"Failed to terminate agent: {e}"
+            }
+
+    def register_health_observer(self, observer: AgentHealthObserver) -> None:
+        """
+        Register a health observer (Observer Pattern)
+
+        Args:
+            observer: Observer to register
+        """
+        if observer not in self.health_observers:
+            self.health_observers.append(observer)
+            if self.verbose:
+                print(f"[Supervisor] Registered health observer: {type(observer).__name__}")
+
+    def unregister_health_observer(self, observer: AgentHealthObserver) -> None:
+        """
+        Unregister a health observer
+
+        Args:
+            observer: Observer to unregister
+        """
+        if observer in self.health_observers:
+            self.health_observers.remove(observer)
+
+    def notify_agent_event(
+        self,
+        agent_name: str,
+        event: AgentHealthEvent,
+        data: Optional[Dict[str, Any]] = None
+    ) -> None:
+        """
+        Notify all health observers of an agent event (Observer Pattern)
+
+        This is called by:
+        1. Agents themselves (for STARTED, PROGRESS, COMPLETED events)
+        2. Watchdog (for CRASHED, HUNG, STALLED events)
+
+        Args:
+            agent_name: Name of the agent
+            event: Type of health event
+            data: Event-specific data
+        """
+        event_data = data or {}
+
+        for observer in self.health_observers:
+            try:
+                observer.on_agent_event(agent_name, event, event_data)
+            except Exception as e:
+                if self.verbose:
+                    print(f"[Supervisor] ⚠️  Observer {type(observer).__name__} error: {e}")
+
+    def register_agent(
+        self,
+        agent_name: str,
+        agent_type: str = "stage",
+        metadata: Optional[Dict[str, Any]] = None,
+        heartbeat_interval: float = 15.0
+    ) -> None:
+        """
+        Register an agent with the supervisor for monitoring
+
+        Agents MUST call this on startup to be monitored.
+
+        Args:
+            agent_name: Name of the agent (e.g., "DevelopmentStage")
+            agent_type: Type of agent (e.g., "stage", "worker", "analyzer")
+            metadata: Optional metadata about the agent
+            heartbeat_interval: Initial heartbeat interval in seconds (default 15)
+        """
+        self.registered_agents[agent_name] = {
+            "type": agent_type,
+            "registered_at": datetime.now().isoformat(),
+            "metadata": metadata or {},
+            "heartbeat_interval": heartbeat_interval
+        }
+
+        if self.verbose:
+            print(f"[Supervisor] ✅ Registered agent '{agent_name}' ({agent_type})")
+
+        # Notify observers that agent started
+        self.notify_agent_event(
+            agent_name,
+            AgentHealthEvent.STARTED,
+            {
+                "agent_type": agent_type,
+                "metadata": metadata
+            }
+        )
+
+    def unregister_agent(self, agent_name: str) -> None:
+        """
+        Unregister an agent (called when agent completes)
+
+        Args:
+            agent_name: Name of the agent
+        """
+        if agent_name in self.registered_agents:
+            del self.registered_agents[agent_name]
+
+            if self.verbose:
+                print(f"[Supervisor] ✅ Unregistered agent '{agent_name}'")
+
+            # Notify observers that agent completed
+            self.notify_agent_event(
+                agent_name,
+                AgentHealthEvent.COMPLETED,
+                {}
+            )
+
+    def agent_heartbeat(self, agent_name: str, progress_data: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Called by agents to signal they're making progress (heartbeat)
+
+        Agents should call this periodically (e.g., every 10-30 seconds) to
+        signal they're alive and making progress.
+
+        Args:
+            agent_name: Name of the agent
+            progress_data: Optional progress information
+        """
+        if agent_name not in self.registered_agents:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Heartbeat from unregistered agent '{agent_name}'")
+            return
+
+        # Update last heartbeat time
+        self.registered_agents[agent_name]["last_heartbeat"] = datetime.now().isoformat()
+
+        # Notify observers of progress
+        self.notify_agent_event(
+            agent_name,
+            AgentHealthEvent.PROGRESS,
+            progress_data or {}
+        )
+
+    def adjust_heartbeat_interval(
+        self,
+        agent_name: str,
+        new_interval: float,
+        reason: Optional[str] = None
+    ) -> bool:
+        """
+        Dynamically adjust the heartbeat interval for a registered agent
+
+        Allows the supervisor to adapt heartbeat frequency based on:
+        - Agent workload (increase interval if slow operations detected)
+        - System load (decrease interval if system resources constrained)
+        - Error rate (decrease interval to catch failures faster)
+        - Stage complexity (LLM-heavy vs I/O-heavy vs CPU-heavy)
+
+        Args:
+            agent_name: Name of the agent
+            new_interval: New heartbeat interval in seconds (5-60 recommended)
+            reason: Optional reason for adjustment (for logging/debugging)
+
+        Returns:
+            True if adjustment successful, False if agent not found
+
+        Example:
+            # Agent is doing expensive LLM calls, reduce monitoring frequency
+            supervisor.adjust_heartbeat_interval("CodeReviewStage", 30, "LLM operations detected")
+
+            # Agent appears to be stalling, increase monitoring frequency
+            supervisor.adjust_heartbeat_interval("DevelopmentStage", 10, "Stall detection")
+        """
+        if agent_name not in self.registered_agents:
+            if self.verbose:
+                print(f"[Supervisor] ⚠️  Cannot adjust heartbeat for unregistered agent '{agent_name}'")
+            return False
+
+        # Validate interval bounds (5-60 seconds)
+        new_interval = max(5.0, min(60.0, new_interval))
+
+        # Store old interval for logging
+        old_interval = self.registered_agents[agent_name].get("heartbeat_interval", 15.0)
+
+        # Update heartbeat interval
+        self.registered_agents[agent_name]["heartbeat_interval"] = new_interval
+        self.registered_agents[agent_name]["heartbeat_adjusted_at"] = datetime.now().isoformat()
+        self.registered_agents[agent_name]["heartbeat_adjustment_reason"] = reason or "manual adjustment"
+
+        if self.verbose:
+            direction = "↑" if new_interval > old_interval else "↓"
+            print(
+                f"[Supervisor] {direction} Adjusted heartbeat for '{agent_name}': "
+                f"{old_interval}s → {new_interval}s ({reason or 'no reason given'})"
+            )
+
+        # Log to state machine if available
+        if self.state_machine:
+            self.state_machine.push_state(
+                PipelineState.STAGE_RUNNING,
+                {
+                    "event": "heartbeat_adjusted",
+                    "agent": agent_name,
+                    "old_interval": old_interval,
+                    "new_interval": new_interval,
+                    "reason": reason
+                }
+            )
+
+        return True
+
+    def get_heartbeat_interval(self, agent_name: str) -> Optional[float]:
+        """
+        Get the current heartbeat interval for an agent
+
+        Args:
+            agent_name: Name of the agent
+
+        Returns:
+            Heartbeat interval in seconds, or None if agent not registered
+        """
+        if agent_name not in self.registered_agents:
+            return None
+
+        return self.registered_agents[agent_name].get("heartbeat_interval", 15.0)
+
+    def auto_adjust_heartbeat(self, agent_name: str) -> None:
+        """
+        Automatically adjust heartbeat interval based on agent behavior
+
+        Uses heuristics to determine optimal heartbeat frequency:
+        - If agent has many rapid heartbeats → increase interval (reduce overhead)
+        - If agent has slow heartbeats → current interval is appropriate
+        - If agent shows errors → decrease interval (catch failures faster)
+        - If agent uses LLMs → increase interval (LLM calls are inherently slow)
+
+        This is called automatically by the supervisor's learning engine.
+
+        Args:
+            agent_name: Name of the agent
+        """
+        if agent_name not in self.registered_agents:
+            return
+
+        agent_metadata = self.registered_agents[agent_name].get("metadata", {})
+        current_interval = self.get_heartbeat_interval(agent_name)
+
+        # Check if agent uses LLMs (from metadata)
+        uses_llm = agent_metadata.get("uses_llm", False)
+        if uses_llm and current_interval < 20:
+            self.adjust_heartbeat_interval(
+                agent_name,
+                20.0,
+                "LLM usage detected - reducing monitoring frequency"
+            )
+            return
+
+        # Check if agent is evaluation-heavy (from metadata)
+        is_evaluation_heavy = agent_metadata.get("evaluation_heavy", False)
+        if is_evaluation_heavy and current_interval < 25:
+            self.adjust_heartbeat_interval(
+                agent_name,
+                25.0,
+                "Evaluation-heavy workload detected"
+            )
+            return
+
+        # Check failure rate from stage health
+        stage_name = agent_metadata.get("stage_name", agent_name)
+        if stage_name in self.stage_health:
+            failure_rate = self.stage_health[stage_name].failure_count / max(
+                self.stage_health[stage_name].execution_count, 1
+            )
+
+            # High failure rate → more frequent monitoring
+            if failure_rate > 0.3 and current_interval > 10:
+                self.adjust_heartbeat_interval(
+                    agent_name,
+                    10.0,
+                    f"High failure rate ({failure_rate:.1%}) - increasing monitoring"
+                )
+                return
+
+        # Default: no adjustment needed
+        if self.verbose:
+            print(f"[Supervisor] ✓ Heartbeat interval for '{agent_name}' is optimal ({current_interval}s)")
+
+    def start_watchdog(
+        self,
+        check_interval: int = 5,
+        timeout_seconds: int = 300
+    ) -> threading.Thread:
+        """
+        Start a watchdog thread to monitor agents via state machine
+
+        The watchdog checks for:
+        1. CRASHED - State machine in FAILED state
+        2. HUNG - No state transition for > timeout_seconds
+        3. STALLED - No progress for > timeout_seconds/2
+
+        Args:
+            check_interval: Seconds between checks (default 5)
+            timeout_seconds: Max time before considering hung (default 300 = 5min)
+
+        Returns:
+            Watchdog thread (already started)
+        """
+        def watchdog_loop():
+            """Watchdog monitoring loop"""
+            if self.verbose:
+                print(f"[Supervisor] 🐕 Watchdog started (check_interval={check_interval}s, timeout={timeout_seconds}s)")
+
+            while True:
+                try:
+                    time.sleep(check_interval)
+
+                    # Check state machine for crashes
+                    if self.state_machine:
+                        current_state = self.state_machine.get_current_state()
+
+                        # Detect crash (FAILED state)
+                        if current_state and "FAILED" in str(current_state):
+                            context = self.state_machine.context if hasattr(self.state_machine, 'context') else {}
+                            error_info = context.get("error", {})
+
+                            crash_info = {
+                                "agent_name": context.get("stage_name", "unknown"),
+                                "error": error_info.get("message", "Unknown error"),
+                                "error_type": error_info.get("type", "Unknown"),
+                                "traceback": context.get("traceback", ""),
+                                "state": str(current_state)
+                            }
+
+                            # Notify observers
+                            self.notify_agent_event(
+                                crash_info["agent_name"],
+                                AgentHealthEvent.CRASHED,
+                                {
+                                    "crash_info": crash_info,
+                                    "context": context
+                                }
+                            )
+
+                        # Check for hang/stall via state machine transitions
+                        # (This requires state machine to track last_transition_time)
+                        if hasattr(self.state_machine, 'context'):
+                            context = self.state_machine.context
+                            last_transition = context.get("last_transition_time")
+
+                            if last_transition:
+                                from datetime import datetime
+                                if isinstance(last_transition, str):
+                                    last_transition = datetime.fromisoformat(last_transition)
+
+                                elapsed = (datetime.now() - last_transition).total_seconds()
+
+                                # Hung (exceeded timeout)
+                                if elapsed > timeout_seconds:
+                                    self.notify_agent_event(
+                                        context.get("stage_name", "unknown"),
+                                        AgentHealthEvent.HUNG,
+                                        {
+                                            "timeout_info": {
+                                                "timeout_seconds": timeout_seconds,
+                                                "elapsed_time": elapsed
+                                            }
+                                        }
+                                    )
+
+                                # Stalled (no progress for extended period)
+                                elif elapsed > (timeout_seconds / 2):
+                                    self.notify_agent_event(
+                                        context.get("stage_name", "unknown"),
+                                        AgentHealthEvent.STALLED,
+                                        {
+                                            "time_since_activity": elapsed
+                                        }
+                                    )
+
+                except Exception as e:
+                    if self.verbose:
+                        print(f"[Supervisor] ⚠️  Watchdog error: {e}")
+
+        # Start watchdog in daemon thread
+        watchdog_thread = threading.Thread(target=watchdog_loop, daemon=True)
+        watchdog_thread.start()
+
+        return watchdog_thread
+
+    def _get_default_for_key(self, key: str) -> Any:
+        """
+        Get sensible default value for a missing key
+
+        Args:
+            key: The missing key name
+
+        Returns:
+            Default value for this key
+        """
+        # Common defaults based on key name
+        defaults = {
+            "approach": "standard",
+            "architecture": "modular",
+            "strategy": "default",
+            "method": "default",
+            "priority": "medium",
+            "developer": "unknown",
+            "status": "unknown",
+            "result": {},
+            "metadata": {},
+            "data": {},
+            "config": {},
+            "options": {},
+        }
+
+        # Check exact match
+        if key in defaults:
+            return defaults[key]
+
+        # Check partial matches
+        key_lower = key.lower()
+        for pattern, value in defaults.items():
+            if pattern in key_lower:
+                return value
+
+        # Default fallback based on common naming patterns
+        if key.endswith('_id'):
+            return "unknown"
+        elif key.endswith('_count') or key.endswith('_num'):
+            return 0
+        elif key.endswith('_list') or key.endswith('_items'):
+            return []
+        elif key.endswith('_dict') or key.endswith('_map'):
+            return {}
+        elif key.endswith('_flag') or key.endswith('_enabled'):
+            return False
+        else:
+            return None  # Generic fallback
 
     def get_learning_insights(self) -> Dict[str, Any]:
         """

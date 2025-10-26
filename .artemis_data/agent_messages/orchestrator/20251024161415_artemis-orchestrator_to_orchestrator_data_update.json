@@ -1,0 +1,232 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251024161415744075-artemis-orchestrator-3-f96330dd",
+  "timestamp": "2025-10-24T16:14:15.744355Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "orchestrator",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "medium",
+  "data": {
+    "update_type": "sprint_planning_complete",
+    "task_title": "Create Artemis self-demo with Chart.js visualization",
+    "total_sprints": 7,
+    "total_story_points": 97,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-24",
+        "end_date": "2025-11-07",
+        "features": [
+          {
+            "title": "Real-Time Metrics Dashboard",
+            "description": "Create a real-time dashboard with Chart.js graphs for various metrics.",
+            "business_value": 10,
+            "acceptance_criteria": [
+              "Dashboard displays LLM cost over time with a line chart.",
+              "Stage completion rates are shown with a bar chart.",
+              "Success rate trends are visualized with an area chart."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 7.300000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-07",
+        "end_date": "2025-11-21",
+        "features": [
+          {
+            "title": "Pipeline Visualization",
+            "description": "Develop an 8-stage pipeline visualization using Chart.js.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Pipeline is accurately represented in 8 stages.",
+              "Each stage is visually distinct and labeled.",
+              "Chart is interactive and responsive."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-21",
+        "end_date": "2025-12-05",
+        "features": [
+          {
+            "title": "Results Display",
+            "description": "Showcase real metrics from recent runs using actual data.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Metrics are up-to-date and accurate.",
+              "Data is displayed in a clear and informative manner.",
+              "Charts reflect actual performance results."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.7,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-05",
+        "end_date": "2025-12-19",
+        "features": [
+          {
+            "title": "Code Quality Visualization",
+            "description": "Visualize TDD compliance and SOLID principles using a radar chart.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Radar chart accurately represents code quality metrics.",
+              "TDD compliance and SOLID principles are clearly displayed.",
+              "Chart is interactive and easy to interpret."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 6.5
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 5,
+        "start_date": "2025-12-19",
+        "end_date": "2026-01-02",
+        "features": [
+          {
+            "title": "Chart.js Integration",
+            "description": "Integrate Chart.js to visualize various data metrics in the Artemis demo.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Pipeline metrics are visualized using Chart.js.",
+              "Cost tracking and success rates are displayed with charts.",
+              "Charts include animations and interactive elements."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 5.7
+          },
+          {
+            "title": "HTML Presentation Creation",
+            "description": "Develop a standalone HTML file for the Artemis demo with embedded CSS, JavaScript, and Chart.js.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "HTML file is standalone with no external dependencies.",
+              "CSS and JavaScript are embedded within the HTML file.",
+              "Chart.js is included for data visualization."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7333333333333333,
+            "priority_score": 5.3
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 6,
+        "start_date": "2026-01-02",
+        "end_date": "2026-01-16",
+        "features": [
+          {
+            "title": "Professional Design",
+            "description": "Apply a professional gradient background and smooth transitions to the presentation.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Gradient background is visually appealing and consistent.",
+              "Transitions between slides are smooth and professional.",
+              "Design aligns with the branding of Artemis."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.9
+          },
+          {
+            "title": "Integration Visualization",
+            "description": "Show supervisor integration across stages using a pie chart.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Integration across stages is clearly visualized.",
+              "Pie chart is accurate and easy to understand.",
+              "Chart is interactive and visually appealing."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 4.6000000000000005
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 7,
+        "start_date": "2026-01-16",
+        "end_date": "2026-01-30",
+        "features": [
+          {
+            "title": "Auto-Advance Slides",
+            "description": "Implement auto-advance functionality with navigation controls for the presentation.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Slides auto-advance after a set duration.",
+              "Users can manually navigate between slides.",
+              "Navigation controls are intuitive and responsive."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.500000000000001
+          },
+          {
+            "title": "HERO Section Development",
+            "description": "Create the HERO section to introduce Artemis as an Autonomous AI Development System.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "HERO section clearly explains Artemis's capabilities.",
+              "Design is engaging and captures user attention.",
+              "Content is concise and informative."
+            ],
+            "story_points": 5,
+            "estimated_hours": 10.0,
+            "risk_level": "low",
+            "confidence": 0.7833333333333333,
+            "priority_score": 4.4
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      }
+    ]
+  },
+  "metadata": {}
+}

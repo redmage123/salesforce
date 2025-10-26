@@ -34,6 +34,7 @@ from artemis_exceptions import (
     ArtemisException,
     wrap_exception
 )
+from debug_mixin import DebugMixin
 
 
 class StageDecision(Enum):
@@ -54,6 +55,7 @@ class TaskRequirements:
     has_external_dependencies: bool
     has_ui_components: bool
     has_accessibility_requirements: bool
+    requires_notebook: bool  # True if task needs Jupyter notebook generation
     complexity: str  # 'simple', 'medium', 'complex'
     task_type: str   # 'feature', 'bugfix', 'refactor', 'documentation', 'test'
     estimated_story_points: int
@@ -76,7 +78,7 @@ class RoutingDecision:
     confidence_score: float
 
 
-class IntelligentRouter:
+class IntelligentRouter(DebugMixin):
     """
     Intelligent router that uses AI to determine which stages should execute
 
@@ -93,6 +95,7 @@ class IntelligentRouter:
         "project_review",
         "dependency_validation",
         "development",
+        "arbitration",  # Adjudicator selects winner when multiple developers compete
         "code_review",
         "uiux",
         "validation",
@@ -135,6 +138,9 @@ class IntelligentRouter:
             logger: Logger for output
             config: Configuration for routing rules
         """
+        # Initialize DebugMixin
+        DebugMixin.__init__(self, component_name="routing")
+
         self.ai_service = ai_service
         self.logger = logger
         self.config = config
@@ -198,7 +204,30 @@ Consider:
 - Database: SQL, NoSQL, schema, queries, data models
 - Dependencies: External libraries, packages, services, APIs
 - UI/Accessibility: WCAG, screen readers, keyboard navigation, ARIA
-- Complexity: Lines of code, number of files, integration points
+
+Complexity Classification (CRITICAL - be conservative, err on the side of SIMPLE):
+- SIMPLE (1-3 story points):
+  * Single file or 2-3 small files (<200 lines total)
+  * No database schema changes
+  * No API design or new endpoints
+  * No complex algorithms or business logic
+  * Straightforward implementation
+  * Examples: Add a button, format data, simple calculation, basic form validation
+
+- MEDIUM (5-8 story points):
+  * Multiple files (3-8 files, 200-800 lines total)
+  * Simple API endpoints or database queries
+  * Moderate business logic
+  * Some integration with existing systems
+  * Examples: New CRUD feature, dashboard page, data export functionality
+
+- COMPLEX (13 story points):
+  * Large feature (8+ files, 800+ lines)
+  * Complex database schema or migrations
+  * Multiple API endpoints with orchestration
+  * Complex algorithms or state management
+  * Multi-system integration
+  * Examples: Authentication system, payment processing, real-time collaboration
 """
 
         try:
@@ -227,7 +256,7 @@ Consider:
                 return self._rule_based_analysis(card, full_text)
 
             # Create TaskRequirements from AI analysis
-            return TaskRequirements(
+            requirements = TaskRequirements(
                 has_frontend=analysis.get('has_frontend', False),
                 has_backend=analysis.get('has_backend', True),
                 has_api=analysis.get('has_api', False),
@@ -235,6 +264,7 @@ Consider:
                 has_external_dependencies=analysis.get('has_external_dependencies', False),
                 has_ui_components=analysis.get('has_ui_components', False),
                 has_accessibility_requirements=analysis.get('has_accessibility_requirements', False),
+                requires_notebook=analysis.get('requires_notebook', False),
                 complexity=analysis.get('complexity', 'medium'),
                 task_type=analysis.get('task_type', 'feature'),
                 estimated_story_points=analysis.get('estimated_story_points', 5),
@@ -243,6 +273,9 @@ Consider:
                 parallel_developers_recommended=analysis.get('parallel_developers_recommended', 1),
                 confidence_score=analysis.get('confidence_score', 0.7)
             )
+
+            # Apply Strategy Pattern: Enforce minimum dev group size
+            return self._enforce_dev_group_policy(requirements)
 
         except Exception as e:
             if self.logger:
@@ -290,7 +323,7 @@ Consider:
         requires_architecture_review = complexity in ['medium', 'complex'] or has_database or has_api
         requires_project_review = complexity == 'complex' or story_points >= 8
 
-        return TaskRequirements(
+        requirements = TaskRequirements(
             has_frontend=has_frontend,
             has_backend=has_backend,
             has_api=has_api,
@@ -298,6 +331,7 @@ Consider:
             has_external_dependencies=has_external_dependencies,
             has_ui_components=has_ui_components,
             has_accessibility_requirements=has_accessibility_requirements,
+            requires_notebook=requires_notebook,
             complexity=complexity,
             task_type=task_type,
             estimated_story_points=story_points,
@@ -306,6 +340,72 @@ Consider:
             parallel_developers_recommended=parallel_devs,
             confidence_score=0.6  # Rule-based has lower confidence
         )
+
+        # Apply Strategy Pattern: Enforce minimum dev group size
+        return self._enforce_dev_group_policy(requirements)
+
+    def _enforce_dev_group_policy(self, requirements: TaskRequirements) -> TaskRequirements:
+        """
+        Strategy Pattern: Enforce minimum one complete dev group
+
+        A dev group consists of: dev-a + dev-b + adjudicator
+        The orchestrator must have at least one dev group running,
+        but may spin up more if resources and requirements allow.
+
+        Args:
+            requirements: Task requirements with LLM's recommendation
+
+        Returns:
+            TaskRequirements with enforced dev group policy
+
+        Raises:
+            ArtemisException: If config is invalid or missing
+        """
+        # Guard Clause: No config means use defaults
+        if not self.config:
+            self._log_dev_group_enforcement(
+                current=requirements.parallel_developers_recommended,
+                enforced=2,
+                reason="No config available, using default minimum dev group size"
+            )
+            requirements.parallel_developers_recommended = 2
+            return requirements
+
+        # Extract max parallel developers from config
+        max_parallel_devs = self.config.get('parallel_developers', 2)
+
+        # Guard Clause: Already at or above maximum
+        if requirements.parallel_developers_recommended >= max_parallel_devs:
+            return requirements
+
+        # Enforce minimum dev group size
+        self._log_dev_group_enforcement(
+            current=requirements.parallel_developers_recommended,
+            enforced=max_parallel_devs,
+            reason="Minimum one dev group (dev-a + dev-b + adjudicator) required"
+        )
+        requirements.parallel_developers_recommended = max_parallel_devs
+
+        return requirements
+
+    def _log_dev_group_enforcement(self, current: int, enforced: int, reason: str) -> None:
+        """
+        Single Responsibility: Log dev group policy enforcement
+
+        Args:
+            current: Current recommended developers
+            enforced: Enforced developer count
+            reason: Reason for enforcement
+        """
+        if not self.logger:
+            return
+
+        self.logger.log(
+            f"🔧 Enforcing dev group policy: {enforced} developers "
+            f"(LLM recommended {current})",
+            "INFO"
+        )
+        self.logger.log(f"   Reason: {reason}", "INFO")
 
     def make_routing_decision(self, card: Dict) -> RoutingDecision:
         """
@@ -364,6 +464,15 @@ Consider:
 
         # Core stages - always required
         stage_decisions['development'] = StageDecision.REQUIRED
+
+        # Arbitration - required when multiple developers compete (dev group has 2+ developers)
+        if requirements.parallel_developers_recommended >= 2:
+            stage_decisions['arbitration'] = StageDecision.REQUIRED
+            reasoning_parts.append(f"Arbitration required: {requirements.parallel_developers_recommended} developers competing, adjudicator must select winner")
+        else:
+            stage_decisions['arbitration'] = StageDecision.SKIP
+            reasoning_parts.append("Single developer - skipping arbitration")
+
         stage_decisions['code_review'] = StageDecision.REQUIRED
         stage_decisions['validation'] = StageDecision.REQUIRED
         stage_decisions['integration'] = StageDecision.REQUIRED
@@ -378,7 +487,7 @@ Consider:
             reasoning_parts.append("No frontend/UI requirements detected, skipping UI/UX stage")
 
         # Notebook generation - only if data science/ML/analysis task detected
-        if requires_notebook:
+        if requirements.requires_notebook:
             stage_decisions['notebook_generation'] = StageDecision.REQUIRED
             reasoning_parts.append("Notebook generation required for data analysis/ML task")
         else:
@@ -429,10 +538,119 @@ Consider:
 
         return filtered_stages
 
+    def recalculate_complexity_from_sprint_planning(
+        self,
+        card: Dict,
+        sprint_planning_result: Dict
+    ) -> RoutingDecision:
+        """
+        Recalculate complexity and routing decision based on actual sprint planning results
+
+        This method overrides the initial AI classification with actual story point totals
+        calculated by sprint planning. This fixes the bug where AI guesses complexity
+        without seeing actual breakdown.
+
+        Args:
+            card: Kanban card
+            sprint_planning_result: Result from SprintPlanningStage with:
+                - total_story_points: Actual calculated story points
+                - features: List of features with individual story points
+
+        Returns:
+            Updated RoutingDecision with corrected complexity
+        """
+        # Extract actual story points from sprint planning
+        total_story_points = sprint_planning_result.get('total_story_points', 0)
+        features = sprint_planning_result.get('features', [])
+
+        # Guard clause: No sprint planning data means keep original decision
+        if total_story_points == 0:
+            if self.logger:
+                self.logger.log("⚠️  No sprint planning data available, keeping original complexity", "WARNING")
+            return self.make_routing_decision(card)
+
+        # Calculate correct complexity based on actual story points
+        # Use same thresholds as rule-based analysis
+        if total_story_points >= 13:
+            corrected_complexity = 'complex'
+        elif total_story_points >= 5:
+            corrected_complexity = 'medium'
+        else:
+            corrected_complexity = 'simple'
+
+        # Get original decision
+        original_decision = self.make_routing_decision(card)
+        original_complexity = original_decision.requirements.complexity
+
+        # DEBUG: Trace recalculation using mixin
+        self.debug_trace("recalculate_complexity_from_sprint_planning",
+                        total_story_points=total_story_points,
+                        original_complexity=original_complexity,
+                        corrected_complexity=corrected_complexity)
+
+        # Log complexity correction if changed
+        if original_complexity != corrected_complexity:
+            if self.logger:
+                self.logger.log("=" * 60, "INFO")
+                self.logger.log("🔧 COMPLEXITY RECALCULATION", "INFO")
+                self.logger.log("=" * 60, "INFO")
+                self.logger.log(f"Original AI Classification: {original_complexity}", "INFO")
+                self.logger.log(f"Actual Story Points from Sprint Planning: {total_story_points}", "INFO")
+                self.logger.log(f"Corrected Complexity: {corrected_complexity}", "INFO")
+                self.logger.log(f"Features Breakdown:", "INFO")
+                for feature in features:
+                    self.logger.log(f"  - {feature.get('title', 'Unknown')}: {feature.get('story_points', 0)} points", "INFO")
+                self.logger.log("=" * 60, "INFO")
+
+            # DEBUG: Dump full decision details using mixin
+            self.debug_dump_if_enabled('show_complexity_calc', "Complexity Recalculation Details", {
+                "original": original_complexity,
+                "corrected": corrected_complexity,
+                "total_story_points": total_story_points,
+                "features": features
+            })
+
+            # Update requirements with corrected complexity
+            original_decision.requirements.complexity = corrected_complexity
+            original_decision.requirements.estimated_story_points = total_story_points
+
+            # Recalculate which stages should run based on corrected complexity
+            # Update architecture review requirement
+            if corrected_complexity in ['medium', 'complex']:
+                original_decision.requirements.requires_architecture_review = True
+            else:
+                original_decision.requirements.requires_architecture_review = False
+
+            # Update project review requirement
+            if corrected_complexity == 'complex':
+                original_decision.requirements.requires_project_review = True
+            else:
+                original_decision.requirements.requires_project_review = False
+
+            # Remake routing decision with corrected requirements
+            # This ensures stage decisions are updated based on corrected complexity
+            card_copy = card.copy()
+            card_copy['story_points'] = total_story_points
+            return self.make_routing_decision(card_copy)
+
+        # No change needed
+        return original_decision
+
     def log_routing_decision(self, decision: RoutingDecision):
         """Log routing decision for visibility"""
         if not self.logger:
             return
+
+        # DEBUG: Dump full routing decision using mixin
+        self.debug_dump_if_enabled('log_decisions', "Routing Decision", {
+            "task_title": decision.task_title,
+            "complexity": decision.requirements.complexity,
+            "task_type": decision.requirements.task_type,
+            "story_points": decision.requirements.estimated_story_points,
+            "parallel_developers": decision.requirements.parallel_developers_recommended,
+            "stages": decision.stages_to_run,
+            "skip_stages": decision.stages_to_skip
+        })
 
         self.logger.log("=" * 60, "INFO")
         self.logger.log("🧭 INTELLIGENT ROUTING DECISION", "INFO")

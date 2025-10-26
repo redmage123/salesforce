@@ -1,0 +1,73 @@
+# Debug Mode Configuration
+# Controls verbosity and diagnostic output across Artemis pipeline
+
+# Master debug switch
+enabled: true
+
+# Component-specific debug flags
+components:
+  # Validation stage debug options
+  validation:
+    verbose_test_output: true      # Show full pytest stdout/stderr
+    log_paths: true                # Log resolved file paths
+    dump_test_results: true        # Dump complete test results dict
+
+  # Development stage debug options
+  development:
+    log_prompts: true              # Log full LLM prompts
+    log_responses: true            # Log full LLM responses
+    show_file_operations: true     # Log all file reads/writes
+
+  # Sprint planning debug options
+  sprint_planning:
+    show_estimates: true           # Show detailed estimation breakdown
+    log_planning_poker: true       # Log planning poker rounds
+    dump_features: true            # Dump complete feature analysis
+
+  # Routing debug options
+  routing:
+    log_decisions: true            # Log routing decisions
+    show_complexity_calc: true     # Show complexity calculations
+    trace_hooks: true              # Trace hook executions
+
+  # Code review debug options
+  code_review:
+    log_review_comments: true      # Log code review comments
+    dump_review_results: true      # Dump review results
+    show_diff: true                # Show code diffs
+
+  # Arbitration debug options
+  arbitration:
+    log_comparisons: true          # Log developer comparisons
+    dump_scores: true              # Dump comparison scores
+    show_winner_selection: true    # Show winner selection logic
+
+  # Architecture debug options
+  architecture:
+    dump_design: true              # Dump design decisions
+    log_decisions: true            # Log architecture decisions
+
+  # UI/UX debug options
+  uiux:
+    log_wcag_checks: true          # Log WCAG accessibility checks
+    dump_accessibility_report: true # Dump accessibility report
+
+  # Supervisor debug options
+  supervisor:
+    log_health_events: true        # Log agent health events
+    log_recovery: true             # Log recovery attempts
+    dump_state_machine: true       # Dump state machine state
+    log_cost_tracking: true        # Log LLM cost tracking
+
+  # Stage execution debug options
+  stages:
+    dump_context: true             # Dump stage context before/after
+    log_transitions: true          # Log state transitions
+    show_timing: true              # Show stage execution timing
+
+# Output formatting
+formatting:
+  indent_json: 2                   # JSON indentation for dumps
+  truncate_output: 1000            # Max chars for output (0 = no limit)
+  color_output: true               # Use ANSI color codes
+  timestamp_format: "%H:%M:%S"     # Timestamp format for debug logs

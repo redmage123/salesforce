@@ -1,0 +1,16 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251025083857919249-artemis-orchestrator-4-81c4e70d",
+  "timestamp": "2025-10-25T08:38:57.919303Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "dependency-validation-agent",
+  "message_type": "data_update",
+  "card_id": "card-20251025083748",
+  "priority": "high",
+  "data": {
+    "update_type": "adr_created",
+    "adr_file": "/home/bbrelin/src/repos/salesforce/.agents/agile/../../.artemis_data/adrs/ADR-002-load-and-analyze-pipeline-execution-data.md",
+    "adr_number": "002"
+  },
+  "metadata": {}
+}

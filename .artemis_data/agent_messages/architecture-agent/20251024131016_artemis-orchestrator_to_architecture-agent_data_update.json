@@ -1,0 +1,35 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251024131016939646-artemis-orchestrator-4-6837e6e0",
+  "timestamp": "2025-10-24T13:10:16.939765Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "architecture-agent",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "high",
+  "data": {
+    "update_type": "project_analysis_complete",
+    "approved_changes": [
+      {
+        "category": "Scope & Requirements",
+        "description": "No acceptance criteria defined",
+        "suggestion": "Add measurable acceptance criteria (Given-When-Then format)",
+        "severity": "HIGH"
+      },
+      {
+        "category": "Security",
+        "description": "Task involves data storage - encryption and validation needed",
+        "suggestion": "Add requirements: input validation, parameterized queries, encryption at rest",
+        "severity": "HIGH"
+      },
+      {
+        "category": "Testing Strategy",
+        "description": "No testing approach mentioned in requirements",
+        "suggestion": "Add testing requirements: unit tests (85%), integration tests, E2E tests",
+        "severity": "HIGH"
+      }
+    ],
+    "total_changes": 3
+  },
+  "metadata": {}
+}

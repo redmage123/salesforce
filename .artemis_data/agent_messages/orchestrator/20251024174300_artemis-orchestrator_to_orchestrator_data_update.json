@@ -1,0 +1,134 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251024174300239464-artemis-orchestrator-3-67aa7096",
+  "timestamp": "2025-10-24T17:43:00.240262Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "orchestrator",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "medium",
+  "data": {
+    "update_type": "sprint_planning_complete",
+    "task_title": "Create Artemis self-demo with Chart.js visualization",
+    "total_sprints": 4,
+    "total_story_points": 55,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-24",
+        "end_date": "2025-11-07",
+        "features": [
+          {
+            "title": "Showcase Artemis Features and Metrics",
+            "description": "Highlight key Artemis features such as cost tracking, sandboxing, and learning with real metrics.",
+            "business_value": 10,
+            "acceptance_criteria": [
+              "Cost tracking, sandboxing, and learning features are clearly explained",
+              "Real-time metrics are displayed using Chart.js graphs",
+              "Actual data from recent runs is included in the presentation"
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 7.300000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-07",
+        "end_date": "2025-11-21",
+        "features": [
+          {
+            "title": "Implement Chart.js Visualizations",
+            "description": "Utilize Chart.js to create various data visualizations such as line, bar, area, pie, and radar charts.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Pipeline metrics displayed using an 8-stage pipeline chart",
+              "LLM cost over time visualized with a line chart",
+              "Stage completion rates shown with a bar chart",
+              "Success rate trends illustrated using an area chart",
+              "Supervisor integration depicted with a pie chart",
+              "Code quality metrics presented using a radar chart"
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.7166666666666667,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-21",
+        "end_date": "2025-12-05",
+        "features": [
+          {
+            "title": "Design Professional Presentation Aesthetics",
+            "description": "Enhance the visual appeal with a gradient background, smooth transitions, and Chart.js animations.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Presentation includes a professional gradient background",
+              "Smooth transitions are implemented between slides",
+              "Chart.js animations are used to enhance data visualization",
+              "Interactive elements are included for user engagement"
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.7,
+            "priority_score": 6.1000000000000005
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-05",
+        "end_date": "2025-12-19",
+        "features": [
+          {
+            "title": "Create Standalone HTML Presentation",
+            "description": "Develop a single HTML file that includes embedded CSS, JavaScript, and Chart.js for a professional presentation.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "HTML file includes all necessary CSS and JavaScript inline",
+              "Chart.js is correctly integrated for data visualization",
+              "File is self-contained with no external dependencies"
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7333333333333333,
+            "priority_score": 5.3
+          },
+          {
+            "title": "Auto-Advance Slides with Navigation Controls",
+            "description": "Enable slides to auto-advance with options for manual navigation.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Slides automatically advance after a set duration",
+              "Users can manually navigate between slides",
+              "Navigation controls are intuitive and responsive"
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7333333333333333,
+            "priority_score": 4.500000000000001
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      }
+    ]
+  },
+  "metadata": {}
+}

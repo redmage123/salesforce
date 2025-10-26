@@ -1,0 +1,223 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251024124116733547-artemis-orchestrator-3-f70ab1f1",
+  "timestamp": "2025-10-24T12:41:16.733679Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "orchestrator",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "medium",
+  "data": {
+    "update_type": "sprint_planning_complete",
+    "task_title": "Create Artemis self-demo with Chart.js visualization",
+    "total_sprints": 6,
+    "total_story_points": 84,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-24",
+        "end_date": "2025-11-07",
+        "features": [
+          {
+            "title": "Chart.js Visualization Integration",
+            "description": "Integrate Chart.js to display various metrics and data visualizations.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Implement pipeline metrics visualization using Chart.js.",
+              "Include cost tracking and success rate charts.",
+              "Ensure charts are interactive and visually appealing."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.7,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-07",
+        "end_date": "2025-11-21",
+        "features": [
+          {
+            "title": "8-Stage Pipeline Visualization",
+            "description": "Develop an 8-stage pipeline visualization using Chart.js.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Accurately represent all 8 stages of the pipeline.",
+              "Ensure the visualization is clear and easy to understand.",
+              "Include interactive elements for user engagement."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-21",
+        "end_date": "2025-12-05",
+        "features": [
+          {
+            "title": "Real-Time Dashboard with Live Metrics",
+            "description": "Implement a real-time dashboard displaying live metrics using Chart.js.",
+            "business_value": 10,
+            "acceptance_criteria": [
+              "Display LLM cost over time using a line chart.",
+              "Show stage completion rates with a bar chart.",
+              "Illustrate success rate trends with an area chart."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 5.800000000000001
+          },
+          {
+            "title": "Display Real Metrics from Recent Runs",
+            "description": "Showcase actual data from recent runs to demonstrate Artemis's effectiveness.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Include real metrics data in the presentation.",
+              "Ensure data is up-to-date and relevant.",
+              "Present data in a clear and understandable format."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 5.7
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-05",
+        "end_date": "2025-12-19",
+        "features": [
+          {
+            "title": "HERO Section Development",
+            "description": "Create a HERO section introducing Artemis as an Autonomous AI Development System.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Clearly define 'What is Artemis?' in the HERO section.",
+              "Ensure the section is engaging and informative.",
+              "Include visuals or animations to enhance understanding."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7166666666666667,
+            "priority_score": 5.3
+          },
+          {
+            "title": "Code Quality Metrics Visualization",
+            "description": "Visualize code quality metrics like TDD compliance and SOLID principles using a radar chart.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Create a radar chart to display code quality metrics.",
+              "Ensure data accuracy and clarity in the visualization.",
+              "Include interactive features for enhanced user interaction."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 5.3
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 5,
+        "start_date": "2025-12-19",
+        "end_date": "2026-01-02",
+        "features": [
+          {
+            "title": "Supervisor Integration Visualization",
+            "description": "Show supervisor integration across stages using a pie chart.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Develop a pie chart to represent supervisor integration.",
+              "Ensure the chart is accurate and visually appealing.",
+              "Include interactive elements for better user experience."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 4.6000000000000005
+          },
+          {
+            "title": "Auto-Advance and Navigation Controls",
+            "description": "Enable auto-advance functionality and provide navigation controls for the presentation.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Slides auto-advance at a set interval.",
+              "Include navigation controls for manual slide navigation.",
+              "Ensure controls are intuitive and responsive."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.75,
+            "priority_score": 4.500000000000001
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 6,
+        "start_date": "2026-01-02",
+        "end_date": "2026-01-16",
+        "features": [
+          {
+            "title": "HTML Presentation Creation",
+            "description": "Develop a standalone HTML file to showcase Artemis capabilities using Chart.js.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Create a single HTML file with embedded CSS and JavaScript.",
+              "Include Chart.js library for data visualization.",
+              "Ensure the file is standalone with no external dependencies."
+            ],
+            "story_points": 5,
+            "estimated_hours": 10.0,
+            "risk_level": "low",
+            "confidence": 0.7666666666666667,
+            "priority_score": 4.4
+          },
+          {
+            "title": "Professional Design and Transitions",
+            "description": "Incorporate a professional gradient background and smooth slide transitions.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Use a gradient background throughout the presentation.",
+              "Implement smooth transitions between slides.",
+              "Ensure design consistency and professional appearance."
+            ],
+            "story_points": 5,
+            "estimated_hours": 10.0,
+            "risk_level": "low",
+            "confidence": 0.7666666666666667,
+            "priority_score": 4.000000000000001
+          }
+        ],
+        "total_story_points": 10,
+        "capacity_used": 0.5
+      }
+    ]
+  },
+  "metadata": {}
+}

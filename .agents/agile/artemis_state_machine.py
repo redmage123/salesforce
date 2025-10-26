@@ -270,18 +270,27 @@ class ArtemisStateMachine:
     def __init__(
         self,
         card_id: str,
-        state_dir: str = "/tmp/artemis_state",
-        verbose: bool = True
+        state_dir: Optional[str] = None,
+        verbose: bool = True,
+        llm_client: Optional[Any] = None
     ):
         """
         Initialize state machine
 
         Args:
             card_id: Kanban card ID
-            state_dir: Directory for state persistence
+            state_dir: Directory for state persistence (defaults to env var or repo path)
             verbose: Enable verbose logging
+            llm_client: LLM client for dynamic workflow generation
         """
+        import os
         self.card_id = card_id
+        self.llm_client = llm_client
+
+        # Get state dir from parameter, env var, or default
+        if state_dir is None:
+            state_dir = os.getenv("ARTEMIS_STATE_DIR", "../../.artemis_data/state")
+
         self.state_dir = Path(state_dir)
         self.state_dir.mkdir(exist_ok=True, parents=True)
         self.verbose = verbose
@@ -546,7 +555,16 @@ class ArtemisStateMachine:
         if not workflow:
             if self.verbose:
                 print(f"[StateMachine] ⚠️  No workflow registered for {issue_type.value}")
-            return False
+
+            # Try to generate workflow using LLM before falling back to failure
+            generated_workflow = self._generate_workflow_with_llm(issue_type, context or {})
+            if generated_workflow:
+                if self.verbose:
+                    print(f"[StateMachine] ✅ Generated new workflow using LLM: {generated_workflow.name}")
+                # Use the generated workflow for this execution only (don't register permanently)
+                workflow = generated_workflow
+            else:
+                return False
 
         execution = WorkflowExecution(
             workflow_name=workflow.name,
@@ -769,6 +787,123 @@ class ArtemisStateMachine:
 
         if self.verbose:
             print(f"[StateMachine] Registered {len(self.workflows)} recovery workflows")
+
+    def _generate_workflow_with_llm(
+        self,
+        issue_type: IssueType,
+        context: Dict[str, Any]
+    ) -> Optional[Workflow]:
+        """
+        Generate a recovery workflow using LLM when no registered workflow exists
+
+        Args:
+            issue_type: Type of issue needing a workflow
+            context: Context about the issue
+
+        Returns:
+            Generated Workflow if successful, None otherwise
+        """
+        if not self.llm_client:
+            if self.verbose:
+                print(f"[StateMachine] ⚠️  Cannot generate workflow - no LLM client available")
+            return None
+
+        if self.verbose:
+            print(f"[StateMachine] 🤖 Consulting LLM to generate workflow for {issue_type.value}...")
+
+        try:
+            system_message = """You are an expert in designing recovery workflows for software pipelines.
+When given an issue type and context, you generate a step-by-step recovery workflow in JSON format."""
+
+            # Build context summary
+            context_str = "\n".join(f"- {k}: {v}" for k, v in context.items() if v is not None)
+
+            user_message = f"""Generate a recovery workflow for the following issue:
+
+Issue Type: {issue_type.value}
+Context:
+{context_str}
+
+Provide a recovery workflow in JSON format:
+{{
+  "workflow_name": "Brief descriptive name",
+  "description": "What this workflow does",
+  "actions": [
+    {{
+      "action_name": "retry_with_backoff",
+      "description": "What this action does",
+      "max_attempts": 3,
+      "parameters": {{"backoff_seconds": 60}}
+    }}
+  ],
+  "success_state": "STAGE_RUNNING",
+  "failure_state": "STAGE_FAILED",
+  "rollback_on_failure": false
+}}
+
+Available actions: retry_with_backoff, reset_state, skip_stage, use_cached_result, fallback_to_default
+Available states: IDLE, INITIALIZING, RUNNING, PAUSED, COMPLETED, FAILED, STAGE_RUNNING, STAGE_FAILED"""
+
+            # Use LLM client's complete() method
+            from llm_client import LLMMessage
+            messages = [
+                LLMMessage(role="system", content=system_message),
+                LLMMessage(role="user", content=user_message)
+            ]
+
+            llm_response = self.llm_client.complete(
+                messages=messages,
+                temperature=0.3,
+                max_tokens=1500
+            )
+            response = llm_response.content
+
+            # Parse JSON response
+            import json
+            import re
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if not json_match:
+                if self.verbose:
+                    print(f"[StateMachine] ⚠️  LLM response did not contain valid JSON")
+                return None
+
+            workflow_data = json.loads(json_match.group(0))
+
+            # Convert to Workflow object
+            actions = []
+            for action_data in workflow_data.get("actions", []):
+                actions.append(WorkflowAction(
+                    action_name=action_data.get("action_name", "retry_with_backoff"),
+                    description=action_data.get("description", ""),
+                    max_attempts=action_data.get("max_attempts", 1),
+                    parameters=action_data.get("parameters", {})
+                ))
+
+            # Parse states
+            success_state_str = workflow_data.get("success_state", "STAGE_RUNNING")
+            failure_state_str = workflow_data.get("failure_state", "STAGE_FAILED")
+
+            success_state = PipelineState[success_state_str] if success_state_str in PipelineState.__members__ else PipelineState.RUNNING
+            failure_state = PipelineState[failure_state_str] if failure_state_str in PipelineState.__members__ else PipelineState.FAILED
+
+            workflow = Workflow(
+                name=workflow_data.get("workflow_name", f"LLM-generated-{issue_type.value}"),
+                issue_type=issue_type,
+                actions=actions,
+                success_state=success_state,
+                failure_state=failure_state,
+                rollback_on_failure=workflow_data.get("rollback_on_failure", False)
+            )
+
+            if self.verbose:
+                print(f"[StateMachine] ✅ Generated workflow '{workflow.name}' with {len(actions)} actions")
+
+            return workflow
+
+        except Exception as e:
+            if self.verbose:
+                print(f"[StateMachine] ❌ Failed to generate workflow: {e}")
+            return None
 
     # ========================================================================
     # PUSHDOWN AUTOMATON FEATURES

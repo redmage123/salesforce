@@ -6,18 +6,21 @@ Manages git operations including branches, commits, pushes, pulls,
 and remote repository synchronization.
 """
 
+import os
 import subprocess
 import json
 import argparse
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
+from debug_mixin import DebugMixin
 
 
-class GitManager:
+class GitManager(DebugMixin):
     """Manage git operations"""
 
     def __init__(self, repo_path: str = '.', verbose: bool = True):
+        DebugMixin.__init__(self, component_name="git")
         self.repo_path = Path(repo_path)
         self.verbose = verbose
         self.operations_log = {
@@ -115,11 +118,13 @@ class GitManager:
 
     def create_branch(self, branch_name: str, from_branch: str = 'main') -> bool:
         """Create new branch"""
+        self.debug_log("Creating branch", branch_name=branch_name, from_branch=from_branch)
         self.log(f"📋 Creating branch: {branch_name}")
 
         # Checkout base branch
         result = self.run_git_command(['checkout', from_branch])
         if result.returncode != 0:
+            self.debug_log("Branch creation failed - checkout failed", branch=branch_name, from_branch=from_branch)
             self.log_operation('branch_create', {'branch': branch_name}, 'failed')
             return False
 
@@ -176,14 +181,15 @@ class GitManager:
 
     def commit(self, message: str, files: List[str] = None) -> bool:
         """Create commit"""
+        self.debug_log("Creating commit", message=message[:50], files_count=len(files) if files else "all")
         self.log(f"📋 Creating commit: {message[:50]}...")
 
         # Stage files
         if files:
-            for file in files:
-                result = self.run_git_command(['add', file])
-                if result.returncode != 0:
-                    self.log(f"⚠️  Failed to stage: {file}")
+            # Stage individual files, log failures
+            [self.log(f"⚠️  Failed to stage: {file}")
+             for file in files
+             if self.run_git_command(['add', file]).returncode != 0]
         else:
             # Stage all changes
             self.run_git_command(['add', '.'])
@@ -211,11 +217,13 @@ class GitManager:
         if not branch:
             branch = self.get_current_branch()
 
+        self.debug_log("Pushing to remote", branch=branch, force=force)
         self.log(f"📋 Pushing to: {branch}")
 
         # Check if protected branch
         protected = self.config.get('git_operations', {}).get('protected_branches', [])
         if branch in protected and force:
+            self.debug_log("Force push blocked - protected branch", branch=branch)
             self.log(f"❌ Cannot force push to protected branch: {branch}")
             return False
 
@@ -278,21 +286,21 @@ class GitManager:
         result = self.run_git_command(['branch', '--merged', 'main'])
         branches = result.stdout.decode().strip().split('\n')
 
-        deleted = []
-        for branch in branches:
-            branch = branch.strip().replace('* ', '')
+        # Filter and process branches using list comprehension
+        protected_branches = {'main', 'master', ''}
+        processable_branches = [
+            branch.strip().replace('* ', '')
+            for branch in branches
+            if branch.strip().replace('* ', '') not in protected_branches
+        ]
 
-            # Don't delete main/master
-            if branch in ['main', 'master', '']:
-                continue
+        # Delete branches
+        deleted = [branch for branch in processable_branches if self.delete_branch(branch)]
 
-            # Delete local branch
-            if self.delete_branch(branch):
-                deleted.append(branch)
-
-            # Delete remote branch if requested
-            if remote:
-                self.run_git_command(['push', 'origin', '--delete', branch], check=False)
+        # Delete remote branches if requested
+        if remote:
+            [self.run_git_command(['push', 'origin', '--delete', branch], check=False)
+             for branch in deleted]
 
         self.log(f"✅ Deleted {len(deleted)} merged branches")
         return deleted
@@ -300,11 +308,20 @@ class GitManager:
     def save_operations_log(self, card_id: str = None, output_file: str = None):
         """Save operations log"""
         if not output_file:
+            # Get git operations directory from env or use default
+            git_ops_dir = os.getenv("ARTEMIS_GIT_OPS_DIR", "../../.artemis_data/git_operations")
+            if not os.path.isabs(git_ops_dir):
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                git_ops_dir = os.path.join(script_dir, git_ops_dir)
+
+            # Ensure directory exists
+            os.makedirs(git_ops_dir, exist_ok=True)
+
             if card_id:
-                output_file = f"/tmp/git_operations_{card_id}.json"
+                output_file = os.path.join(git_ops_dir, f"git_operations_{card_id}.json")
             else:
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                output_file = f"/tmp/git_operations_{timestamp}.json"
+                output_file = os.path.join(git_ops_dir, f"git_operations_{timestamp}.json")
 
         with open(output_file, 'w') as f:
             json.dump(self.operations_log, f, indent=2)

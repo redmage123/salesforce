@@ -1,0 +1,169 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251025220057813959-artemis-orchestrator-2-761d5fdd",
+  "timestamp": "2025-10-25T22:00:57.814248Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "architecture-agent",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "high",
+  "data": {
+    "update_type": "sprint_plan_complete",
+    "task_title": "Create Artemis self-demo with Chart.js visualization",
+    "total_sprints": 5,
+    "total_story_points": 71,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-26",
+        "end_date": "2025-11-09",
+        "features": [
+          {
+            "title": "Chart.js Integration",
+            "description": "Integrate Chart.js for data visualization within the presentation.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Chart.js is used to create pipeline metrics, cost tracking, and success rate visualizations.",
+              "Charts include line, bar, area, pie, and radar types.",
+              "Charts are interactive and include animations."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.7,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-09",
+        "end_date": "2025-11-23",
+        "features": [
+          {
+            "title": "Real-Time Dashboard",
+            "description": "Create a real-time dashboard with various Chart.js graphs.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Dashboard includes line chart for LLM cost over time.",
+              "Includes bar chart for stage completion rates.",
+              "Includes area chart for success rate trends."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 6.9
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-23",
+        "end_date": "2025-12-07",
+        "features": [
+          {
+            "title": "Code Quality Metrics",
+            "description": "Display code quality metrics using a radar chart.",
+            "business_value": 5,
+            "acceptance_criteria": [
+              "Radar chart includes TDD compliance and SOLID principles.",
+              "Metrics are clearly labeled and easy to interpret.",
+              "Chart is interactive and visually engaging."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 5.300000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-07",
+        "end_date": "2025-12-21",
+        "features": [
+          {
+            "title": "HTML Presentation Creation",
+            "description": "Develop a standalone HTML presentation showcasing Artemis capabilities.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Presentation is a single HTML file with embedded CSS and JavaScript.",
+              "Uses existing demos as templates for structure and design.",
+              "Includes professional gradient background and smooth transitions."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 5.3
+          },
+          {
+            "title": "Pipeline Visualization",
+            "description": "Visualize the 8-stage pipeline using Chart.js.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Pipeline is represented using a suitable chart type.",
+              "Stages are clearly labeled and visually distinct.",
+              "Pipeline visualization is interactive."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.9
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 5,
+        "start_date": "2025-12-21",
+        "end_date": "2026-01-04",
+        "features": [
+          {
+            "title": "Auto-Advance Slides",
+            "description": "Implement auto-advance functionality with navigation controls.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Slides auto-advance after a set period.",
+              "Users can manually navigate slides using controls.",
+              "Navigation controls are intuitive and responsive."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.9
+          },
+          {
+            "title": "Supervisor Integration Visualization",
+            "description": "Show supervisor integration across stages using a pie chart.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Pie chart accurately represents supervisor integration data.",
+              "Chart is interactive and visually appealing.",
+              "Data is clearly labeled and easy to understand."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.500000000000001
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      }
+    ]
+  },
+  "metadata": {}
+}

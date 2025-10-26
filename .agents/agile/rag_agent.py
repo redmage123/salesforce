@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
+from debug_mixin import DebugMixin
 
 try:
     import chromadb
@@ -35,7 +36,7 @@ class Artifact:
     timestamp: str
 
 
-class RAGAgent:
+class RAGAgent(DebugMixin):
     """
     RAG Agent - Pipeline Memory & Learning System
 
@@ -46,6 +47,7 @@ class RAGAgent:
     ARTIFACT_TYPES = [
         "research_report",
         "project_analysis",
+        "project_review",        # Project review stage quality gate
         "architecture_decision",
         "developer_solution",
         "validation_result",
@@ -54,11 +56,28 @@ class RAGAgent:
         "testing_result",
         "issue_and_fix",
         "issue_resolution",      # Supervisor issue resolution tracking
-        "supervisor_recovery"    # Supervisor recovery workflow outcomes
+        "supervisor_recovery",   # Supervisor recovery workflow outcomes
+        "sprint_plan",           # Sprint planning with story point estimates
+        "notebook_example",      # Jupyter notebook examples for demonstrations
+        "code_example"           # Code examples from research stage (GitHub, HuggingFace, local)
     ]
 
-    def __init__(self, db_path: str = "/tmp/rag_db", verbose: bool = True):
+    def __init__(self, db_path: str = "db", verbose: bool = True):
+        """
+        Initialize RAG Agent with database path.
+
+        Args:
+            db_path: Path to RAG database (default: 'db' relative to .agents/agile)
+            verbose: Enable verbose logging
+        """
+        DebugMixin.__init__(self, component_name="rag")
+        # Convert to absolute path if relative
         self.db_path = Path(db_path)
+        if not self.db_path.is_absolute():
+            # Make it relative to the script's directory
+            script_dir = Path(__file__).parent
+            self.db_path = script_dir / self.db_path
+
         self.db_path.mkdir(exist_ok=True, parents=True)
         self.verbose = verbose
 
@@ -76,6 +95,7 @@ class RAGAgent:
 
         self.log("RAG Agent initialized")
         self.log(f"Database path: {self.db_path}")
+        self.debug_log("RAGAgent initialized", db_path=str(self.db_path), chromadb_available=CHROMADB_AVAILABLE)
 
     def log(self, message: str):
         """Log message if verbose"""
@@ -130,6 +150,7 @@ class RAGAgent:
         Returns:
             Artifact ID
         """
+        self.debug_trace("store_artifact", artifact_type=artifact_type, card_id=card_id)
         if artifact_type not in self.ARTIFACT_TYPES:
             self.log(f"⚠️  Unknown artifact type: {artifact_type}")
             return None
@@ -201,6 +222,7 @@ class RAGAgent:
         Returns:
             List of similar artifacts
         """
+        self.debug_if_enabled("rag_queries", "Querying RAG", query=query_text[:50], top_k=top_k)
         if artifact_types is None:
             artifact_types = self.ARTIFACT_TYPES
 
@@ -290,65 +312,60 @@ class RAGAgent:
                 "similar_tasks_count": 0
             }
 
-        # Extract patterns from similar tasks
-        technologies = {}
-        success_patterns = []
-        issues = []
+        # Extract patterns from similar tasks using comprehensions
+        from collections import defaultdict
 
+        # Track technologies using defaultdict
+        technologies = defaultdict(lambda: {"count": 0, "avg_score": 0, "scores": []})
         for task in similar_tasks:
             metadata = task.get('metadata', {})
+            for tech in metadata.get('technologies', []):
+                technologies[tech]["count"] += 1
 
-            # Track technologies mentioned
-            if 'technologies' in metadata:
-                for tech in metadata['technologies']:
-                    if tech not in technologies:
-                        technologies[tech] = {
-                            "count": 0,
-                            "avg_score": 0,
-                            "scores": []
-                        }
-                    technologies[tech]["count"] += 1
+        # Extract success patterns using list comprehension
+        success_patterns = [
+            {
+                "approach": task['metadata'].get('approach', 'unknown'),
+                "score": task['metadata'].get('arbitration_score', 0),
+                "technologies": task['metadata'].get('technologies', [])
+            }
+            for task in similar_tasks
+            if task.get('artifact_type') == 'developer_solution'
+            and task.get('metadata', {}).get('winner')
+        ]
 
-            # Track success patterns
-            if task['artifact_type'] == 'developer_solution':
-                if metadata.get('winner'):
-                    success_patterns.append({
-                        "approach": metadata.get('approach', 'unknown'),
-                        "score": metadata.get('arbitration_score', 0),
-                        "technologies": metadata.get('technologies', [])
-                    })
+        # Extract issues using list comprehension with chain
+        from itertools import chain
+        issues = list(chain.from_iterable(
+            task.get('metadata', {}).get('issues', [])
+            for task in similar_tasks
+            if task.get('artifact_type') == 'validation_result'
+        ))
 
-            # Track issues
-            if task['artifact_type'] == 'validation_result':
-                if 'issues' in metadata:
-                    issues.extend(metadata['issues'])
-
-        # Generate recommendations
-        recommendations = []
-        based_on = []
-        avoid = []
-
+        # Generate recommendations using comprehensions
         # Technology recommendations
-        for tech, data in sorted(technologies.items(), key=lambda x: x[1]['count'], reverse=True)[:3]:
-            based_on.append(f"Used {tech} in {data['count']} past similar tasks")
-            if data['count'] >= 2:
-                recommendations.append(f"Consider {tech} (proven in {data['count']} similar tasks)")
+        top_techs = sorted(technologies.items(), key=lambda x: x[1]['count'], reverse=True)[:3]
+        based_on = [f"Used {tech} in {data['count']} past similar tasks" for tech, data in top_techs]
+        recommendations = [
+            f"Consider {tech} (proven in {data['count']} similar tasks)"
+            for tech, data in top_techs
+            if data['count'] >= 2
+        ]
 
         # Success pattern recommendations
-        for pattern in success_patterns[:3]:
-            based_on.append(f"{pattern['approach']} approach scored {pattern['score']}/100")
+        based_on.extend([
+            f"{pattern['approach']} approach scored {pattern['score']}/100"
+            for pattern in success_patterns[:3]
+        ])
 
-        # Issue-based avoidance
-        common_issues = {}
-        for issue in issues:
-            issue_type = issue.get('type', 'unknown')
-            if issue_type not in common_issues:
-                common_issues[issue_type] = 0
-            common_issues[issue_type] += 1
-
-        for issue_type, count in common_issues.items():
-            if count >= 2:
-                avoid.append(f"Watch for {issue_type} issues (found in {count} similar tasks)")
+        # Issue-based avoidance using Counter
+        from collections import Counter
+        common_issues = Counter(issue.get('type', 'unknown') for issue in issues)
+        avoid = [
+            f"Watch for {issue_type} issues (found in {count} similar tasks)"
+            for issue_type, count in common_issues.items()
+            if count >= 2
+        ]
 
         confidence = "HIGH" if len(similar_tasks) >= 5 else "MEDIUM" if len(similar_tasks) >= 2 else "LOW"
 
@@ -463,8 +480,16 @@ class RAGAgent:
 
 
 # Convenience functions
-def create_rag_agent(db_path: str = "/tmp/rag_db") -> RAGAgent:
-    """Create RAG agent instance"""
+def create_rag_agent(db_path: str = "db") -> RAGAgent:
+    """
+    Create RAG agent instance.
+
+    Args:
+        db_path: Path to RAG database (default: 'db' relative to .agents/agile)
+
+    Returns:
+        Initialized RAGAgent instance
+    """
     return RAGAgent(db_path=db_path)
 
 

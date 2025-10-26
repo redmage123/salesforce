@@ -14,7 +14,7 @@ Uses weighted multi-criteria decision analysis (MCDA)
 """
 
 from typing import Dict, List, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 
 @dataclass
@@ -118,8 +118,8 @@ class DeveloperArbitrator:
             "loser_score": loser_score.final_score,
             "margin": margin,
             "confidence": self._calculate_confidence(margin),
-            "developer_a_details": score_a,
-            "developer_b_details": score_b,
+            "developer_a_details": asdict(score_a),  # Convert dataclass to dict for JSON serialization
+            "developer_b_details": asdict(score_b),  # Convert dataclass to dict for JSON serialization
             "breakdown": {
                 "developer-a": score_a.weighted_scores,
                 "developer-b": score_b.weighted_scores

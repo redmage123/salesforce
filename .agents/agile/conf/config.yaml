@@ -6,6 +6,10 @@ defaults:
   - storage: local
   - pipeline: standard
   - security: strict
+  - logging: prod
+  - output: local
+  - sprint: standard
+  - debug: default
   - _self_
 
 # Card ID (must be provided via CLI: card_id=XXX)
@@ -14,9 +18,9 @@ card_id: ???
 # Hydra runtime configuration
 hydra:
   run:
-    dir: /tmp/artemis_runs/${now:%Y-%m-%d}/${now:%H-%M-%S}_${card_id}
+    dir: ${oc.env:ARTEMIS_RUN_DIR,../../.artemis_data/runs}/${now:%Y-%m-%d}/${now:%H-%M-%S}_${card_id}
   sweep:
-    dir: /tmp/artemis_multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
+    dir: ${oc.env:ARTEMIS_MULTIRUN_DIR,../../.artemis_data/multirun}/${now:%Y-%m-%d}/${now:%H-%M-%S}
   job:
     name: artemis_${card_id}
   job_logging:
@@ -36,4 +40,23 @@ hydra:
 # Logging configuration
 logging:
   verbose: true
-  log_level: INFO  # DEBUG, INFO, WARNING, ERROR
+  log_level: ${oc.env:ARTEMIS_LOG_LEVEL,INFO}  # DEBUG, INFO, WARNING, ERROR
+  log_dir: ${oc.env:ARTEMIS_LOG_DIR,/var/log/artemis}
+  max_size_mb: ${oc.env:ARTEMIS_LOG_MAX_SIZE_MB,100}
+  backup_count: ${oc.env:ARTEMIS_LOG_BACKUP_COUNT,10}
+
+# Output storage configuration
+output:
+  storage_type: ${oc.env:ARTEMIS_OUTPUT_STORAGE,local}
+  local_path: ${oc.env:ARTEMIS_OUTPUT_PATH,../../outputs}
+  remote:
+    provider: ${oc.env:ARTEMIS_REMOTE_STORAGE_PROVIDER,s3}
+    s3:
+      bucket: ${oc.env:ARTEMIS_S3_BUCKET,}
+      region: ${oc.env:ARTEMIS_S3_REGION,us-east-1}
+    gcs:
+      bucket: ${oc.env:ARTEMIS_GCS_BUCKET,}
+      project: ${oc.env:ARTEMIS_GCS_PROJECT,}
+    azure:
+      container: ${oc.env:ARTEMIS_AZURE_CONTAINER,}
+      storage_account: ${oc.env:ARTEMIS_AZURE_STORAGE_ACCOUNT,}

@@ -26,10 +26,16 @@ class WorkflowStatusTracker:
                 pass
     """
 
-    def __init__(self, card_id: str, status_dir: str = "/tmp/artemis_status"):
+    def __init__(self, card_id: str, status_dir: str = "../../.artemis_data/status"):
         self.card_id = card_id
+
+        # Convert relative path to absolute
+        if not os.path.isabs(status_dir):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            status_dir = os.path.join(script_dir, status_dir)
+
         self.status_dir = Path(status_dir)
-        self.status_dir.mkdir(exist_ok=True)
+        self.status_dir.mkdir(exist_ok=True, parents=True)
         self.status_file = self.status_dir / f"{card_id}.json"
 
         self.status_data = {

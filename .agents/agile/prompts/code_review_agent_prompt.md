@@ -71,12 +71,60 @@ Check for common anti-patterns:
 - **Spaghetti Code** - Tangled control flow, excessive coupling
 - **Magic Numbers/Strings** - Hardcoded values without constants
 - **Duplicate Code** - Violations of DRY principle
-- **Long Methods** - Functions exceeding 50 lines
+- **Long Methods** - Functions exceeding 50 lines (HIGH severity)
 - **Deep Nesting** - More than 3 levels of indentation
 - **Premature Optimization** - Complex code without measurable benefit
 - **Tight Coupling** - Hard dependencies between modules
 - **Global State** - Mutable global variables
 - **Callback Hell** - Excessive nested callbacks
+
+**Refactoring Pattern Violations (HIGH severity):**
+
+1. **Loop to Comprehension (Python/JavaScript/Rust)**
+   - Simple for loops that build lists/arrays should use comprehensions/map/filter
+   - Flag loops with only 1-2 statements that append to collections
+   - Example: `results.append(item.upper())` in loop → should be list comprehension
+
+2. **If/Elif Chain to Dictionary Mapping**
+   - 3+ elif branches returning similar values → use dict.get() or strategy pattern
+   - Long switch/case statements → replace with lookup tables or strategy pattern
+   - Example: Multiple `if status == "X"` → use `status_map.get(status)`
+
+3. **Extract Long Methods (ALL languages)**
+   - Methods >50 lines → MUST extract helper methods
+   - Identify distinct phases/responsibilities
+   - Each extracted method should have clear, focused purpose
+
+4. **First Match Pattern**
+   - Loops that find first element and break → use next() with generator (Python)
+   - Use find() or filter().first() in other languages
+
+5. **Collections Module Usage (Python)**
+   - Manual counting → use Counter
+   - If-not-exists checks before dict insert → use defaultdict
+   - Nested list flattening → use chain.from_iterable
+
+6. **Stream/Functional Operations (Java/JS/Rust/Go)**
+   - Imperative loops with filter+map → use streams/functional style
+   - Flag transformation loops that should be declarative
+
+7. **Strategy Pattern for Complex Conditionals**
+   - Large if/elif or switch blocks with different algorithms → strategy pattern
+   - Type-based dispatch → polymorphism or strategy pattern
+
+8. **Null Object Pattern**
+   - Repetitive null checks → use null object pattern
+   - Defensive programming with many if-not-null → create NullObject class
+
+9. **Builder Pattern for Complex Construction**
+   - Constructors with 4+ parameters → builder pattern
+   - Many optional parameters → builder pattern
+   - Telescoping constructors → builder pattern
+
+10. **Early Return Pattern (Guard Clauses)**
+    - Nested if statements (>2 levels) → use early returns
+    - Arrow code (deep indentation) → flatten with guard clauses
+    - Example: `if x: if y: if z: do_work()` → use guard clauses
 
 Optimization checks:
 - Inefficient algorithms (O(n²) when O(n) possible)

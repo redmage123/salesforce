@@ -1,0 +1,199 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251025134920838951-artemis-orchestrator-3-38bf9f73",
+  "timestamp": "2025-10-25T13:49:20.839074Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "orchestrator",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "medium",
+  "data": {
+    "update_type": "sprint_planning_complete",
+    "task_title": "Create Artemis self-demo with Chart.js visualization",
+    "total_sprints": 5,
+    "total_story_points": 74,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-25",
+        "end_date": "2025-11-08",
+        "features": [
+          {
+            "title": "Real-Time Metrics Dashboard",
+            "description": "Create a real-time dashboard with Chart.js graphs showcasing various metrics.",
+            "business_value": 10,
+            "acceptance_criteria": [
+              "Dashboard includes a line chart for LLM cost over time.",
+              "Dashboard includes a bar chart for stage completion rates.",
+              "Dashboard includes an area chart for success rate trends."
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 7.300000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-08",
+        "end_date": "2025-11-22",
+        "features": [
+          {
+            "title": "Chart.js Pipeline Visualization",
+            "description": "Implement an 8-stage pipeline visualization using Chart.js.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "The pipeline is represented using a Chart.js visualization.",
+              "Each stage is clearly labeled and distinct.",
+              "The visualization accurately reflects the pipeline stages."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7333333333333333,
+            "priority_score": 5.7
+          },
+          {
+            "title": "HTML Presentation with Embedded Resources",
+            "description": "Create a standalone HTML file with embedded CSS, JavaScript, and Chart.js for visualization.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "The HTML file is standalone with no external dependencies.",
+              "CSS and JavaScript are embedded within the HTML file.",
+              "Chart.js is included and functional within the HTML."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7333333333333333,
+            "priority_score": 5.3
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-22",
+        "end_date": "2025-12-06",
+        "features": [
+          {
+            "title": "Display Real Metrics from Recent Runs",
+            "description": "Showcase actual data from recent runs within the presentation.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Real metrics are displayed accurately in the presentation.",
+              "Data is up-to-date and relevant.",
+              "Metrics are integrated into the appropriate charts."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 5.3
+          },
+          {
+            "title": "Code Quality Metrics Visualization",
+            "description": "Visualize code quality metrics such as TDD compliance and SOLID principles using a radar chart.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "A radar chart is used to display code quality metrics.",
+              "Metrics include TDD compliance and SOLID principles.",
+              "The chart is clear and easy to interpret."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 4.6000000000000005
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-06",
+        "end_date": "2025-12-20",
+        "features": [
+          {
+            "title": "Auto-Advance and Navigation Controls",
+            "description": "Implement auto-advance functionality and navigation controls for slides.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Slides auto-advance at a set interval.",
+              "Users can manually navigate between slides.",
+              "Navigation controls are intuitive and responsive."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.75,
+            "priority_score": 4.500000000000001
+          },
+          {
+            "title": "Interactive Chart.js Animations",
+            "description": "Enhance visualizations with interactive Chart.js animations.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Charts include animations that enhance user engagement.",
+              "Animations are smooth and do not hinder performance.",
+              "Users can interact with charts to gain more insights."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.500000000000001
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 5,
+        "start_date": "2025-12-20",
+        "end_date": "2026-01-03",
+        "features": [
+          {
+            "title": "Supervisor Integration Visualization",
+            "description": "Show supervisor integration across stages using a pie chart.",
+            "business_value": 5,
+            "acceptance_criteria": [
+              "A pie chart is used to represent supervisor integration.",
+              "Each segment of the pie chart is clearly labeled.",
+              "The chart accurately reflects integration data."
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.1000000000000005
+          },
+          {
+            "title": "Professional Presentation Design",
+            "description": "Design a professional presentation with gradient backgrounds and smooth transitions.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "The presentation includes a professional gradient background.",
+              "Transitions between slides are smooth and visually appealing.",
+              "The design is consistent with professional standards."
+            ],
+            "story_points": 5,
+            "estimated_hours": 10.0,
+            "risk_level": "low",
+            "confidence": 0.7666666666666667,
+            "priority_score": 4.000000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      }
+    ]
+  },
+  "metadata": {}
+}

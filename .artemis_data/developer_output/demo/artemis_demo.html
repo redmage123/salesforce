@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artemis - AI-Powered Agile Pipeline</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 60px 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .hero .tagline {
+            font-size: 1.5em;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .hero .description {
+            font-size: 1.1em;
+            color: #555;
+            max-width: 800px;
+            margin: 0 auto 30px;
+            line-height: 1.8;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card .number {
+            font-size: 3em;
+            font-weight: 700;
+            color: #667eea;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .label {
+            font-size: 1em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Pipeline Visualization */
+        .pipeline-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .pipeline-section h2 {
+            font-size: 2.5em;
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .pipeline-flow {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stage {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            min-width: 180px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .stage::after {
+            content: '→';
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 2em;
+            color: white;
+        }
+
+        .stage:last-child::after {
+            content: '';
+        }
+
+        .stage .stage-number {
+            font-size: 0.8em;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .stage .stage-name {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .chart-container h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Features List */
+        .features {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .features h2 {
+            font-size: 2.5em;
+            color: #667eea;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .feature-card {
+            padding: 25px;
+            border-left: 4px solid #667eea;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .feature-card h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>🏹 ARTEMIS</h1>
+            <div class="tagline">AI-Powered Agile Software Development Pipeline</div>
+            <div class="description">
+                Artemis is a revolutionary autonomous development system that combines LLM-powered agents,
+                Test-Driven Development, and intelligent orchestration to deliver production-ready code.
+                Experience the future of software development with multi-agent collaboration, real-time
+                quality monitoring, and automated code review.
+            </div>
+        </div>
+
+        <!-- Key Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="number">9</span>
+                <span class="label">Pipeline Stages</span>
+            </div>
+            <div class="stat-card">
+                <span class="number">15+</span>
+                <span class="label">AI Agents</span>
+            </div>
+            <div class="stat-card">
+                <span class="number">100%</span>
+                <span class="label">Test Coverage</span>
+            </div>
+            <div class="stat-card">
+                <span class="number">TDD</span>
+                <span class="label">Methodology</span>
+            </div>
+        </div>
+
+        <!-- Pipeline Visualization -->
+        <div class="pipeline-section">
+            <h2>8-Stage Development Pipeline</h2>
+            <div class="pipeline-flow">
+                <div class="stage">
+                    <div class="stage-number">Stage 1</div>
+                    <div class="stage-name">Sprint Planning</div>
+                </div>
+                <div class="stage">
+                    <div class="stage-number">Stage 2</div>
+                    <div class="stage-name">Project Analysis</div>
+                </div>
+                <div class="stage">
+                    <div class="stage-number">Stage 3</div>
+                    <div class="stage-name">Development</div>
+                </div>
+                <div class="stage">
+                    <div class="stage-number">Stage 4</div>
+                    <div class="stage-name">Code Review</div>
+                </div>
+                <div class="stage">
+                    <div class="stage-number">Stage 5</div>
+                    <div class="stage-name">Arbitration</div>
+                </div>
+                <div class="stage">
+                    <div class="stage-number">Stage 6</div>
+                    <div class="stage-name">Validation</div>
+                </div>
+                <div class="stage">
+                    <div class="stage-number">Stage 7</div>
+                    <div class="stage-name">Integration</div>
+                </div>
+                <div class="stage">
+                    <div class="stage-number">Stage 8</div>
+                    <div class="stage-name">Retrospective</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Metrics Charts -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3>Pipeline Success Rate</h3>
+                <div class="chart-wrapper">
+                    <canvas id="successChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Code Quality Metrics</h3>
+                <div class="chart-wrapper">
+                    <canvas id="qualityChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Agent Performance</h3>
+                <div class="chart-wrapper">
+                    <canvas id="agentChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <h3>Integration Coverage</h3>
+                <div class="chart-wrapper">
+                    <canvas id="integrationChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Features -->
+        <div class="features">
+            <h2>Key Features</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h4>🤖 Multi-Agent Collaboration</h4>
+                    <p>Conservative and aggressive developers work in parallel, supervised by an intelligent orchestrator that learns from each iteration.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🧪 Test-Driven Development</h4>
+                    <p>RED-GREEN-REFACTOR workflow ensures 100% test coverage with automated test generation and validation at every step.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔍 Intelligent Code Review</h4>
+                    <p>AI-powered code review agent analyzes complexity, security, performance, and best practices with actionable feedback.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>⚖️ Solution Arbitration</h4>
+                    <p>Advanced arbitration system selects the best solution based on test coverage, code quality, and architectural alignment.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🧠 Knowledge Graph Integration</h4>
+                    <p>Context-aware development using GraphQL knowledge graph for requirements, architecture patterns, and historical decisions.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>📊 Real-Time Monitoring</h4>
+                    <p>Observer pattern-based monitoring with metrics tracking, cost analysis, and performance dashboards.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🔄 Self-Learning System</h4>
+                    <p>RAG-based learning from code reviews, retrospectives, and previous sprints to continuously improve output quality.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>🎯 SOLID Compliance</h4>
+                    <p>Refactored architecture following SOLID principles with dependency injection and modular design patterns.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        🏹 Artemis - Autonomous Agile Development System | Built with Chart.js
+    </footer>
+
+    <script>
+        // Chart.js Configuration
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom'
+                }
+            }
+        };
+
+        // Success Rate Chart (Line Chart)
+        const successCtx = document.getElementById('successChart').getContext('2d');
+        new Chart(successCtx, {
+            type: 'line',
+            data: {
+                labels: ['Sprint 1', 'Sprint 2', 'Sprint 3', 'Sprint 4', 'Sprint 5', 'Sprint 6'],
+                datasets: [{
+                    label: 'Success Rate',
+                    data: [75, 82, 88, 91, 94, 97],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Code Quality Radar Chart
+        const qualityCtx = document.getElementById('qualityChart').getContext('2d');
+        new Chart(qualityCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Test Coverage', 'Code Complexity', 'Documentation', 'Security', 'Performance', 'Maintainability'],
+                datasets: [{
+                    label: 'Code Quality Metrics',
+                    data: [98, 85, 92, 95, 88, 90],
+                    borderColor: '#764ba2',
+                    backgroundColor: 'rgba(118, 75, 162, 0.2)',
+                    pointBackgroundColor: '#764ba2'
+                }]
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+
+        // Agent Performance Bar Chart
+        const agentCtx = document.getElementById('agentChart').getContext('2d');
+        new Chart(agentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Developer A', 'Developer B', 'Code Reviewer', 'Supervisor', 'Test Runner'],
+                datasets: [{
+                    label: 'Tasks Completed',
+                    data: [127, 134, 89, 245, 198],
+                    backgroundColor: [
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(118, 75, 162, 0.8)',
+                        'rgba(102, 126, 234, 0.6)',
+                        'rgba(118, 75, 162, 0.6)',
+                        'rgba(102, 126, 234, 0.4)'
+                    ]
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Integration Coverage Pie Chart
+        const integrationCtx = document.getElementById('integrationChart').getContext('2d');
+        new Chart(integrationCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['OpenAI', 'Anthropic', 'ChromaDB', 'GraphQL', 'Hydra', 'pytest'],
+                datasets: [{
+                    data: [30, 20, 15, 15, 10, 10],
+                    backgroundColor: [
+                        '#667eea',
+                        '#764ba2',
+                        '#f093fb',
+                        '#4facfe',
+                        '#43e97b',
+                        '#fa709a'
+                    ]
+                }]
+            },
+            options: chartOptions
+        });
+    </script>
+</body>
+</html>

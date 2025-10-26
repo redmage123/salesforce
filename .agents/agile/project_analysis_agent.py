@@ -5,6 +5,13 @@ Project Analysis Agent (SOLID-Compliant)
 Analyzes tasks BEFORE implementation across 8 dimensions to identify
 issues, suggest improvements, and get user approval.
 
+Now enhanced with LLM-powered analysis using DEPTH framework:
+- D: Define Multiple Perspectives (security, performance, testing, architecture)
+- E: Establish Clear Success Metrics (severity levels, approval criteria)
+- P: Provide Context Layers (card details, RAG context, historical data)
+- T: Task Breakdown (dimension-by-dimension analysis)
+- H: Human Feedback Loop (self-critique and validation)
+
 SOLID Principles Applied:
 - Single Responsibility: Each analyzer handles ONE dimension only
 - Open/Closed: Can add new analyzers without modifying core
@@ -14,9 +21,24 @@ SOLID Principles Applied:
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+import json
+from environment_context import get_environment_context_short
+from debug_mixin import DebugMixin
+
+# Import AIQueryService for centralized KG→RAG→LLM pipeline
+try:
+    from ai_query_service import (
+        AIQueryService,
+        create_ai_query_service,
+        QueryType,
+        AIQueryResult
+    )
+    AI_QUERY_SERVICE_AVAILABLE = True
+except ImportError:
+    AI_QUERY_SERVICE_AVAILABLE = False
 
 
 # ============================================================================
@@ -278,11 +300,263 @@ class ErrorHandlingAnalyzer(DimensionAnalyzer):
         return "error_handling"
 
 
+class LLMPoweredAnalyzer(DimensionAnalyzer):
+    """
+    LLM-Powered Comprehensive Analyzer using DEPTH Framework
+
+    Uses LLM to perform intelligent, context-aware analysis across all dimensions.
+    Complements rule-based analyzers with deeper insights.
+
+    Now uses AIQueryService for KG-First approach (token savings ~750 tokens/task).
+    """
+
+    def __init__(
+        self,
+        llm_client: Optional[Any] = None,
+        config: Optional[Any] = None,
+        ai_service: Optional['AIQueryService'] = None
+    ):
+        """
+        Initialize with LLM client
+
+        Args:
+            llm_client: LLM client instance (LLMClientInterface)
+            config: Configuration agent for settings
+            ai_service: AI Query Service for KG-First queries (optional)
+        """
+        self.llm_client = llm_client
+        self.config = config
+        self.ai_service = ai_service
+
+    def analyze(self, card: Dict, context: Dict) -> AnalysisResult:
+        """
+        Analyze task using LLM with DEPTH framework
+
+        Now uses AIQueryService for KG-First approach to reduce token usage.
+
+        Args:
+            card: Kanban card with task details
+            context: Pipeline context (RAG recommendations, etc.)
+
+        Returns:
+            AnalysisResult with LLM-generated insights
+        """
+        if not self.ai_service and not self.llm_client:
+            # Fallback to empty result if no LLM available
+            return AnalysisResult(
+                dimension="LLM-Powered Analysis",
+                issues=[],
+                recommendations=["LLM client not available - using rule-based analysis only"]
+            )
+
+        # Build DEPTH-conforming prompt
+        system_message = self._build_system_message()
+        user_message = self._build_user_message(card, context)
+        full_prompt = f"{system_message}\n\n{user_message}"
+
+        try:
+            # Use AIQueryService if available (KG-First approach)
+            if self.ai_service:
+                keywords = card.get('title', '').lower().split()[:3]
+                result = self.ai_service.query(
+                    query_type=QueryType.PROJECT_ANALYSIS,
+                    prompt=full_prompt,
+                    kg_query_params={
+                        'task_title': card.get('title', ''),
+                        'keywords': keywords
+                    },
+                    temperature=0.3,  # Lower temperature for analytical consistency
+                    max_tokens=2000
+                )
+
+                if not result.success:
+                    raise Exception(f"AI query failed: {result.error}")
+
+                response = result.llm_response.content
+            else:
+                # Fallback to direct LLM call
+                response = self.llm_client.generate_text(
+                    system_message=system_message,
+                    user_message=user_message,
+                    temperature=0.3,
+                    max_tokens=2000
+                )
+
+            # Parse LLM response (expecting JSON)
+            analysis_data = self._parse_llm_response(response)
+
+            # Convert to AnalysisResult
+            issues = self._extract_issues(analysis_data)
+            recommendations = analysis_data.get("recommendations", [])
+
+            return AnalysisResult(
+                dimension="LLM-Powered Comprehensive Analysis",
+                issues=issues,
+                recommendations=recommendations
+            )
+
+        except Exception as e:
+            # Fallback on error
+            return AnalysisResult(
+                dimension="LLM-Powered Analysis",
+                issues=[],
+                recommendations=[f"LLM analysis failed: {str(e)}"]
+            )
+
+    def get_dimension_name(self) -> str:
+        return "llm_powered"
+
+    def _build_system_message(self) -> str:
+        """Build system message with DEPTH framework"""
+        return """You are an expert Project Analysis AI specializing in identifying issues before implementation.
+
+**Multiple Expert Perspectives:**
+Apply the viewpoints of:
+- Senior Software Architect (15+ years) - focusing on architectural soundness and scalability
+- Security Engineer - identifying potential vulnerabilities and compliance issues
+- QA Lead - considering testability, edge cases, and quality assurance
+- DevOps Engineer - evaluating deployment, monitoring, and operational concerns
+- UX Designer - assessing user experience and accessibility requirements
+
+**Success Criteria:**
+Your analysis MUST:
+1. Identify CRITICAL issues (security, compliance, data loss risks)
+2. Highlight HIGH-priority improvements (testing, performance, scalability)
+3. Suggest MEDIUM-priority enhancements (code quality, maintainability)
+4. Provide specific, actionable recommendations (not generic advice)
+5. Return valid JSON matching the expected schema
+6. Avoid AI clichés like "robust", "delve", "leverage"
+
+**Self-Validation:**
+Before responding, ask yourself:
+1. Did I identify all security vulnerabilities?
+2. Are my recommendations specific and actionable?
+3. Did I consider all edge cases and failure scenarios?
+4. Is my JSON properly formatted?
+5. Did I avoid generic advice and AI clichés?
+
+If any answer is NO, revise your analysis."""
+
+    def _build_user_message(self, card: Dict, context: Dict) -> str:
+        """Build user message with context layers"""
+        card_summary = f"""
+**Task Title:** {card.get('title', 'Unknown')}
+**Description:** {card.get('description', 'No description provided')}
+**Priority:** {card.get('priority', 'Not set')}
+**Story Points:** {card.get('points', 'Not estimated')}
+**Acceptance Criteria:** {card.get('acceptance_criteria', [])}
+"""
+
+        context_summary = ""
+        if context:
+            rag_recommendations = context.get('rag_recommendations', [])
+            # Handle both dict and list formats
+            if isinstance(rag_recommendations, dict):
+                # Convert dict values to list
+                rag_list = list(rag_recommendations.values()) if rag_recommendations else []
+            elif isinstance(rag_recommendations, list):
+                rag_list = rag_recommendations
+            else:
+                rag_list = []
+
+            if rag_list:
+                context_summary = f"\n**Historical Context (RAG):**\n"
+                for rec in rag_list[:3]:  # Top 3 recommendations
+                    context_summary += f"- {rec}\n"
+
+        return f"""Analyze the following task BEFORE implementation across these dimensions:
+
+1. **Scope & Requirements**: Are requirements clear and complete?
+2. **Security**: Any security vulnerabilities or compliance issues?
+3. **Performance & Scalability**: Performance concerns or bottlenecks?
+4. **Testing Strategy**: Is testing approach comprehensive?
+5. **Error Handling**: Are edge cases and failures addressed?
+6. **Architecture**: Architectural concerns or design issues?
+7. **Dependencies**: External dependencies or integration risks?
+8. **Accessibility**: WCAG compliance and UX considerations?
+
+{card_summary}
+{context_summary}
+
+{get_environment_context_short()}
+
+**Task Breakdown:**
+1. Read the task requirements carefully
+2. Analyze each dimension systematically
+3. Identify issues categorized by severity (CRITICAL/HIGH/MEDIUM)
+4. Provide specific, actionable recommendations
+5. Self-validate your analysis before responding
+
+**Response Format (JSON only):**
+{{
+  "issues": [
+    {{
+      "category": "Security|Performance|Testing|Architecture|Dependencies|Accessibility|Scope|Error Handling",
+      "severity": "CRITICAL|HIGH|MEDIUM",
+      "description": "Brief issue description",
+      "impact": "What happens if not addressed",
+      "suggestion": "Specific actionable fix",
+      "reasoning": "Why this matters",
+      "user_approval_needed": true|false
+    }}
+  ],
+  "recommendations": [
+    "Specific recommendation 1",
+    "Specific recommendation 2"
+  ],
+  "overall_assessment": "Brief 1-2 sentence summary",
+  "recommendation_action": "APPROVE_ALL|APPROVE_CRITICAL|REJECT"
+}}
+
+Return ONLY valid JSON, no markdown, no explanations."""
+
+    def _parse_llm_response(self, response: str) -> Dict:
+        """Parse LLM response JSON"""
+        # Strip markdown code blocks if present
+        response = response.strip()
+        if response.startswith("```json"):
+            response = response[7:]
+        if response.startswith("```"):
+            response = response[3:]
+        if response.endswith("```"):
+            response = response[:-3]
+        response = response.strip()
+
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError as e:
+            # Fallback: try to extract JSON from response
+            import re
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group(0))
+            raise ValueError(f"Failed to parse LLM response as JSON: {e}")
+
+    def _extract_issues(self, analysis_data: Dict) -> List[Issue]:
+        """Extract issues from LLM analysis data"""
+        issues = []
+        for issue_data in analysis_data.get("issues", []):
+            severity_str = issue_data.get("severity", "MEDIUM").upper()
+            severity = Severity[severity_str] if severity_str in Severity.__members__ else Severity.MEDIUM
+
+            issues.append(Issue(
+                category=issue_data.get("category", "General"),
+                severity=severity,
+                description=issue_data.get("description", ""),
+                impact=issue_data.get("impact", ""),
+                suggestion=issue_data.get("suggestion", ""),
+                reasoning=issue_data.get("reasoning", ""),
+                user_approval_needed=issue_data.get("user_approval_needed", False)
+            ))
+
+        return issues
+
+
 # ============================================================================
 # PROJECT ANALYSIS ENGINE
 # ============================================================================
 
-class ProjectAnalysisEngine:
+class ProjectAnalysisEngine(DebugMixin):
     """
     Coordinates analysis across all dimensions
 
@@ -291,15 +565,43 @@ class ProjectAnalysisEngine:
     Dependency Inversion: Depends on DimensionAnalyzer abstraction
     """
 
-    def __init__(self, analyzers: Optional[List[DimensionAnalyzer]] = None):
+    def __init__(
+        self,
+        analyzers: Optional[List[DimensionAnalyzer]] = None,
+        llm_client: Optional[Any] = None,
+        config: Optional[Any] = None,
+        enable_llm_analysis: bool = True,
+        ai_service: Optional['AIQueryService'] = None,
+        rag: Optional[Any] = None
+    ):
         """
         Initialize with dependency injection
 
         Args:
             analyzers: List of dimension analyzers (injected)
+            llm_client: LLM client for AI-powered analysis
+            config: Configuration agent
+            enable_llm_analysis: Enable LLM-powered analysis (default: True)
+            ai_service: AI Query Service for KG-First queries (optional)
+            rag: RAG agent for pattern retrieval (optional)
         """
+        DebugMixin.__init__(self, component_name="project_analysis")
+        # Initialize AI Query Service if not provided
+        if not ai_service and llm_client and AI_QUERY_SERVICE_AVAILABLE:
+            try:
+                ai_service = create_ai_query_service(
+                    llm_client=llm_client,
+                    rag=rag,
+                    logger=None,
+                    verbose=False
+                )
+            except Exception:
+                ai_service = None
+
+        self.ai_service = ai_service
+
         if analyzers is None:
-            # Default analyzers
+            # Default analyzers (rule-based)
             self.analyzers = [
                 ScopeAnalyzer(),
                 SecurityAnalyzer(),
@@ -307,8 +609,18 @@ class ProjectAnalysisEngine:
                 TestingAnalyzer(),
                 ErrorHandlingAnalyzer()
             ]
+
+            # Add LLM-powered analyzer if available and enabled
+            if enable_llm_analysis and llm_client:
+                self.analyzers.append(LLMPoweredAnalyzer(llm_client, config, ai_service))
         else:
             self.analyzers = analyzers
+
+        self.llm_client = llm_client
+        self.config = config
+        self.debug_log("ProjectAnalysisEngine initialized",
+                      analyzer_count=len(self.analyzers),
+                      llm_enabled=enable_llm_analysis)
 
     def analyze_task(self, card: Dict, context: Dict) -> Dict:
         """
@@ -321,6 +633,7 @@ class ProjectAnalysisEngine:
         Returns:
             Dict with complete analysis results
         """
+        self.debug_trace("analyze_task", task_title=card.get('title', 'Unknown'))
         results = []
         all_issues = []
 
@@ -330,10 +643,27 @@ class ProjectAnalysisEngine:
             results.append(result)
             all_issues.extend(result.issues)
 
-        # Categorize issues by severity
-        critical_issues = [i for i in all_issues if i.severity == Severity.CRITICAL]
-        high_issues = [i for i in all_issues if i.severity == Severity.HIGH]
-        medium_issues = [i for i in all_issues if i.severity == Severity.MEDIUM]
+        # Categorize issues by severity (Performance: Single-pass O(n) vs O(3n))
+        from collections import defaultdict
+        issues_by_severity = defaultdict(list)
+        for issue in all_issues:
+            issues_by_severity[issue.severity].append(issue)
+
+        critical_issues = issues_by_severity[Severity.CRITICAL]
+        high_issues = issues_by_severity[Severity.HIGH]
+        medium_issues = issues_by_severity[Severity.MEDIUM]
+
+        # Generate recommendation based on severity
+        # Recommend REJECT if any critical issues, otherwise APPROVE_ALL
+        if critical_issues:
+            recommendation = "REJECT"
+            recommendation_reason = f"Found {len(critical_issues)} CRITICAL issues that must be fixed"
+        elif len(high_issues) > 5:
+            recommendation = "APPROVE_CRITICAL"
+            recommendation_reason = f"Found {len(high_issues)} HIGH-priority issues - consider fixing"
+        else:
+            recommendation = "APPROVE_ALL"
+            recommendation_reason = f"No critical issues found - {len(high_issues)} high, {len(medium_issues)} medium priority improvements suggested"
 
         # Generate summary
         summary = {
@@ -345,8 +675,17 @@ class ProjectAnalysisEngine:
             "results": results,
             "critical_issues": critical_issues,
             "high_issues": high_issues,
-            "medium_issues": medium_issues
+            "medium_issues": medium_issues,
+            "recommendation": recommendation,  # Agent's recommendation
+            "recommendation_reason": recommendation_reason
         }
+
+        self.debug_dump_if_enabled("analysis_summary", "Analysis Summary", {
+            "total_issues": len(all_issues),
+            "critical": len(critical_issues),
+            "high": len(high_issues),
+            "recommendation": recommendation
+        })
 
         return summary
 

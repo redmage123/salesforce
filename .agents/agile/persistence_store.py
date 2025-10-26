@@ -15,6 +15,7 @@ Supports multiple backends:
 """
 
 import json
+import os
 import sqlite3
 from pathlib import Path
 from datetime import datetime
@@ -96,14 +97,23 @@ class SQLitePersistenceStore(PersistenceStoreInterface):
     - Good for single-machine deployment
     """
 
-    def __init__(self, db_path: str = "/tmp/artemis_persistence.db"):
+    def __init__(self, db_path: str = "../../.artemis_data/artemis_persistence.db"):
         """
         Initialize SQLite store
 
         Args:
-            db_path: Path to SQLite database file
+            db_path: Path to SQLite database file (relative to .agents/agile)
         """
+        # Convert relative path to absolute
+        if not os.path.isabs(db_path):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            db_path = os.path.join(script_dir, db_path)
+
         self.db_path = db_path
+
+        # Ensure parent directory exists
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
+
         self.connection = sqlite3.connect(db_path, check_same_thread=False)
         self.connection.row_factory = sqlite3.Row  # Enable dict access
         self._create_tables()
@@ -327,13 +337,18 @@ class JSONFilePersistenceStore(PersistenceStoreInterface):
     Good for development/testing.
     """
 
-    def __init__(self, storage_dir: str = "/tmp/artemis_persistence"):
+    def __init__(self, storage_dir: str = "../../.artemis_data/persistence"):
         """
         Initialize JSON file store
 
         Args:
-            storage_dir: Directory to store JSON files
+            storage_dir: Directory to store JSON files (relative to .agents/agile)
         """
+        # Convert relative path to absolute
+        if not os.path.isabs(storage_dir):
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            storage_dir = os.path.join(script_dir, storage_dir)
+
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(exist_ok=True, parents=True)
 
@@ -419,11 +434,11 @@ class PersistenceStoreFactory:
             PersistenceStoreInterface implementation
         """
         if store_type == "sqlite":
-            db_path = kwargs.get("db_path", "/tmp/artemis_persistence.db")
+            db_path = kwargs.get("db_path", "../../.artemis_data/artemis_persistence.db")
             return SQLitePersistenceStore(db_path=db_path)
 
         elif store_type == "json":
-            storage_dir = kwargs.get("storage_dir", "/tmp/artemis_persistence")
+            storage_dir = kwargs.get("storage_dir", "../../.artemis_data/persistence")
             return JSONFilePersistenceStore(storage_dir=storage_dir)
 
         elif store_type == "postgres":
@@ -441,11 +456,11 @@ class PersistenceStoreFactory:
         store_type = os.getenv("ARTEMIS_PERSISTENCE_TYPE", "sqlite")
 
         if store_type == "sqlite":
-            db_path = os.getenv("ARTEMIS_PERSISTENCE_DB", "/tmp/artemis_persistence.db")
+            db_path = os.getenv("ARTEMIS_PERSISTENCE_DB", "../../.artemis_data/artemis_persistence.db")
             return SQLitePersistenceStore(db_path=db_path)
 
         elif store_type == "json":
-            storage_dir = os.getenv("ARTEMIS_PERSISTENCE_DIR", "/tmp/artemis_persistence")
+            storage_dir = os.getenv("ARTEMIS_PERSISTENCE_DIR", "../../.artemis_data/persistence")
             return JSONFilePersistenceStore(storage_dir=storage_dir)
 
         else:

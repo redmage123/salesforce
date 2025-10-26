@@ -1,0 +1,179 @@
+[
+  {
+    "file": "artemis_stages.py",
+    "missing_wrap_exception": [
+      "ProjectAnalysisStage.execute:114",
+      "ArchitectureStage.execute:402",
+      "DependencyValidationStage.execute:1126",
+      "DevelopmentStage.execute:1283",
+      "ValidationStage.execute:1667",
+      "IntegrationStage.execute:1870",
+      "TestingStage.execute:2037"
+    ],
+    "bare_excepts": [
+      "382 - __init__ (ArchitectureStage)",
+      "398 - __init__ (ArchitectureStage)",
+      "612 - _generate_adr (ArchitectureStage)",
+      "865 - _generate_user_stories_from_adr (ArchitectureStage)",
+      "953 - _generate_user_stories_from_adr (ArchitectureStage)",
+      "1005 - _store_kanban_in_rag (ArchitectureStage)",
+      "1081 - _store_adr_in_knowledge_graph (ArchitectureStage)",
+      "1084 - _store_adr_in_knowledge_graph (ArchitectureStage)",
+      "1373 - _do_work (DevelopmentStage)",
+      "1462 - _do_work (DevelopmentStage)",
+      "1497 - _read_adr (DevelopmentStage)",
+      "1562 - _store_development_in_knowledge_graph (DevelopmentStage)",
+      "1580 - _store_development_in_knowledge_graph (DevelopmentStage)",
+      "1588 - _store_development_in_knowledge_graph (DevelopmentStage)"
+    ],
+    "silent_failures": [],
+    "total_methods": 50,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "notes": "Multiple stage classes in one file. All execute() methods should have @wrap_exception. Bare exceptions in best-effort operations (RAG/KG storage) are acceptable."
+  },
+  {
+    "file": "code_review_stage.py",
+    "missing_wrap_exception": [
+      "CodeReviewStage.execute:95"
+    ],
+    "bare_excepts": [
+      "349 - _store_review_in_rag (best-effort)",
+      "384 - _send_review_notification (best-effort)",
+      "428 - _store_review_in_knowledge_graph (best-effort)",
+      "435 - _store_review_in_knowledge_graph (best-effort)"
+    ],
+    "silent_failures": [],
+    "total_methods": 8,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "notes": "All bare exceptions are in best-effort operations. Consider using specific exceptions: RAGStorageError, MessengerError, KnowledgeGraphError."
+  },
+  {
+    "file": "arbitration_stage.py",
+    "missing_wrap_exception": [
+      "ArbitrationStage.execute:69"
+    ],
+    "bare_excepts": [
+      "156 - _do_work (uses wrap_exception properly - ACCEPTABLE)"
+    ],
+    "silent_failures": [],
+    "total_methods": 7,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "notes": "GOOD: Line 156 catches Exception but properly wraps and re-raises using wrap_exception(). This is the correct pattern."
+  },
+  {
+    "file": "sprint_planning_stage.py",
+    "missing_wrap_exception": [
+      "SprintPlanningStage.execute:152 - CRITICAL"
+    ],
+    "bare_excepts": [
+      "177 - execute (re-raises SprintPlanningError - ACCEPTABLE)",
+      "297 - _extract_features (should use FeatureExtractionError)",
+      "386 - _parse_features_from_description (should use FeatureExtractionError)",
+      "461 - _run_planning_poker (should use PlanningPokerError)",
+      "522 - _create_sprints (should use SprintAllocationError)",
+      "578 - _update_kanban_board (best-effort - ACCEPTABLE)",
+      "627 - _store_sprint_plan (best-effort - ACCEPTABLE)",
+      "675 - _notify_agents (best-effort - ACCEPTABLE)"
+    ],
+    "silent_failures": [],
+    "total_methods": 16,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "notes": "CRITICAL: execute() at line 152 needs @wrap_exception. Lines 578, 627, 675 are best-effort operations and acceptable. Lines 297, 386, 461, 522 should use specific exceptions."
+  },
+  {
+    "file": "project_review_stage.py",
+    "missing_wrap_exception": [
+      "ProjectReviewStage.execute:114"
+    ],
+    "bare_excepts": [
+      "278 - _review_architecture (LLM fallback - ACCEPTABLE)"
+    ],
+    "silent_failures": [],
+    "total_methods": 14,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "notes": "Line 278 is acceptable as it's a best-effort LLM operation with graceful fallback."
+  },
+  {
+    "file": "uiux_stage.py",
+    "missing_wrap_exception": [
+      "UIUXStage.execute:225 - CRITICAL"
+    ],
+    "bare_excepts": [
+      "196 - __init__ (AI service initialization - ACCEPTABLE)",
+      "242 - execute (re-raises UIUXEvaluationError - ACCEPTABLE)",
+      "472 - _query_accessibility_patterns (best-effort - ACCEPTABLE)",
+      "516 - _evaluate_developer_uiux (should use WCAGEvaluationError)",
+      "529 - _evaluate_developer_uiux (should use GDPREvaluationError)",
+      "697 - _store_evaluation_in_rag (best-effort - ACCEPTABLE)",
+      "731 - _send_evaluation_notification (best-effort - ACCEPTABLE)",
+      "801 - _send_feedback_to_developer (best-effort - ACCEPTABLE)",
+      "898 - _store_evaluation_in_knowledge_graph (best-effort - ACCEPTABLE)",
+      "912 - _store_evaluation_in_knowledge_graph (best-effort - ACCEPTABLE)"
+    ],
+    "silent_failures": [],
+    "total_methods": 17,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "notes": "CRITICAL: execute() at line 225 needs @wrap_exception. Lines 516, 529 should use specific exceptions (already imported). Best-effort operations are acceptable."
+  },
+  {
+    "file": "requirements_stage.py",
+    "missing_wrap_exception": [
+      "RequirementsParsingStage.execute:119"
+    ],
+    "bare_excepts": [
+      "250 - _do_requirements_parsing (already uses wrap_exception - GOOD)",
+      "316 - _store_requirements_in_rag (best-effort - ACCEPTABLE)",
+      "347 - _send_requirements_notification (best-effort - ACCEPTABLE)",
+      "419 - _store_requirements_in_knowledge_graph (best-effort - ACCEPTABLE)"
+    ],
+    "silent_failures": [],
+    "total_methods": 7,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "notes": "GOOD: Line 250 properly uses wrap_exception() to wrap and re-raise. All other bare exceptions are in best-effort operations."
+  },
+  {
+    "file": "bdd_scenario_generation_stage.py",
+    "missing_wrap_exception": [
+      "BDDScenarioGenerationStage.execute:63"
+    ],
+    "bare_excepts": [],
+    "silent_failures": [],
+    "total_methods": 7,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "notes": "EXCELLENT: No bare except clauses found. Clean exception handling. Just needs @wrap_exception on execute() for consistency."
+  },
+  {
+    "file": "bdd_test_generation_stage.py",
+    "missing_wrap_exception": [
+      "BDDTestGenerationStage.execute:64"
+    ],
+    "bare_excepts": [],
+    "silent_failures": [],
+    "total_methods": 7,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "notes": "EXCELLENT: No bare except clauses found. Clean exception handling. Just needs @wrap_exception on execute() for consistency."
+  },
+  {
+    "file": "bdd_validation_stage.py",
+    "missing_wrap_exception": [
+      "BDDValidationStage.execute:60"
+    ],
+    "bare_excepts": [
+      "196 - _run_bdd_tests (subprocess fallback - ACCEPTABLE)"
+    ],
+    "silent_failures": [],
+    "total_methods": 8,
+    "protected_methods": 0,
+    "coverage_percent": 0.0,
+    "notes": "Line 196 is acceptable as it's a best-effort subprocess execution with error logging and fallback."
+  }
+]

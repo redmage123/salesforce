@@ -1,0 +1,39 @@
+# Debug Mode - Verbose Profile
+# All debug features enabled with minimal truncation
+
+defaults:
+  - default
+
+enabled: true
+
+components:
+  validation:
+    verbose_test_output: true
+    log_paths: true
+    dump_test_results: true
+
+  development:
+    log_prompts: true
+    log_responses: true
+    show_file_operations: true
+
+  sprint_planning:
+    show_estimates: true
+    log_planning_poker: true
+    dump_features: true
+
+  routing:
+    log_decisions: true
+    show_complexity_calc: true
+    trace_hooks: true
+
+  stages:
+    dump_context: true
+    log_transitions: true
+    show_timing: true
+
+formatting:
+  indent_json: 2
+  truncate_output: 0  # No truncation
+  color_output: true
+  timestamp_format: "%H:%M:%S.%f"

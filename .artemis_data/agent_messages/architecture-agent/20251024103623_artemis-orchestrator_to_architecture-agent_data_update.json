@@ -1,0 +1,223 @@
+{
+  "protocol_version": "1.0.0",
+  "message_id": "msg-20251024103623148281-artemis-orchestrator-2-aa876046",
+  "timestamp": "2025-10-24T10:36:23.148643Z",
+  "from_agent": "artemis-orchestrator",
+  "to_agent": "architecture-agent",
+  "message_type": "data_update",
+  "card_id": "card-20251023065355",
+  "priority": "high",
+  "data": {
+    "update_type": "sprint_plan_complete",
+    "task_title": "Create Artemis self-demo with Chart.js visualization",
+    "total_sprints": 6,
+    "total_story_points": 85,
+    "sprints": [
+      {
+        "sprint_number": 1,
+        "start_date": "2025-10-24",
+        "end_date": "2025-11-07",
+        "features": [
+          {
+            "title": "Showcase Artemis Features",
+            "description": "Highlight key features of Artemis including pipeline stages, cost tracking, and sandboxing with charts.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "8-stage pipeline is visualized with Chart.js",
+              "Cost tracking is demonstrated with charts",
+              "Sandboxing and learning features are highlighted"
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6333333333333333,
+            "priority_score": 6.5
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 2,
+        "start_date": "2025-11-07",
+        "end_date": "2025-11-21",
+        "features": [
+          {
+            "title": "Illustrate Code Quality Metrics",
+            "description": "Use a radar chart to show TDD compliance and adherence to SOLID principles.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "TDD compliance is displayed with a radar chart",
+              "SOLID principles adherence is visualized",
+              "Chart is accurate and informative"
+            ],
+            "story_points": 13,
+            "estimated_hours": 26.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 5.700000000000001
+          }
+        ],
+        "total_story_points": 13,
+        "capacity_used": 0.65
+      },
+      {
+        "sprint_number": 3,
+        "start_date": "2025-11-21",
+        "end_date": "2025-12-05",
+        "features": [
+          {
+            "title": "Display Real-Time Metrics",
+            "description": "Create a real-time dashboard using Chart.js to show live metrics such as LLM cost, stage completion rates, and success trends.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "LLM cost over time is shown with a line chart",
+              "Stage completion rates are displayed with a bar chart",
+              "Success rate trends are visualized with an area chart"
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 5.7
+          },
+          {
+            "title": "Implement Chart.js Visualizations",
+            "description": "Use Chart.js to create visualizations for pipeline metrics, cost tracking, and success rates.",
+            "business_value": 9,
+            "acceptance_criteria": [
+              "Pipeline metrics are visualized using Chart.js",
+              "Cost tracking is displayed with appropriate charts",
+              "Success rates are shown using Chart.js visualizations"
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 5.4
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 4,
+        "start_date": "2025-12-05",
+        "end_date": "2025-12-19",
+        "features": [
+          {
+            "title": "Present Real Metrics from Recent Runs",
+            "description": "Include actual data from recent Artemis runs to demonstrate results.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "Real metrics are included in the presentation",
+              "Data is current and relevant",
+              "Metrics are clearly displayed and understandable"
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 5.3
+          },
+          {
+            "title": "Create Standalone HTML Presentation",
+            "description": "Develop a single HTML file with embedded CSS, JavaScript, and Chart.js for the Artemis self-demo.",
+            "business_value": 8,
+            "acceptance_criteria": [
+              "HTML file is standalone with no external dependencies",
+              "CSS and JavaScript are embedded within the HTML",
+              "Chart.js is included for data visualization"
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 5.0
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 5,
+        "start_date": "2025-12-19",
+        "end_date": "2026-01-02",
+        "features": [
+          {
+            "title": "Integrate Supervisor Across Stages",
+            "description": "Demonstrate supervisor integration across different stages using a pie chart.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Supervisor integration is visualized with a pie chart",
+              "Chart accurately represents integration across stages",
+              "Data is clear and easy to understand"
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.9
+          },
+          {
+            "title": "Enhance with Animations and Interactivity",
+            "description": "Incorporate Chart.js animations and interactive elements to make the presentation engaging.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Charts include animations for transitions",
+              "Interactive elements are included for user engagement",
+              "Presentation remains responsive and functional"
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "low",
+            "confidence": 0.7,
+            "priority_score": 4.9
+          }
+        ],
+        "total_story_points": 16,
+        "capacity_used": 0.8
+      },
+      {
+        "sprint_number": 6,
+        "start_date": "2026-01-02",
+        "end_date": "2026-01-16",
+        "features": [
+          {
+            "title": "Auto-Advance Slides with Navigation Controls",
+            "description": "Enable slides to auto-advance with options for manual navigation.",
+            "business_value": 6,
+            "acceptance_criteria": [
+              "Slides auto-advance after a set duration",
+              "Users can manually navigate through slides",
+              "Navigation controls are intuitive and responsive"
+            ],
+            "story_points": 8,
+            "estimated_hours": 16.0,
+            "risk_level": "medium",
+            "confidence": 0.6666666666666666,
+            "priority_score": 4.200000000000001
+          },
+          {
+            "title": "Design Professional Presentation",
+            "description": "Incorporate a professional gradient background and smooth transitions into the presentation.",
+            "business_value": 7,
+            "acceptance_criteria": [
+              "Presentation has a gradient background",
+              "Transitions between slides are smooth and professional",
+              "Overall design is visually appealing"
+            ],
+            "story_points": 3,
+            "estimated_hours": 6.0,
+            "risk_level": "low",
+            "confidence": 0.8,
+            "priority_score": 3.4000000000000004
+          }
+        ],
+        "total_story_points": 11,
+        "capacity_used": 0.55
+      }
+    ]
+  },
+  "metadata": {}
+}

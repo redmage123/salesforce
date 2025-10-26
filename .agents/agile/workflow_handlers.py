@@ -118,7 +118,19 @@ class CleanupTempFilesHandler(WorkflowHandler):
 
     def handle(self, context: Dict[str, Any]) -> bool:
         try:
-            temp_dirs = ["/tmp/developer-a", "/tmp/developer-b", "/tmp/adr"]
+            # Get developer base directory from environment (same logic as DeveloperInvoker)
+            import os
+            developer_base_dir = os.getenv("ARTEMIS_DEVELOPER_DIR", "/tmp")
+            if not os.path.isabs(developer_base_dir):
+                script_dir = Path(__file__).parent.resolve()
+                developer_base_dir = script_dir / developer_base_dir
+
+            # Build list of temp directories to clean
+            temp_dirs = [
+                str(Path(developer_base_dir) / "developer-a"),
+                str(Path(developer_base_dir) / "developer-b"),
+                "/tmp/adr"  # ADR still uses /tmp (could be made configurable too)
+            ]
 
             for temp_dir in temp_dirs:
                 if Path(temp_dir).exists():
