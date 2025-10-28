@@ -732,15 +732,80 @@ response = openai.chat.completions.<span class="function">create</span>(
             </div>
 
             <div class="demo-box">
-                <h4>3. AI-Generated Documentation Includes</h4>
-                <ul>
-                    <li>✓ High-level overview of the algorithm</li>
-                    <li>✓ Step-by-step execution walkthrough</li>
-                    <li>✓ Time complexity: O(n log n) average, O(n²) worst</li>
-                    <li>✓ Space complexity: O(n)</li>
-                    <li>✓ Use cases and practical examples</li>
-                </ul>
-                <p><strong>Perfect for:</strong> Onboarding, READMEs, docstrings</p>
+                <h4>3. AI-Generated Documentation</h4>
+                <div style="background: #f8f9fa; border: 2px solid #667eea; border-radius: 8px; padding: 20px; margin-top: 15px;">
+                    <h3 style="color: #667eea; margin-top: 0; font-size: 1.4em;">Quicksort Algorithm - Complete Documentation</h3>
+
+                    <h4 style="color: #764ba2; margin-top: 20px;">Overview</h4>
+                    <p style="line-height: 1.6; color: #333;">
+                        This implementation uses the Quicksort algorithm, a highly efficient divide-and-conquer sorting method.
+                        It works by selecting a 'pivot' element and partitioning the array into three groups: elements smaller than
+                        the pivot, elements equal to the pivot, and elements larger than the pivot. These partitions are then
+                        recursively sorted and combined.
+                    </p>
+
+                    <h4 style="color: #764ba2; margin-top: 20px;">How It Works (Step-by-Step)</h4>
+                    <ol style="line-height: 1.8; color: #333;">
+                        <li><strong>Base Case:</strong> If the array has 1 or fewer elements, it's already sorted - return it as-is</li>
+                        <li><strong>Choose Pivot:</strong> Select the middle element as the pivot point</li>
+                        <li><strong>Partition:</strong> Create three lists using list comprehensions:
+                            <ul style="margin-top: 8px;">
+                                <li><code>left</code> - all elements less than pivot</li>
+                                <li><code>middle</code> - all elements equal to pivot</li>
+                                <li><code>right</code> - all elements greater than pivot</li>
+                            </ul>
+                        </li>
+                        <li><strong>Recursive Sort:</strong> Recursively call quicksort on left and right partitions</li>
+                        <li><strong>Combine:</strong> Concatenate sorted_left + middle + sorted_right</li>
+                    </ol>
+
+                    <h4 style="color: #764ba2; margin-top: 20px;">Complexity Analysis</h4>
+                    <ul style="line-height: 1.6; color: #333;">
+                        <li><strong>Time Complexity:</strong>
+                            <ul style="margin-top: 5px;">
+                                <li>Average case: <strong>O(n log n)</strong> - when pivot splits array evenly</li>
+                                <li>Worst case: <strong>O(n²)</strong> - when pivot is always smallest/largest element</li>
+                                <li>Best case: <strong>O(n log n)</strong> - balanced partitions</li>
+                            </ul>
+                        </li>
+                        <li style="margin-top: 10px;"><strong>Space Complexity:</strong> <strong>O(n)</strong> - creates new lists at each recursion level</li>
+                    </ul>
+
+                    <h4 style="color: #764ba2; margin-top: 20px;">Example Execution</h4>
+                    <div class="code-block" style="margin-top: 10px;">
+Input: [3, 6, 8, 10, 1, 2, 1]
+
+Step 1: pivot = 10
+  left = [3, 6, 8, 1, 2, 1]
+  middle = [10]
+  right = []
+
+Step 2: Recurse on left [3, 6, 8, 1, 2, 1], pivot = 8
+  left = [3, 6, 1, 2, 1]
+  middle = [8]
+  right = [10]
+
+...continues recursively...
+
+Final: [1, 1, 2, 3, 6, 8, 10]</div>
+
+                    <h4 style="color: #764ba2; margin-top: 20px;">Use Cases</h4>
+                    <ul style="line-height: 1.6; color: #333;">
+                        <li>✓ General-purpose sorting when average-case performance matters</li>
+                        <li>✓ Large datasets where cache efficiency is important</li>
+                        <li>✓ When in-place sorting isn't required (this version creates new lists)</li>
+                        <li>✓ Educational purposes - demonstrates divide-and-conquer elegantly</li>
+                    </ul>
+
+                    <div style="background: #e7f3ff; border-left: 4px solid #667eea; padding: 15px; margin-top: 20px; border-radius: 5px;">
+                        <p style="margin: 0; color: #333; font-size: 0.95em;">
+                            <strong>💡 Production Note:</strong> For production use, consider Python's built-in <code>sorted()</code> or
+                            <code>list.sort()</code> which use Timsort (O(n log n) guaranteed). This implementation is excellent
+                            for learning but creates extra memory overhead due to list creation.
+                        </p>
+                    </div>
+                </div>
+                <p style="margin-top: 15px;"><strong>Cost:</strong> $0.0245 | <strong>Latency:</strong> 3.2s | <strong>Tokens:</strong> 1,956</p>
             </div>
         </div>
 
